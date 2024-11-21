@@ -12,9 +12,13 @@ const Dashboard = () => {
       <div className="min-h-screen bg-gradient-to-br from-primary/20 to-secondary/20 p-4 pb-20">
         <div className="max-w-md mx-auto space-y-4">
           <header className="space-y-3">
-            <h1 className="text-2xl font-bold text-primary flex items-center">
-              FluentHub
-            </h1>
+            <div className="flex items-center">
+              <img 
+                src="/fluenthub-logo.png" 
+                alt="FluentHub" 
+                className="h-8 w-auto"
+              />
+            </div>
             <div className="flex justify-between items-center bg-white/50 rounded-lg p-3">
               <div>
                 <p className="text-sm font-medium">Daily Streak</p>
