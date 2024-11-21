@@ -13,11 +13,11 @@ const Dashboard = () => {
       <div className="min-h-screen bg-gradient-to-br from-primary/20 to-secondary/20 p-4 pb-20">
         <div className="max-w-md mx-auto space-y-4">
           <header className="space-y-3">
-            <div className="flex items-center">
+            <div className="flex items-center justify-center">
               <img
                 src={logo}
                 alt="FluentHub"
-                className="h-14 w-auto"
+                className="h-16 w-auto"
               />
             </div>
             <div className="flex justify-between items-center bg-white/50 rounded-lg p-3">

@@ -1,7 +1,6 @@
 import React from 'react';
 import { Lock, Unlock, Headphones, BookOpen, Video, Mic, Users, CheckCircle } from 'lucide-react';
 import LessonActionButton from './StartLearningButton';
-// import { StartLearningButton } from './components/StartLearningButton';
 
 // Dummy Data
 const lessonsData = [
@@ -16,12 +15,12 @@ const lessonsData = [
             participants: 4,
             duration: "30 minutes"
         },
-        status: 'active'
+        status: 'completed'
     },
     {
         id: 2,
         title: "Booking a Hotel Room",
-        isLocked: true,
+        isLocked: false,
         situation: "Learn phrases and tips for booking accommodations.",
         practices: ["Vocabulary Practice", "Listening Activity"],
         liveSession: {
@@ -29,12 +28,12 @@ const lessonsData = [
             participants: 3,
             duration: "45 minutes"
         },
-        status: 'locked'
+        status: 'active'
     },
     {
         id: 3,
         title: "Introducing Yourself",
-        isLocked: false,
+        isLocked: true,
         situation: "Basic phrases to introduce yourself confidently.",
         practices: ["Shadowing", "Flashcards"],
         liveSession: {
@@ -42,7 +41,7 @@ const lessonsData = [
             participants: 5,
             duration: "20 minutes"
         },
-        status: 'active'
+        status: 'locked'
     },
     {
         id: 4,
@@ -60,7 +59,7 @@ const lessonsData = [
     {
         id: 5,
         title: "Taking Public Transportation",
-        isLocked: false,
+        isLocked: true,
         situation: "Learn how to navigate public transport effectively.",
         practices: ["Shadowing", "Flashcards"],
         liveSession: {
@@ -68,7 +67,7 @@ const lessonsData = [
             participants: 3,
             duration: "35 minutes"
         },
-        status: 'completed'
+        status: 'locked'
     },
     {
         id: 6,
@@ -98,9 +97,9 @@ function LessonCard({ lesson }) {
     const getStatusStyles = (status) => {
         switch (status) {
             case 'completed':
-                return 'border-2 border-blue-500 bg-blue-50';
+                return 'border-2 border-green-500 bg-green-50';
             case 'active':
-                return 'border-2 border-green-500';
+                return 'border-2 border-blue-500';
             default:
                 return 'border-2 border-gray-300 bg-gray-50';
         }
@@ -117,7 +116,7 @@ function LessonCard({ lesson }) {
                 <div className="flex justify-between items-center mb-2">
                     <h2 className="text-lg font-semibold text-gray-800">{lesson.title}</h2>
                     {lesson.status === 'completed' ? (
-                        <CheckCircle className="text-blue-500" size={24} />
+                        <CheckCircle className="text-green-500" size={24} />
                     ) : lesson.isLocked ? (
                         <Lock className="text-gray-500" size={24} />
                     ) : (

@@ -6,12 +6,12 @@ export default function LessonActionButton({ status, onClick }) {
         completed: {
             text: 'Completed Lesson',
             icon: CheckCircle,
-            className: 'bg-blue-500 hover:bg-blue-600'
+            className: 'bg-green-500 hover:bg-green-600'
         },
         active: {
             text: 'Start Learning',
             icon: Play,
-            className: 'bg-green-500 hover:bg-green-600'
+            className: 'bg-blue-500 hover:bg-blue-600'
         },
         locked: {
             text: 'Locked Lesson',
