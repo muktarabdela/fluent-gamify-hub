@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Trophy, Book, Users, Zap } from "lucide-react";
 import Navigation from "@/components/Navigation";
-
+import logo from "../../public/fluent logo.png"
+import Lessons from "@/components/Lessons";
 const Dashboard = () => {
   const userPreferences = JSON.parse(localStorage.getItem("userPreferences") || "{}");
 
@@ -13,10 +14,10 @@ const Dashboard = () => {
         <div className="max-w-md mx-auto space-y-4">
           <header className="space-y-3">
             <div className="flex items-center">
-              <img 
-                src="/fluenthub-logo.png" 
-                alt="FluentHub" 
-                className="h-8 w-auto"
+              <img
+                src={logo}
+                alt="FluentHub"
+                className="h-14 w-auto"
               />
             </div>
             <div className="flex justify-between items-center bg-white/50 rounded-lg p-3">
@@ -32,7 +33,7 @@ const Dashboard = () => {
           </header>
 
           <div className="space-y-3">
-            <Card className="p-4 card-hover">
+            {/* <Card className="p-4 card-hover">
               <div className="flex items-center space-x-3 mb-3">
                 <Book className="h-6 w-6 text-primary" />
                 <h2 className="text-lg font-semibold">Continue Learning</h2>
@@ -40,7 +41,8 @@ const Dashboard = () => {
               <Progress value={33} className="mb-3" />
               <p className="text-sm text-gray-600 mb-3">Lesson 3: Ordering Food</p>
               <Button className="w-full">Continue</Button>
-            </Card>
+            </Card> */}
+            <Lessons />
 
             <Card className="p-4 card-hover">
               <div className="flex items-center space-x-3 mb-3">
