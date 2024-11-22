@@ -170,6 +170,7 @@ function LessonCard({ lesson }) {
                         )}
                         <div>
                             <h2 className="text-md font-semibold text-gray-800">{lesson.title}</h2>
+                            
                             {/* <Progress value={lesson.progress} className="w-24 h-1 mt-1" /> */}
                         </div>
                     </div>
