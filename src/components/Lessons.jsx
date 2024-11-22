@@ -169,7 +169,7 @@ function LessonCard({ lesson }) {
                             <Unlock className="text-blue-500 flex-shrink-0" size={20} />
                         )}
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-800">{lesson.title}</h2>
+                            <h2 className="text-md font-semibold text-gray-800">{lesson.title}</h2>
                             {/* <Progress value={lesson.progress} className="w-24 h-1 mt-1" /> */}
                         </div>
                     </div>
@@ -242,7 +242,7 @@ function LessonCard({ lesson }) {
 
 export default function MobileLessonDashboard() {
     return (
-        <div className="bg-gra-100 py-6 px-4">
+        <div className="bg-gra-100">
             <h1 className="text-3xl font-bold text-gray-900 mb-6 text-center">Language Learning</h1>
             <Accordion type="single" collapsible className="space-y-4">
                 {lessonsData.map((lesson) => (

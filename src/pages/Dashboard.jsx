@@ -12,7 +12,7 @@ const Dashboard = () => {
         <div className="max-w-md mx-auto space-y-4">
           <div className="space-y-3">
             <Lessons />
-                     </div>
+          </div>
         </div>
       </div>
       <Navigation />
