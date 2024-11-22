@@ -4,7 +4,7 @@ import { Play, Lock, CheckCircle } from 'lucide-react';
 export default function LessonActionButton({ status, onClick }) {
     const buttonConfig = {
         completed: {
-            text: 'Completed Lesson',
+            text: 'Review Lesson',
             icon: CheckCircle,
             className: 'bg-green-500 hover:bg-green-600'
         },

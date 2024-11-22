@@ -13,21 +13,18 @@ const Dashboard = () => {
       <div className="min-h-screen bg-gradient-to-br from-primary/20 to-secondary/20 p-4 pb-20">
         <div className="max-w-md mx-auto space-y-4">
           <header className="space-y-3">
-            <div className="flex items-center justify-center">
+            <div className="flex items-center">
               <img
                 src={logo}
                 alt="FluentHub"
-                className="h-16 w-auto"
+                className="h-10 w-auto"
               />
-            </div>
-            <div className="flex justify-between items-center bg-white/50 rounded-lg p-3">
-              <div>
-                <p className="text-sm font-medium">Daily Streak</p>
-                <p className="text-xl font-bold text-accent">🔥 3 days</p>
+              <div className="flex items-center space-x-3">
+                <p className="text-xl font-bold text-accent">🔥3 days</p>
               </div>
-              <div>
-                <p className="text-sm font-medium">Points</p>
-                <p className="text-xl font-bold text-primary">150 XP</p>
+              <div className="ml-auto flex items-center space-x-3">
+                <p className="text-md font-medium text-gray-600">likes</p>
+                <p className="text-xl font-bold text-primary">150 🩷</p>
               </div>
             </div>
           </header>
