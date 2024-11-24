@@ -1,11 +1,12 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { navItems } from "./nav-items";
 import Onboarding from "@/pages/Onboarding";
 import Header from "@/components/Header";
 import Navigation from "@/components/Navigation";
+import DetailLesson from "@/pages/DetailLesson";
 
 const queryClient = new QueryClient();
 
@@ -27,14 +28,16 @@ const ProtectedRoute = ({ children }) => {
 };
 
 const AppLayout = ({ children }) => {
-  // Don't show header/nav on onboarding page
+  const location = useLocation();
+  // Don't show header/nav on onboarding page or lesson pages
   const isOnboarding = window.location.pathname === "/";
+  const isLessonPage = location.pathname.includes('/lesson/');
   
   return (
     <>
-      {!isOnboarding && <Header />}
+      {!isOnboarding && !isLessonPage && <Header />}
       {children}
-      {!isOnboarding && <Navigation />}
+      {!isOnboarding && !isLessonPage && <Navigation />}
     </>
   );
 };
@@ -51,6 +54,18 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Onboarding />
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Detail Lesson Route */}
+          <Route
+            path="/lesson/:id"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <DetailLesson />
+                </AppLayout>
               </ProtectedRoute>
             }
           />

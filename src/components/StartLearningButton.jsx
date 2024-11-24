@@ -1,7 +1,10 @@
 import React from 'react';
 import { Play, Lock, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-export default function LessonActionButton({ status, onClick }) {
+export default function LessonActionButton({ status, lessonId, onClick }) {
+    const navigate = useNavigate();
+
     const buttonConfig = {
         completed: {
             text: 'Review Lesson',
@@ -22,9 +25,15 @@ export default function LessonActionButton({ status, onClick }) {
 
     const { text, icon: Icon, className } = buttonConfig[status];
 
+    const handleClick = () => {
+        if (status !== 'locked') {
+            navigate(`/lesson/${lessonId}`);
+        }
+    };
+
     return (
         <button
-            onClick={status !== 'locked' ? onClick : undefined}
+            onClick={handleClick}
             className={`w-full ${className} text-white font-semibold py-2 px-4 rounded-md flex items-center justify-center transition-colors duration-300`}
             disabled={status === 'locked'}
         >

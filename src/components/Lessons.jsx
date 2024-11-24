@@ -1,12 +1,12 @@
 import React from 'react';
-import { Lock, Unlock, Headphones, BookOpen, Video, Mic, Users, CheckCircle, Coins, ChevronRight } from 'lucide-react';
+import { Lock, Unlock, Headphones, BookOpen, Video, Mic, Users, CheckCircle, Coins, ChevronRight, Activity, Clock } from 'lucide-react';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import LessonActionButton from './StartLearningButton';
 
-const lessonsData = [
+export const lessonsData = [
     {
         id: 1,
         title: "Ordering Food at a Restaurant",
@@ -157,30 +157,47 @@ function LessonCard({ lesson }) {
     };
 
     return (
-        <AccordionItem value={`item-${lesson.id}`} className={`mb-4 rounded-lg overflow-hidden shadow-md transition-all duration-300 ${getStatusStyles(lesson.status)}`}>
-            <AccordionTrigger className="hover:no-underline px-4 py-3">
-                <div className="flex justify-between items-center w-full">
-                    <div className="flex items-center space-x-3">
-                        {lesson.status === 'completed' ? (
-                            <CheckCircle className="text-green-500 flex-shrink-0" size={20} />
-                        ) : lesson.isLocked ? (
-                            <Lock className="text-gray-500 flex-shrink-0" size={20} />
-                        ) : (
-                            <Unlock className="text-blue-500 flex-shrink-0" size={20} />
-                        )}
-                        <div>
-                            <h2 className="text-md font-semibold text-gray-800">{lesson.title}</h2>
-                            
-                            {/* <Progress value={lesson.progress} className="w-24 h-1 mt-1" /> */}
+        <AccordionItem value={`item-${lesson.id}`} className={`mb-4 mt-10 rounded-lg overflow-hidden shadow-md transition-all duration-300 ${getStatusStyles(lesson.status)}`}>
+            <AccordionTrigger className="hover:no-underline px-6 py-4 [&>svg]:hidden group">
+                <div className="flex items-center justify-between w-full rounded-lg transition-all duration-200 group-hover:bg-gray-50">
+                    <div className="flex items-center gap-4">
+                        <div className="relative">
+                            <img
+                                src={`https://tools-api.webcrumbs.org/image-placeholder/48/48/${lesson.topic}/1`}
+                                alt={lesson.title}
+                                className="w-14 h-14 rounded-xl object-cover shadow-sm"
+                            />
+                            {lesson.status === 'completed' && (
+                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                                    <CheckCircle size={12} className="text-white" />
+                                </div>
+                            )}
+                            {lesson.status === 'locked' && (
+                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-gray-400 rounded-full flex items-center justify-center">
+                                    <Lock size={12} className="text-white" />
+                                </div>
+                            )}
+                            {lesson.status === 'active' && (
+                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <ChevronRight size={12} className="text-white" />
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex-1">
+                            <div className="flex text-end gap-3 mb-1">
+                                <h4 className="text-lg font-semibold text-start whitespace-nowrap text-gray-800 group-hover:text-primary transition-colors">
+                                    {lesson.title}
+                                </h4>
+                            </div>
+                            <p className="text-sm text-gray-500 line-clamp-2 text-start">{lesson.situation}</p>
                         </div>
                     </div>
-                    <ChevronRight size={20} className="text-gray-400" />
                 </div>
             </AccordionTrigger>
+
             <AccordionContent>
                 <div className="px-4 py-3 space-y-4">
                     <p className="text-sm text-gray-600">{lesson.situation}</p>
-
                     <div className="border-t pt-3">
                         <h3 className="text-sm font-semibold text-gray-700 mb-2">Grammar Focus:</h3>
                         <div className="flex flex-wrap gap-2">
@@ -232,7 +249,7 @@ function LessonCard({ lesson }) {
 
                     <LessonActionButton
                         status={lesson.status}
-                        onClick={() => console.log(`Action for: ${lesson.title}`)}
+                        lessonId={lesson.id}
                     />
                 </div>
             </AccordionContent>
@@ -244,7 +261,26 @@ function LessonCard({ lesson }) {
 export default function MobileLessonDashboard() {
     return (
         <div className="bg-gra-100">
-            <h1 className="text-3xl font-bold text-gray-900 mb-6 text-center">Language Learning</h1>
+            <section className='fixed top-16 left-0 right-0 py-4 bg-white/95 backdrop-blur-md shadow-md px-6 max-w-md mx-auto z-10 rounded-xl'>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-xs font-semibold tracking-wider text-gray-500">UNIT 1 · 15 LESSONS</h2>
+                        <h3 className="mt-1.5 text-lg font-bold text-gray-900">Talking About Yourself – 1</h3>
+                    </div>
+                    <div className="flex items-center bg-green-100 px-2.5 py-1 rounded-full">
+                        <span className="text-sm font-medium text-green-700">75%</span>
+                    </div>
+                </div>
+                <div className="relative mt-3 bg-gray-200 h-2 rounded-full overflow-hidden">
+                    <div className="absolute top-0 left-0 bg-gradient-to-r from-primary to-primary/80 h-full rounded-full transition-all duration-300" style={{ width: '75%' }}></div>
+                </div>
+            </section>
+
+            <div className="mt-4 px-6">
+                <h2 className="text-xs font-semibold tracking-wider text-gray-500">UNIT 2</h2>
+                <h3 className="mt-1.5 text-lg font-bold text-gray-900">Talking About Yourself – 2</h3>
+            </div>
+
             <Accordion type="single" collapsible className="space-y-4">
                 {lessonsData.map((lesson) => (
                     <LessonCard key={lesson.id} lesson={lesson} />
