@@ -132,6 +132,69 @@ export const lessonsData = [
             participants: 6,
             duration: "50 minutes"
         }
+    },
+    {
+        id: 4,
+        title: "Shopping for Groceries",
+        isLocked: true,
+        status: 'locked',
+        progress: 0,
+        situation: "Understand common phrases for grocery shopping.",
+        grammarFocus: ["Countable and uncountable nouns", "Quantifiers"],
+        vocabulary: {
+            words: 30,
+            phrases: 12
+        },
+        exercises: ["Shopping list comprehension", "Listening activity", "Dialogue practice"],
+        coins: 55,
+        practices: ["Listening Practice", "Flashcards", "Video Questions"],
+        liveSession: {
+            title: "Virtual Grocery Shopping Experience",
+            participants: 4,
+            duration: "40 minutes"
+        }
+    },
+    {
+        id: 5,
+        title: "Taking Public Transportation",
+        isLocked: true,
+        status: 'locked',
+        progress: 0,
+        situation: "Learn how to navigate public transport effectively.",
+        grammarFocus: ["Prepositions of place", "Imperative sentences"],
+        vocabulary: {
+            words: 18,
+            phrases: 9
+        },
+        exercises: ["Route planning", "Listening comprehension", "Dialogues"],
+        coins: 50,
+        practices: ["Shadowing", "Flashcards"],
+        liveSession: {
+            title: "Simulated Public Transport Journey",
+            participants: 3,
+            duration: "35 minutes"
+        }
+    },
+    {
+        id: 6,
+        title: "Attending a Meeting",
+        isLocked: true,
+        status: 'locked',
+        progress: 0,
+        situation: "Key phrases for professional communication in meetings.",
+        grammarFocus: ["Formal language", "Passive voice"],
+        vocabulary: {
+            words: 22,
+            phrases: 14
+        },
+        exercises: ["Meeting role-play", "Listening activity", "Key phrase matching"],
+        coins: 70,
+        practices: ["Listening Activity", "Video Questions"],
+        liveSession: {
+            title: "Mock Business Meeting Roleplay",
+            participants: 6,
+            duration: "50 minutes"
+        }
     }
 ];
 
@@ -158,7 +221,7 @@ function LessonCard({ lesson }) {
 
     return (
         <AccordionItem value={`item-${lesson.id}`} className={`mb-4 mt-10 rounded-lg overflow-hidden shadow-md transition-all duration-300 ${getStatusStyles(lesson.status)}`}>
-            <AccordionTrigger className="hover:no-underline px-6 py-4 [&>svg]:hidden group">
+            <AccordionTrigger className="hover:no-underline px-2 py-4 [&>svg]:hidden group">
                 <div className="flex items-center justify-between w-full rounded-lg transition-all duration-200 group-hover:bg-gray-50">
                     <div className="flex items-center gap-4">
                         <div className="relative">
