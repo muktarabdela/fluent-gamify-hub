@@ -222,7 +222,7 @@ function LessonCard({ lesson }) {
     return (
         <AccordionItem value={`item-${lesson.id}`} className={`mb-4 mt-10 rounded-lg overflow-hidden shadow-md transition-all duration-300 ${getStatusStyles(lesson.status)}`}>
             <AccordionTrigger className="hover:no-underline px-2 py-4 [&>svg]:hidden group">
-                <div className="flex items-center justify-between w-full rounded-lg transition-all duration-200 group-hover:bg-gray-50">
+                <div className="flex items-center justify-between w-full rounded-lg transition-all duration-200 group-hover:bggray-50">
                     <div className="flex items-center gap-4">
                         <div className="relative">
                             <img
