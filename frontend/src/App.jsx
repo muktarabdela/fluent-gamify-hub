@@ -16,10 +16,10 @@ const ProtectedRoute = ({ children }) => {
   const userPreferences = localStorage.getItem("userPreferences");
   const user = localStorage.getItem("user");
 
-  // If no user is logged in, show Telegram auth
-  if (!user) {
-    return <TelegramAuth />;
-  }
+  // // If no user is logged in, show Telegram auth
+  // if (!user) {
+  //   return <TelegramAuth />;
+  // }
 
   // If trying to access onboarding page but already completed
   if (window.location.pathname === "/" && userPreferences) {
