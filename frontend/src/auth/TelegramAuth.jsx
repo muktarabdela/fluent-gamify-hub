@@ -1,29 +1,41 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const TelegramAuth = () => {
   const navigate = useNavigate();
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Load Telegram widget script
-    const script = document.createElement('script');
-    script.src = "https://telegram.org/js/telegram-widget.js?22";
-    script.setAttribute('data-telegram-login', import.meta.env.VITE_BOT_NAME); // Changed from REACT_APP_BOT_NAME
-    script.setAttribute('data-size', 'large');
-    script.setAttribute('data-auth-url', `${import.meta.env.VITE_API_URL}/auth/telegram/callback`); // Changed from REACT_APP_API_URL
-    script.setAttribute('data-request-access', 'write');
-    script.async = true;
+    try {
+      const script = document.createElement('script');
+      script.src = "https://telegram.org/js/telegram-widget.js?22";
+      script.setAttribute('data-telegram-login', import.meta.env.VITE_BOT_NAME);
+      script.setAttribute('data-size', 'large');
+      script.setAttribute('data-radius', '8');
+      script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+      script.setAttribute('data-request-access', 'write');
+      script.async = true;
 
-    // Callback when user authenticates
-    window.onTelegramAuth = (user) => {
-      handleTelegramResponse(user);
-    };
+      // Define the callback function globally
+      window.onTelegramAuth = (user) => {
+        handleTelegramResponse(user);
+      };
 
-    document.getElementById('telegram-login-container').appendChild(script);
+      const container = document.getElementById('telegram-login-container');
+      if (container) {
+        container.innerHTML = ''; // Clear any existing content
+        container.appendChild(script);
+      }
 
-    return () => {
-      document.getElementById('telegram-login-container').removeChild(script);
-    };
+      return () => {
+        if (container && script) {
+          container.removeChild(script);
+        }
+      };
+    } catch (err) {
+      setError('Failed to load Telegram login widget');
+      console.error('Telegram widget error:', err);
+    }
   }, []);
 
   const handleTelegramResponse = async (user) => {
@@ -40,13 +52,31 @@ const TelegramAuth = () => {
         const data = await response.json();
         localStorage.setItem('user', JSON.stringify(data.user));
         navigate('/dashboard');
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Authentication failed');
       }
     } catch (error) {
+      setError('Authentication failed');
       console.error('Authentication error:', error);
     }
   };
 
-  return <div id="telegram-login-container"></div>;
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen p-4">
+      <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
+        <h2 className="text-2xl font-bold text-center mb-6">Login with Telegram</h2>
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+            {error}
+          </div>
+        )}
+        <div id="telegram-login-container" className="flex justify-center">
+          {/* Telegram widget will be inserted here */}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default TelegramAuth; 
