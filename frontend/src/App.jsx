@@ -6,7 +6,7 @@ import { navItems } from "./nav-items";
 import Onboarding from "@/pages/Onboarding";
 import Header from "@/components/Header";
 import Navigation from "@/components/Navigation";
-import DetailLesson from "@/pages/DetailLesson";
+// import DetailLesson from "@/pages/DetailLesson";
 
 const queryClient = new QueryClient();
 
@@ -64,7 +64,7 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <AppLayout>
-                  <DetailLesson />
+                  {/* <DetailLesson /> */}
                 </AppLayout>
               </ProtectedRoute>
             }
