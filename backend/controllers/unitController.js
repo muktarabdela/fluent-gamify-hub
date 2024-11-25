@@ -47,7 +47,15 @@ const unitController = {
     // Create new unit
     createUnit: async (req, res) => {
         console.log('Received request to create unit:', req.body);
-        const { title, description, order_number } = req.body;
+        const { 
+            title, 
+            description, 
+            order_number,
+            total_lessons,
+            completed_lessons,
+            progress_percentage,
+            is_active 
+        } = req.body;
 
         // Validate required fields
         if (!title || !order_number) {
@@ -60,8 +68,24 @@ const unitController = {
         try {
             const pool = getPool();
             const [result] = await pool.query(
-                'INSERT INTO Units (title, description, order_number) VALUES (?, ?, ?)',
-                [title, description, order_number]
+                `INSERT INTO Units (
+                    title, 
+                    description, 
+                    order_number, 
+                    total_lessons, 
+                    completed_lessons, 
+                    progress_percentage,
+                    is_active
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    title, 
+                    description, 
+                    order_number,
+                    total_lessons || 0,
+                    completed_lessons || 0,
+                    progress_percentage || 0.00,
+                    is_active !== undefined ? is_active : true
+                ]
             );
 
             console.log('Unit created successfully:', result);

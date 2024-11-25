@@ -37,6 +37,9 @@ const tableQueries = {
         CREATE TABLE IF NOT EXISTS Dialogues (
             dialogue_id INT AUTO_INCREMENT PRIMARY KEY,
             lesson_id INT NOT NULL,
+            speaker_name VARCHAR(100) NOT NULL,
+            speaker_role VARCHAR(100),
+            sequence_order INT NOT NULL,
             content TEXT NOT NULL,
             audio_url VARCHAR(255),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -71,6 +74,19 @@ const tableQueries = {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (lesson_id) REFERENCES Lessons(lesson_id),
             FOREIGN KEY (exercise_id) REFERENCES Exercises(exercise_id)
+        )
+    `,
+
+    createUsersTable: `
+        CREATE TABLE IF NOT EXISTS Users (
+            user_id BIGINT PRIMARY KEY,  -- Telegram user ID
+            username VARCHAR(255),
+            first_name VARCHAR(255),
+            last_name VARCHAR(255),
+            photo_url VARCHAR(255),
+            auth_date TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )
     `
 };

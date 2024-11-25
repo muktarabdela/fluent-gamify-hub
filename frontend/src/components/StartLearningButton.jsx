@@ -27,6 +27,11 @@ export default function LessonActionButton({ status, lessonId, onClick }) {
 
     const handleClick = () => {
         if (status !== 'locked') {
+            console.log('Navigating to lesson:', lessonId);
+            if (!lessonId) {
+                console.error('No lesson ID provided to button');
+                return;
+            }
             navigate(`/lesson/${lessonId}`);
         }
     };

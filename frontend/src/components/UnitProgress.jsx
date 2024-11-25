@@ -1,12 +1,8 @@
 import React from 'react';
 
 export default function UnitProgress({ unit, isFixed = false }) {
-    const containerClasses = isFixed
-        ? 'fixed top-16 left-0 right-0 py-4 bg-white/95 backdrop-blur-md shadow-md px-6 max-w-md mx-auto z-10 rounded-xl'
-        : 'mt-4 px-6';
-
     return (
-        <section className={containerClasses}>
+        <section className="py-4 bg-white/95 backdrop-blur-md shadow-md px-6 max-w-md mx-auto rounded-xl">
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-xs font-semibold tracking-wider text-gray-500">

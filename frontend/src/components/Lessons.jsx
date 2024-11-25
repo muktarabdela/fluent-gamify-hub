@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Lock, Unlock, Headphones, BookOpen, Video, Mic, Users, CheckCircle, Coins, ChevronRight } from 'lucide-react';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import LessonActionButton from './StartLearningButton';
 import UnitsList from './UnitsList';
+import { getAllUnits } from '@/api/unitService';
 import { getLessonsByUnit } from '@/api/lessonService';
-
 const practiceIcons = {
     "Shadowing": <Mic size={14} />,
     "Flashcards": <BookOpen size={14} />,
@@ -15,13 +15,21 @@ const practiceIcons = {
     "Listening Practice": <Headphones size={14} />,
 };
 
-const parseJSON = (jsonString) => {
-    try {
-        return JSON.parse(jsonString);
-    } catch (e) {
-        console.error('Error parsing JSON:', e);
-        return [];
+const parseJSON = (jsonData) => {
+    if (Array.isArray(jsonData)) {
+        return jsonData;
     }
+
+    if (typeof jsonData === 'string') {
+        try {
+            return JSON.parse(jsonData);
+        } catch (e) {
+            console.error('Error parsing JSON:', e);
+            return [];
+        }
+    }
+
+    return [];
 };
 
 function LessonCard({ lesson }) {
@@ -34,7 +42,7 @@ function LessonCard({ lesson }) {
             case 'active':
                 return 'border-l-4 border-l-blue-500 bg-blue-50';
             default:
-                return 'border-l-4 border-l-gray-300 bg-gray-100';
+                return 'border-l-4 border-l-gray-300 bg-gray-150';
         }
     };
 
@@ -50,24 +58,17 @@ function LessonCard({ lesson }) {
     return (
         <AccordionItem
             value={`item-${lesson.lesson_id}`}
-            className={`mb-4 mt-10 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 ${getStatusStyles(lesson.status || 'locked')}`}
+            className={`mb-4 mt-10 rounded-lg overflow-hidden shadow-md transition-all duration-300 ${getStatusStyles(lesson.status)}`}
         >
             <AccordionTrigger className="hover:no-underline px-2 py-4 [&>svg]:hidden group">
                 <div className="flex items-center justify-between w-full rounded-lg transition-all duration-200 group-hover:bggray-50">
                     <div className="flex items-center gap-4">
                         <div className="relative">
-                            {imageError ? (
-                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center text-white font-semibold text-lg text-start">
-                                    {getInitials(lesson.title)}
-                                </div>
-                            ) : (
-                                <img
-                                    src={`https://tools-api.webcrumbs.org/image-placeholder/48/48/${lesson.title}/1`}
-                                    alt={lesson.title}
-                                    className="w-14 h-14 rounded-xl object-cover shadow-sm"
-                                    onError={() => setImageError(true)}
-                                />
-                            )}
+                            <img
+                                src={`https://tools-api.webcrumbs.org/image-placeholder/48/48/${lesson.topic}/1`}
+                                alt={lesson.title}
+                                className="w-14 h-14 rounded-xl object-cover shadow-sm"
+                            />
                             {lesson.status === 'completed' && (
                                 <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
                                     <CheckCircle size={12} className="text-white" />
@@ -97,58 +98,54 @@ function LessonCard({ lesson }) {
             </AccordionTrigger>
 
             <AccordionContent>
-                <div className="px-6 py-4 space-y-4 bg-white/50">
+                <div className="px-4 py-3 space-y-4">
                     <p className="text-sm text-gray-600">{lesson.description}</p>
 
                     {lesson.grammar_focus && (
-                        <div className="space-y-2">
-                            <h5 className="text-sm font-semibold text-gray-700">Grammar Focus</h5>
+                        <div className="border-t pt-3">
+                            <h3 className="text-sm font-semibold text-gray-700 mb-2">Grammar Focus:</h3>
                             <div className="flex flex-wrap gap-2">
-                                {parseJSON(lesson.grammar_focus).map((item, index) => (
-                                    <Badge key={index} variant="secondary" className="bg-blue-100 text-blue-700">
-                                        {item}
-                                    </Badge>
+                                {parseJSON(lesson.grammar_focus).map((point, index) => (
+                                    <span key={index} className="inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded-full">
+                                        <span className="ml-1 text-xs">{point}</span>
+                                    </span>
                                 ))}
                             </div>
                         </div>
                     )}
 
-                    <div className="flex gap-4">
-                        <div className="space-y-1">
-                            <h5 className="text-sm font-semibold text-gray-700">Vocabulary</h5>
-                            <div className="flex gap-4 text-sm text-gray-600">
-                                <span>{lesson.vocabulary_words} words</span>
-                                <span>{lesson.vocabulary_phrases} phrases</span>
-                            </div>
+                    <div>
+                        <h3 className="text-sm font-semibold text-gray-700 mb-2">Vocabulary:</h3>
+                        <div className="flex space-x-4">
+                            <Badge variant="outline">{lesson.vocabulary_words} words</Badge>
+                            <Badge variant="outline">{lesson.vocabulary_phrases} phrases</Badge>
                         </div>
                     </div>
 
-                    {lesson.live_session_title && (
-                        <div className="bg-blue-50 p-3 rounded-lg">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Users size={16} className="text-blue-600" />
-                                <h5 className="text-sm font-semibold text-blue-700">Live Session</h5>
-                            </div>
-                            <div className="space-y-1 text-sm text-blue-600">
-                                <p>{lesson.live_session_title}</p>
-                                <div className="flex gap-4">
-                                    <span>{lesson.live_session_duration}</span>
-                                    <span>Max {lesson.live_session_max_participants} participants</span>
-                                </div>
+                    {lesson.practices && (
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-2">Interactive Practices:</h3>
+                            <div className="flex flex-wrap gap-1 mb-3">
+                                {lesson.practices.map((practice, index) => (
+                                    <span key={index} className="inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded-full">
+                                        {practiceIcons[practice]}
+                                        <span className="ml-1 text-xs">{practice}</span>
+                                    </span>
+                                ))}
                             </div>
                         </div>
                     )}
 
-                    {lesson.practices && (
-                        <div className="space-y-2">
-                            <h5 className="text-sm font-semibold text-gray-700">Practice Activities</h5>
-                            <div className="flex flex-wrap gap-2">
-                                {lesson.practices.map((practice, index) => (
-                                    <Badge key={index} variant="outline" className="flex items-center gap-1">
-                                        {practiceIcons[practice]}
-                                        {practice}
-                                    </Badge>
-                                ))}
+                    {lesson.live_session_title && (
+                        <div className="bg-yellow-100 rounded-md p-3">
+                            <h3 className="text-sm font-semibold text-yellow-800 mb-2 flex items-center">
+                                <Users size={16} className="mr-2" />
+                                Live Group Session
+                            </h3>
+                            <p className="text-sm text-yellow-800 mb-1">{lesson.live_session_title}</p>
+                            <div className="flex justify-between text-xs text-yellow-700">
+                                <span>Max {lesson.live_session_max_participants} participants</span>
+                                <span>{lesson.live_session_duration}</span>
                             </div>
                         </div>
                     )}
@@ -164,86 +161,122 @@ function LessonCard({ lesson }) {
 }
 
 export default function MobileLessonDashboard() {
+    const [units, setUnits] = useState([]);
     const [lessons, setLessons] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [selectedUnitId, setSelectedUnitId] = useState(null);
+    const [visibleUnit, setVisibleUnit] = useState(null);
+    const userId = 2;
+    const lessonRefs = useRef({});
+    const unitDividerRefs = useRef({});
 
+    // Fetch all units first
     useEffect(() => {
-        const fetchLessons = async () => {
-            if (!selectedUnitId) {
-                console.log("No unit selected yet");
-                return;
-            }
-
+        const fetchAllUnits = async () => {
             try {
-                setLoading(true);
-                console.log("🔍 Fetching lessons for unit:", selectedUnitId);
-                const lessonsData = await getLessonsByUnit(selectedUnitId);
-                console.log("📚 Lessons data:", lessonsData);
-                setLessons(Array.isArray(lessonsData) ? lessonsData : []);
-                setLoading(false);
+                const unitsData = await getAllUnits();
+                setUnits(unitsData);
+                // Set the first unit as visible by default
+                if (unitsData.length > 0) {
+                    setVisibleUnit(unitsData[0].unit_id);
+                }
+                // Load lessons for all units
+                await Promise.all(unitsData.map(unit => fetchLessonsForUnit(unit.unit_id)));
             } catch (err) {
-                console.error('❌ Error fetching lessons:', err);
+                console.error('Error fetching units:', err);
                 setError(err.message);
-                setLoading(false);
             }
         };
+        fetchAllUnits();
+    }, []);
 
-        fetchLessons();
-    }, [selectedUnitId]);
-
-    const handleUnitSelect = (unitId) => {
-        console.log("🎯 Selected unit:", unitId);
-        setSelectedUnitId(unitId);
+    const fetchLessonsForUnit = async (unitId) => {
+        try {
+            setLoading(true);
+            const lessonsData = await getLessonsByUnit(unitId, userId);
+            setLessons(prev => [...prev, ...lessonsData]);
+            setLoading(false);
+        } catch (err) {
+            console.error('Error fetching lessons:', err);
+            setError(err.message);
+            setLoading(false);
+        }
     };
 
-    console.log("🎨 Rendering with state:", {
-        loading,
-        error,
-        selectedUnitId,
-        lessonsCount: lessons.length
-    });
+    useEffect(() => {
+        const options = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.5
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const unitId = parseInt(entry.target.getAttribute('data-unit-id'));
+                const previousUnitId = units[units.findIndex(u => u.unit_id === unitId) - 1]?.unit_id;
+
+                if (entry.isIntersecting) {
+                    setVisibleUnit(unitId);
+                } else {
+                    const rect = entry.target.getBoundingClientRect();
+                    if (rect.top > 0) {
+                        setVisibleUnit(previousUnitId);
+                    }
+                }
+            });
+        }, options);
+
+        // Only observe dividers for units after the first one
+        Object.values(unitDividerRefs.current).forEach(ref => {
+            if (ref) observer.observe(ref);
+        });
+
+        return () => observer.disconnect();
+    }, [units]);
+
+    // Group lessons by unit
+    const lessonsByUnit = lessons.reduce((acc, lesson) => {
+        if (!acc[lesson.unit_id]) {
+            acc[lesson.unit_id] = [];
+        }
+        acc[lesson.unit_id].push(lesson);
+        return acc;
+    }, {});
 
     return (
         <div className="bg-gray-100 mt-[6em]">
-            <UnitsList
-                onUnitSelect={handleUnitSelect}
-                selectedUnitId={selectedUnitId}
-            />
+            <UnitsList visibleUnitId={visibleUnit} />
 
-            <div className="">
-                {loading && (
-                    <div className="flex justify-center items-center p4">
-                        <span className="text-gray-600">Loading lessons...</span>
+            <div className="container mx-auto px-4">
+                {units.map((unit, index) => (
+                    <div key={unit.unit_id} className="mb-8">
+                        {/* Unit Divider - Only show for units after the first one */}
+                        {index > 0 && (
+                            <div
+                                ref={el => unitDividerRefs.current[unit.unit_id] = el}
+                                data-unit-id={unit.unit_id}
+                                className="bg-gray-700 rounded-lg shadow-md flex flex-col items-center py-4 mb-6 z-40"
+                            >
+                                <div className="h-4" />
+                                <h6 className="text-neutral-500 text-sm tracking-wider">
+                                    UNIT {unit.order_number}
+                                </h6>
+                                <h1 className="text-neutral-50 font-title text-xl font-semibold flex items-center gap-4">
+                                    {unit.title}
+                                </h1>
+                                <div className="h-4" />
+                            </div>
+                        )}
+
+                        <Accordion type="single" collapsible className="space-y-4">
+                            {lessonsByUnit[unit.unit_id]?.map((lesson) => (
+                                <div key={lesson.lesson_id}>
+                                    <LessonCard lesson={lesson} />
+                                </div>
+                            ))}
+                        </Accordion>
                     </div>
-                )}
-
-                {error && (
-                    <div className="text-red-500 p-4 text-center">
-                        <p>Error: {error}</p>
-                    </div>
-                )}
-
-                {!loading && !error && !selectedUnitId && (
-                    <div className="text-gray-500 p-4 text-center">
-                        Please select a unit to view lessons
-                    </div>
-                )}
-
-                {!loading && !error && selectedUnitId && lessons.length === 0 && (
-                    <div className="text-gray-500 p-4 text-center">
-                        No lessons found for this unit
-                    </div>
-                )}
-
-                {!loading && !error && selectedUnitId && lessons.length > 0 && (
-                    <Accordion type="single" collapsible className="space-y-4">
-                        {lessons.map((lesson) => (
-                            <LessonCard key={lesson.lesson_id} lesson={lesson} />
-                        ))}
-                    </Accordion>
-                )}
+                ))}
             </div>
         </div>
     );

@@ -153,7 +153,8 @@ const lessonController = {
     getLessonsByUnitWithStatus: async (req, res) => {
         try {
             const pool = getPool();
-            console.log('Fetching lessons for unit:', req.params.unitId);
+            const userId = req.query.userId;
+            console.log('Fetching lessons for unit:', req.params.unitId, 'and user:', userId);
             
             const [lessons] = await pool.query(`
                 SELECT 
@@ -161,13 +162,13 @@ const lessonController = {
                     CASE 
                         WHEN up.status = 'completed' THEN 'completed'
                         WHEN up.status = 'started' THEN 'active'
-                        ELSE 'locked'
+                        ELSE l.status  -- Use the lesson's default status if no user progress
                     END as status
                 FROM Lessons l
-                LEFT JOIN UserProgress up ON l.lesson_id = up.lesson_id
+                LEFT JOIN UserProgress up ON l.lesson_id = up.lesson_id AND up.user_id = ?
                 WHERE l.unit_id = ?
                 ORDER BY l.order_number
-            `, [req.params.unitId]);
+            `, [userId, req.params.unitId]);
             
             console.log('Found lessons:', lessons);
             res.json(lessons);

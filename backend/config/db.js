@@ -67,7 +67,7 @@ const connectDB = async () => {
 
         // Create pool with database selected
         pool = createPool();
-        
+
         // Test connection
         const connection = await pool.getConnection();
         console.log('MySQL Database Connected Successfully');
