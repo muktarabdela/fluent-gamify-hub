@@ -41,3 +41,14 @@
 .card-hover {
   @apply transition-transform duration-200 hover:scale-105;
 }
+
+@layer utilities {
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+}

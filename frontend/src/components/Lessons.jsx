@@ -3,9 +3,9 @@ import { Lock, Unlock, Headphones, BookOpen, Video, Mic, Users, CheckCircle, Coi
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import LessonActionButton from './StartLearningButton';
-import UnitsList from './UnitsList';
 import { getAllUnits } from '@/api/unitService';
 import { getLessonsByUnit } from '@/api/lessonService';
+import { Skeleton } from "@/components/ui/skeleton";
 const practiceIcons = {
     "Shadowing": <Mic size={14} />,
     "Flashcards": <BookOpen size={14} />,
@@ -160,10 +160,32 @@ function LessonCard({ lesson }) {
     );
 }
 
+// Add this new component for the skeleton loading
+const LessonCardSkeleton = () => {
+    return (
+        <div className="mb-4 mt-10">
+            <div className="px-2 py-4">
+                <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-4">
+                        <div className="relative">
+                            <Skeleton className="w-14 h-14 rounded-xl" />
+                            <Skeleton className="absolute -top-1 -right-1 w-5 h-5 rounded-full" />
+                        </div>
+                        <div className="flex-1 space-y-2">
+                            <Skeleton className="h-6 w-[200px]" />
+                            <Skeleton className="h-4 w-[300px]" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 export default function MobileLessonDashboard() {
     const [units, setUnits] = useState([]);
     const [lessons, setLessons] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [visibleUnit, setVisibleUnit] = useState(null);
     const userId = 2;
@@ -244,39 +266,73 @@ export default function MobileLessonDashboard() {
     }, {});
 
     return (
-        <div className="bg-gray-100 mt-[6em]">
-            <UnitsList visibleUnitId={visibleUnit} />
-
+        <div className="bg-gray-0">
             <div className="container mx-auto px-4">
-                {units.map((unit, index) => (
-                    <div key={unit.unit_id} className="mb-8">
-                        {/* Unit Divider - Only show for units after the first one */}
-                        {index > 0 && (
-                            <div
-                                ref={el => unitDividerRefs.current[unit.unit_id] = el}
-                                data-unit-id={unit.unit_id}
-                                className="bg-gray-700 rounded-lg shadow-md flex flex-col items-center py-4 mb-6 z-40"
-                            >
-                                <div className="h-4" />
-                                <h6 className="text-neutral-500 text-sm tracking-wider">
-                                    UNIT {unit.order_number}
-                                </h6>
-                                <h1 className="text-neutral-50 font-title text-xl font-semibold flex items-center gap-4">
-                                    {unit.title}
-                                </h1>
-                                <div className="h-4" />
+                {loading ? (
+                    // Show skeletons while loading
+                    Array(3).fill(0).map((_, index) => (
+                        <div key={`skeleton-${index}`} className="mb-8">
+                            {/* Unit Header Skeleton */}
+                            <div className="sticky top-[4.5rem] z-10 mb-4">
+                                <section className="py-4 bg-white/95 backdrop-blur-md shadow-md px-6 max-w-md mx-auto rounded-xl">
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center">
+                                            <div className="space-y-2">
+                                                <Skeleton className="h-4 w-[100px]" />
+                                                <Skeleton className="h-6 w-[200px]" />
+                                            </div>
+                                            <Skeleton className="h-8 w-16 rounded-full" />
+                                        </div>
+                                        <Skeleton className="h-2 w-full rounded-full" />
+                                    </div>
+                                </section>
                             </div>
-                        )}
-
-                        <Accordion type="single" collapsible className="space-y-4">
-                            {lessonsByUnit[unit.unit_id]?.map((lesson) => (
-                                <div key={lesson.lesson_id}>
-                                    <LessonCard lesson={lesson} />
-                                </div>
+                            
+                            {/* Lesson Cards Skeletons */}
+                            {Array(3).fill(0).map((_, lessonIndex) => (
+                                <LessonCardSkeleton key={`lesson-skeleton-${lessonIndex}`} />
                             ))}
-                        </Accordion>
-                    </div>
-                ))}
+                        </div>
+                    ))
+                ) : (
+                    // Show actual content when loaded
+                    units.map((unit, index) => (
+                        <div key={unit.unit_id} className="mb-8">
+                            {/* Unit Divider - Make it sticky */}
+                            <div className="sticky top-[4.5rem] z-10 mb-4">
+                                <section className="py-4 bg-white/95 backdrop-blur-md shadow-md px-6 max-w-md mx-auto rounded-xl">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h2 className="text-xs font-semibold tracking-wider text-gray-500">
+                                                UNIT {unit?.order_number} · {unit?.total_lessons || 0} LESSONS
+                                            </h2>
+                                            <h3 className="mt-1.5 text-lg font-bold text-gray-900">{unit?.title}</h3>
+                                        </div>
+                                        <div className="flex items-center bg-green-100 px-2.5 py-1 rounded-full">
+                                            <span className="text-sm font-medium text-green-700">
+                                                {Math.round(unit?.progress_percentage || 0)}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="relative mt-3 bg-gray-200 h-2 rounded-full overflow-hidden">
+                                        <div
+                                            className="absolute top-0 left-0 bg-gradient-to-r from-primary to-primary/80 h-full rounded-full transition-all duration-300"
+                                            style={{ width: `${unit?.progress_percentage || 0}%` }}
+                                        ></div>
+                                    </div>
+                                </section>
+                            </div>
+
+                            <Accordion type="single" collapsible className="space-y-4">
+                                {lessonsByUnit[unit.unit_id]?.map((lesson) => (
+                                    <div key={lesson.lesson_id}>
+                                        <LessonCard lesson={lesson} />
+                                    </div>
+                                ))}
+                            </Accordion>
+                        </div>
+                    ))
+                )}
             </div>
         </div>
     );

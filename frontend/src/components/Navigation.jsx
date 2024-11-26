@@ -1,6 +1,6 @@
 import React from "react";
 import { useLocation, Link } from "react-router-dom";
-import { BookOpen, Trophy, UserRound, Activity, Video, Watch } from "lucide-react";
+import { BookOpen, Trophy, UserRound, Activity, Video, Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const Navigation = () => {
@@ -10,8 +10,8 @@ const Navigation = () => {
     { icon: BookOpen, label: "Learn", path: "/dashboard" },
     { icon: Video, label: "Live", path: "/live-session" },
     { icon: Activity, label: "Practice", path: "/practice" },
-    { icon: BookOpen, label: "Read", path: "/read" },
-    { icon: Video, label: "Watch", path: "/watch" },
+    { icon: Bookmark, label: "Saved", path: "/saved" },
+    { icon: Trophy, label: "Rewards", path: "/rewards" },
   ];
 
   return (
