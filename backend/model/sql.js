@@ -72,6 +72,7 @@ const tableQueries = {
             status ENUM('started', 'completed') NOT NULL,
             score INT DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             FOREIGN KEY (lesson_id) REFERENCES Lessons(lesson_id),
             FOREIGN KEY (exercise_id) REFERENCES Exercises(exercise_id)
         )

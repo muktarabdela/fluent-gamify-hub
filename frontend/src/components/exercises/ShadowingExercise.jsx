@@ -1,64 +1,168 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Square, Mic, StopCircle, ChevronRight, Volume2, Check } from 'lucide-react';
+import { Play, Square, Mic, StopCircle, ChevronRight, Volume2, Check, Turtle } from 'lucide-react';
+import { speak } from '@/utils/textToSpeech';
+import { playCorrectSound, playWrongSound } from '@/utils/soundEffects';
 
 const ShadowingExercise = ({ exercise, onSubmit, onContinue }) => {
     const [isPlaying, setIsPlaying] = useState(false);
+    const [isPlayingSlow, setIsPlayingSlow] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [result, setResult] = useState(null);
     const [wordScores, setWordScores] = useState([]);
-    const audioRef = useRef(null);
-    const mediaRecorderRef = useRef(null);
-    const audioChunksRef = useRef([]);
+    const recognitionRef = useRef(null);
+
+    // Remove any audio references that aren't being used
+    useEffect(() => {
+        // Cleanup function
+        return () => {
+            if (recognitionRef.current) {
+                recognitionRef.current.stop();
+            }
+        };
+    }, []);
 
     // Reset states when exercise changes
     useEffect(() => {
         setIsPlaying(false);
+        setIsPlayingSlow(false);
         setIsRecording(false);
         setSubmitted(false);
         setResult(null);
         setWordScores([]);
+        
+        // Stop any ongoing recognition when exercise changes
+        if (recognitionRef.current) {
+            recognitionRef.current.stop();
+        }
+
+        // Automatically play audio when new exercise loads
+        playAudio();
     }, [exercise]);
 
-    const handlePlayback = () => {
-        if (isPlaying) {
-            audioRef.current.pause();
-        } else {
-            audioRef.current.play();
+    const playAudio = async () => {
+        if (isPlaying) return;
+
+        try {
+            setIsPlaying(true);
+            await speak(exercise.correct_answer);
+        } catch (error) {
+            console.error('Text-to-speech error:', error);
+        } finally {
+            setIsPlaying(false);
         }
-        setIsPlaying(!isPlaying);
+    };
+
+    const playSlowAudio = async () => {
+        if (isPlayingSlow) return;
+
+        try {
+            setIsPlayingSlow(true);
+            await speak(exercise.correct_answer, {
+                rate: 0.5,
+                pitch: 0.95,
+                volume: 1
+            });
+        } catch (error) {
+            console.error('Text-to-speech error:', error);
+        } finally {
+            setIsPlayingSlow(false);
+        }
     };
 
     const startRecording = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorderRef.current = new MediaRecorder(stream);
-            audioChunksRef.current = [];
+            recognitionRef.current = new window.webkitSpeechRecognition();
+            recognitionRef.current.continuous = false;
+            recognitionRef.current.interimResults = true;
+            recognitionRef.current.lang = 'en-US';
 
-            mediaRecorderRef.current.ondataavailable = (event) => {
-                audioChunksRef.current.push(event.data);
+            recognitionRef.current.onresult = async (event) => {
+                const current = event.resultIndex;
+                const transcript = event.results[current][0].transcript;
+                const isFinal = event.results[current].isFinal;
+                
+                console.log('Speech detected:', {
+                    transcript,
+                    isFinal,
+                    confidence: event.results[current][0].confidence
+                });
+
+                if (isFinal) {
+                    const userAnswer = transcript.toLowerCase();
+                    const correctAnswer = exercise.correct_answer.toLowerCase();
+                    
+                    console.log('Final comparison:', {
+                        userSaid: userAnswer,
+                        correctAnswer: correctAnswer,
+                        isMatch: userAnswer === correctAnswer
+                    });
+
+                    // Compare words and generate scores
+                    const userWords = userAnswer.split(' ');
+                    const correctWords = correctAnswer.split(' ');
+                    const scores = correctWords.map((word, index) => {
+                        const match = userWords[index]?.toLowerCase() === word.toLowerCase();
+                        console.log(`Word ${index}:`, {
+                            expected: word,
+                            heard: userWords[index] || 'missing',
+                            match
+                        });
+                        return match;
+                    });
+
+                    setWordScores(scores);
+                    const isCorrect = userAnswer === correctAnswer;
+
+                    try {
+                        setSubmitted(true);
+                        if (isCorrect) {
+                            const submitResult = onSubmit(userAnswer);
+                            setResult({
+                                isCorrect: true,
+                                userAnswer,
+                                correctAnswer,
+                                showContinue: submitResult.showContinue
+                            });
+                            await playCorrectSound();
+                        } else {
+                            setResult({
+                                isCorrect: false,
+                                userAnswer,
+                                correctAnswer
+                            });
+                            await playWrongSound();
+                        }
+                    } catch (error) {
+                        console.error('Error handling submission:', error);
+                    }
+                }
             };
 
-            mediaRecorderRef.current.start();
+            recognitionRef.current.onerror = (event) => {
+                console.error('Speech Recognition Error:', event.error);
+            };
+
+            recognitionRef.current.onstart = () => {
+                console.log('Speech recognition started');
+            };
+
+            recognitionRef.current.onend = () => {
+                console.log('Speech recognition ended');
+            };
+
+            recognitionRef.current.start();
             setIsRecording(true);
         } catch (error) {
-            console.error('Error accessing microphone:', error);
+            console.error('Error starting speech recognition:', error);
         }
     };
 
-    const stopRecording = async () => {
-        mediaRecorderRef.current.stop();
+    const stopRecording = () => {
+        if (recognitionRef.current) {
+            recognitionRef.current.stop();
+        }
         setIsRecording(false);
-
-        // Simulate word-by-word scoring (replace with actual speech recognition)
-        const words = exercise.correct_answer.split(' ');
-        const simulatedScores = words.map(() => Math.random() > 0.3); // Random scoring for demo
-        setWordScores(simulatedScores);
-
-        const audioBlob = new Blob(audioChunksRef.current);
-        const submitResult = onSubmit(audioBlob);
-        setResult(submitResult);
-        setSubmitted(true);
     };
 
     return (
@@ -66,15 +170,28 @@ const ShadowingExercise = ({ exercise, onSubmit, onContinue }) => {
             {/* Exercise Header */}
             <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold">{exercise.question}</h3>
-                <button
-                    onClick={handlePlayback}
-                    className={`p-3 rounded-full ${isPlaying
+                <div className="flex gap-2">
+                    <button
+                        onClick={playAudio}
+                        disabled={isPlaying || isPlayingSlow}
+                        className={`p-3 rounded-full ${isPlaying
                             ? 'bg-primary text-white'
                             : 'bg-primary/10 text-primary hover:bg-primary/20'
                         } transition-all`}
-                >
-                    <Volume2 size={20} />
-                </button>
+                    >
+                        <Volume2 size={20} />
+                    </button>
+                    <button
+                        onClick={playSlowAudio}
+                        disabled={isPlaying || isPlayingSlow}
+                        className={`p-3 rounded-full ${isPlayingSlow
+                            ? 'bg-primary text-white'
+                            : 'bg-primary/10 text-primary hover:bg-primary/20'
+                        } transition-all`}
+                    >
+                        <Turtle size={20} />
+                    </button>
+                </div>
             </div>
 
             <div className="space-y-6">
@@ -95,11 +212,6 @@ const ShadowingExercise = ({ exercise, onSubmit, onContinue }) => {
                             </span>
                         ))}
                     </div>
-                    <audio
-                        ref={audioRef}
-                        src={exercise.audio_url}
-                        onEnded={() => setIsPlaying(false)}
-                    />
                 </div>
 
                 {/* Recording Controls */}

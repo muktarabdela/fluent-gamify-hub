@@ -14,8 +14,11 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { getTelegramUser } from '@/utils/telegram';
 
 const LessonDetail = () => {
+    const telegramUser = getTelegramUser();
+
     const { lessonId } = useParams();
     const navigate = useNavigate();
     const [lesson, setLesson] = useState(null);
@@ -58,11 +61,11 @@ const LessonDetail = () => {
             try {
                 console.log('Fetching lesson data...');
                 setLoading(true);
-                
+
                 const [lessonData, dialoguesData, exercisesData] = await Promise.all([
                     getLessonById(lessonId),
                     getDialoguesByLesson(lessonId),
-                    getExercisesByLesson(lessonId, '123') // Replace with actual userId
+                    getExercisesByLesson(lessonId, telegramUser?.id) // Replace with actual userId
                 ]);
 
                 setLesson(lessonData);
@@ -178,7 +181,7 @@ const LessonDetail = () => {
             </div>
 
             {/* Main Content */}
-            <div 
+            <div
                 ref={dialoguesContainerRef}
                 className="pt-20 pb-32 px-4 max-w-lg mx-auto relative overflow-y-auto"
             >
@@ -229,7 +232,8 @@ const LessonDetail = () => {
                         {/* Exercises */}
                         <ExerciseContainer
                             exercises={exercises}
-                            userId="2" // Replace with actual userId
+                            userId={telegramUser?.id}
+                            lessonId={lessonId}
                             onComplete={handleExerciseComplete}
                         />
                     </>

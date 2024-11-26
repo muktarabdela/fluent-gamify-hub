@@ -4,19 +4,35 @@ import MultipleChoiceExercise from './MultipleChoiceExercise';
 import ShadowingExercise from './ShadowingExercise';
 import FillBlankExercise from './FillBlankExercise';
 import { Progress } from "@/components/ui/progress";
+import { updateUserProgress } from '@/api/userService';
 
-const ExerciseContainer = ({ exercises, userId, onComplete }) => {
+const ExerciseContainer = ({ exercises, userId, lessonId, onComplete }) => {
     const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
     const [completedExercises, setCompletedExercises] = useState(new Set());
 
     const currentExercise = exercises[currentExerciseIndex];
     const progress = (completedExercises.size / exercises.length) * 100;
 
-    const handleExerciseSubmit = (answer) => {
+    const handleExerciseSubmit = async (answer) => {
         // Mark the current exercise as completed
-        setCompletedExercises(prev => new Set([...prev, currentExercise.exercise_id]));
+        const newCompletedExercises = new Set([...completedExercises, currentExercise.exercise_id]);
+        setCompletedExercises(newCompletedExercises);
 
-        // Return result object with correct status and showContinue flag
+        // Check if all exercises are completed
+        if (newCompletedExercises.size === exercises.length) {
+            try {
+                // Update user progress to mark lesson as completed
+                await updateUserProgress(userId, {
+                    lesson_id: lessonId,
+                    status: 'completed',
+                    score: 100 // You might want to calculate this based on exercise performance
+                });
+                onComplete();
+            } catch (error) {
+                console.error('Error updating lesson progress:', error);
+            }
+        }
+
         return { 
             isCorrect: true, 
             showContinue: currentExerciseIndex < exercises.length - 1

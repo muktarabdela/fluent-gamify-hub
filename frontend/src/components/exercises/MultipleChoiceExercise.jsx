@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronRight, RefreshCw, Volume2, Repeat } from 'lucide-react';
+import { speak } from '@/utils/textToSpeech';
+import { playCorrectSound, playWrongSound } from '@/utils/soundEffects';
 
 const MultipleChoiceExercise = ({ exercise, onSubmit, onContinue }) => {
     const [selectedAnswer, setSelectedAnswer] = useState('');
@@ -14,29 +16,59 @@ const MultipleChoiceExercise = ({ exercise, onSubmit, onContinue }) => {
         setResult(null);
         setIsPlaying(false);
         audioRef.current = new Audio(exercise.audioUrl);
+        
+        playAudio();
     }, [exercise]);
 
-    const playAudio = () => {
+    const playAudio = async (text = exercise.question) => {
         if (isPlaying) return;
-        setIsPlaying(true);
-        audioRef.current.play();
-        audioRef.current.onended = () => setIsPlaying(false);
+
+        try {
+            setIsPlaying(true);
+            await speak(text);
+        } catch (error) {
+            console.error('Text-to-speech error:', error);
+        } finally {
+            setIsPlaying(false);
+        }
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!selectedAnswer) return;
-        
+
         const isCorrect = selectedAnswer === exercise.correct_answer;
-        const submitResult = isCorrect ? onSubmit(selectedAnswer) : null;
-        
-        setResult({
-            isCorrect,
-            correctAnswer: exercise.correct_answer,
-            userAnswer: selectedAnswer,
-            showContinue: isCorrect ? submitResult.showContinue : false
-        });
-        
-        setSubmitted(true);
+        let submitResult;
+
+        try {
+            setSubmitted(true);
+
+            if (isCorrect) {
+                submitResult = onSubmit(selectedAnswer);
+                setResult({
+                    isCorrect: true,
+                    correctAnswer: exercise.correct_answer,
+                    userAnswer: selectedAnswer,
+                    showContinue: submitResult.showContinue
+                });
+                await playCorrectSound();
+            } else {
+                setResult({
+                    isCorrect: false,
+                    correctAnswer: exercise.correct_answer,
+                    userAnswer: selectedAnswer,
+                    showContinue: false
+                });
+                await playWrongSound();
+            }
+        } catch (error) {
+            console.error('Error playing sound effect:', error);
+            setResult({
+                isCorrect,
+                correctAnswer: exercise.correct_answer,
+                userAnswer: selectedAnswer,
+                showContinue: isCorrect ? submitResult?.showContinue : false
+            });
+        }
     };
 
     const handleReset = () => {
@@ -51,18 +83,17 @@ const MultipleChoiceExercise = ({ exercise, onSubmit, onContinue }) => {
                 <h3 className="text-lg font-semibold">{exercise.question}</h3>
                 <div className="flex gap-2">
                     <button
-                        onClick={playAudio}
-                        className={`p-3 rounded-full ${
-                            isPlaying 
-                                ? 'bg-primary text-white' 
+                        onClick={() => playAudio()}
+                        className={`p-3 rounded-full ${isPlaying
+                                ? 'bg-primary text-white'
                                 : 'bg-primary/10 text-primary hover:bg-primary/20'
-                        } transition-all`}
+                            } transition-all`}
                         disabled={isPlaying}
                     >
                         <Volume2 size={20} />
                     </button>
                     <button
-                        onClick={playAudio}
+                        onClick={() => playAudio()}
                         className="p-3 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-all"
                         disabled={isPlaying}
                     >
@@ -70,17 +101,17 @@ const MultipleChoiceExercise = ({ exercise, onSubmit, onContinue }) => {
                     </button>
                 </div>
             </div>
-            
+
             <div className="space-y-3 mb-6">
                 {exercise.options.map((option, index) => (
                     <button
                         key={index}
                         onClick={() => !submitted && setSelectedAnswer(option)}
-                        className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
-                            selectedAnswer === option 
+                        onDoubleClick={() => playAudio(option)}
+                        className={`group relative w-full p-4 rounded-lg border-2 text-left transition-all ${selectedAnswer === option
                                 ? 'border-primary bg-primary/5'
                                 : 'border-gray-200 hover:border-gray-300'
-                        }`}
+                            }`}
                         disabled={submitted}
                     >
                         {option}
@@ -108,14 +139,13 @@ const MultipleChoiceExercise = ({ exercise, onSubmit, onContinue }) => {
                             </p>
                         )}
                     </div>
-                    
+
                     <button
                         onClick={result?.isCorrect ? onContinue : handleReset}
-                        className={`w-full py-3 rounded-lg transition-colors flex items-center justify-center gap-2 ${
-                            result?.isCorrect 
+                        className={`w-full py-3 rounded-lg transition-colors flex items-center justify-center gap-2 ${result?.isCorrect
                                 ? 'bg-primary text-white hover:bg-primary/90'
                                 : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                        }`}
+                            }`}
                     >
                         {result?.isCorrect ? (
                             <>

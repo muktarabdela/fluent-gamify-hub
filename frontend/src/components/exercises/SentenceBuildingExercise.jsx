@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, X, RefreshCw, Volume2, Repeat, ChevronRight } from 'lucide-react';
+import { Check, X, RefreshCw, Volume2, Turtle, ChevronRight } from 'lucide-react';
+import { speak } from '@/utils/textToSpeech';
+import { playCorrectSound, playWrongSound } from '@/utils/soundEffects';
 
 const SentenceBuildingExercise = ({ exercise, onSubmit, onContinue }) => {
     const [selectedWords, setSelectedWords] = useState([]);
@@ -8,6 +10,7 @@ const SentenceBuildingExercise = ({ exercise, onSubmit, onContinue }) => {
     const [submitted, setSubmitted] = useState(false);
     const [result, setResult] = useState(null);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [isPlayingSlow, setIsPlayingSlow] = useState(false);
     const audioRef = React.useRef(new Audio(exercise.audioUrl));
 
     // Shuffle function
@@ -20,19 +23,50 @@ const SentenceBuildingExercise = ({ exercise, onSubmit, onContinue }) => {
         return shuffled;
     };
 
-    // Initialize shuffled words
+    // Initialize shuffled words and play audio
     useEffect(() => {
         setAvailableWords(shuffleArray(exercise.options));
         setSelectedWords([]);
         setSubmitted(false);
         setResult(null);
-    }, [exercise.options]);
+        
+        // Auto-play the audio with a small delay
+        const timer = setTimeout(() => {
+            playAudio();
+        }, 500); // 500ms delay to ensure smooth transition
 
-    const playAudio = () => {
+        // Cleanup timer if component unmounts or exercise changes
+        return () => clearTimeout(timer);
+    }, [exercise]); // Changed from exercise.options to exercise to react to any exercise change
+
+    const playAudio = async (text = exercise.correct_answer) => {
         if (isPlaying) return;
-        setIsPlaying(true);
-        audioRef.current.play();
-        audioRef.current.onended = () => setIsPlaying(false);
+
+        try {
+            setIsPlaying(true);
+            await speak(text);
+        } catch (error) {
+            console.error('Text-to-speech error:', error);
+        } finally {
+            setIsPlaying(false);
+        }
+    };
+
+    const playSlowAudio = async (text = exercise.correct_answer) => {
+        if (isPlayingSlow) return;
+
+        try {
+            setIsPlayingSlow(true);
+            await speak(text, {
+                rate: 0.5,
+                pitch: 0.95,
+                volume: 1
+            });
+        } catch (error) {
+            console.error('Text-to-speech error:', error);
+        } finally {
+            setIsPlayingSlow(false);
+        }
     };
 
     const handleWordClick = (word, index, isSelected) => {
@@ -49,29 +83,47 @@ const SentenceBuildingExercise = ({ exercise, onSubmit, onContinue }) => {
         }
     };
 
-    const handleSubmit = () => {
+    const handleWordSpeak = (word) => {
+        playAudio(word);
+    };
+
+    const handleSubmit = async () => {
         const userAnswer = selectedWords.join(' ');
         const isCorrect = userAnswer.toLowerCase() === exercise.correct_answer.toLowerCase();
-        
-        if (isCorrect) {
-            // Get the result from onSubmit which includes showContinue flag
-            const submitResult = onSubmit(userAnswer);
-            
+        let submitResult;
+
+        try {
+            setSubmitted(true);
+
+            if (isCorrect) {
+                submitResult = onSubmit(userAnswer);
+                // Set the result state before playing the sound
+                setResult({
+                    isCorrect: true,
+                    correctAnswer: exercise.correct_answer,
+                    userAnswer,
+                    showContinue: submitResult.showContinue
+                });
+                await playCorrectSound();
+            } else {
+                // Set the result state before playing the sound
+                setResult({
+                    isCorrect: false,
+                    correctAnswer: exercise.correct_answer,
+                    userAnswer
+                });
+                await playWrongSound();
+            }
+        } catch (error) {
+            console.error('Error playing sound effect:', error);
+            // Set result even if sound fails
             setResult({
-                isCorrect: true,
+                isCorrect,
                 correctAnswer: exercise.correct_answer,
                 userAnswer,
-                showContinue: submitResult.showContinue
-            });
-        } else {
-            setResult({
-                isCorrect: false,
-                correctAnswer: exercise.correct_answer,
-                userAnswer
+                showContinue: isCorrect ? submitResult?.showContinue : false
             });
         }
-        
-        setSubmitted(true);
     };
 
     const handleReset = () => {
@@ -90,23 +142,28 @@ const SentenceBuildingExercise = ({ exercise, onSubmit, onContinue }) => {
                         {exercise.question}
                     </h3>
                     <div className="flex gap-2">
-                        <button
-                            onClick={playAudio}
-                            className={`p-3 rounded-full ${
-                                isPlaying 
-                                    ? 'bg-primary text-white' 
+                        <div className="flex gap-2 mb-4">
+                            <button
+                                onClick={() => playAudio()}
+                                className={`p-3 rounded-full ${isPlaying
+                                    ? 'bg-primary text-white'
                                     : 'bg-primary/10 text-primary hover:bg-primary/20'
-                            } transition-all`}
-                            disabled={isPlaying}
-                        >
-                            <Volume2 size={20} />
-                        </button>
-                        <button
-                            onClick={playAudio}
-                            className="p-3 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-all"
-                        >
-                            <Repeat size={20} />
-                        </button>
+                                    } transition-all group relative`}
+                                disabled={isPlaying || isPlayingSlow}
+                            >
+                                <Volume2 size={20} />
+                            </button>
+                            <button
+                                onClick={() => playSlowAudio()}
+                                className={`p-3 rounded-full ${isPlayingSlow
+                                    ? 'bg-primary text-white'
+                                    : 'bg-primary/10 text-primary hover:bg-primary/20'
+                                    } transition-all group relative`}
+                                disabled={isPlaying || isPlayingSlow}
+                            >
+                                <Turtle size={20} />
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <p className="text-gray-500 text-sm">
@@ -122,10 +179,15 @@ const SentenceBuildingExercise = ({ exercise, onSubmit, onContinue }) => {
                             key={`selected-${word}-${index}`}
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
-                            className="px-4 py-2 rounded-lg bg-primary text-white font-medium text-sm cursor-pointer"
-                            onClick={() => handleWordClick(word, index, true)}
+                            className="group relative px-4 py-2 rounded-lg bg-primary text-white font-medium text-sm cursor-pointer flex items-center gap-2"
                         >
-                            {word}
+                            <span onClick={() => handleWordSpeak(word)}>
+                                {word}
+                            </span>
+                            <div
+                                className="absolute inset-0 cursor-grab"
+                                onClick={() => handleWordClick(word, index, true)}
+                            />
                         </motion.div>
                     ))}
                 </div>
@@ -136,13 +198,24 @@ const SentenceBuildingExercise = ({ exercise, onSubmit, onContinue }) => {
                 <div className="flex flex-wrap gap-2">
                     {availableWords.map((word, index) => (
                         <motion.div
+                            onClick={() => handleWordSpeak(word)}
                             key={`available-${word}-${index}`}
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
-                            className="px-4 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 font-medium text-sm cursor-pointer transition-all"
-                            onClick={() => handleWordClick(word, index, false)}
+                            className="group relative px-4 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 font-medium text-sm cursor-pointer transition-all flex items-center gap-2"
                         >
-                            {word}
+                            <span onClick={() => handleWordSpeak(word)}>
+                                {word}
+                            </span>
+                            {/* <Volume2
+                                size={14}
+                                className="opacity-50 hover:opacity-100"
+                                onClick={() => handleWordSpeak(word)}
+                            /> */}
+                            <div
+                                className="absolute inset-0 cursor-grab"
+                                onClick={() => handleWordClick(word, index, false)}
+                            />
                         </motion.div>
                     ))}
                 </div>
@@ -155,11 +228,10 @@ const SentenceBuildingExercise = ({ exercise, onSubmit, onContinue }) => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}
-                        className={`p-4 rounded-lg mb-4 ${
-                            result?.isCorrect 
-                                ? 'bg-green-50 border border-green-200' 
-                                : 'bg-red-50 border border-red-200'
-                        }`}
+                        className={`p-4 rounded-lg mb-4 ${result?.isCorrect
+                            ? 'bg-green-50 border border-green-200'
+                            : 'bg-red-50 border border-red-200'
+                            }`}
                     >
                         <div className="flex items-center gap-2 mb-2">
                             {result?.isCorrect ? (
@@ -185,11 +257,10 @@ const SentenceBuildingExercise = ({ exercise, onSubmit, onContinue }) => {
                 {submitted && (
                     <button
                         onClick={result?.isCorrect ? onContinue : handleReset}
-                        className={`flex-1 flex items-center justify-center gap-2 ${
-                            result?.isCorrect 
-                                ? 'bg-primary text-white hover:bg-primary/90'
-                                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                        } font-medium py-3 px-6 rounded-lg transition-colors`}
+                        className={`flex-1 flex items-center justify-center gap-2 ${result?.isCorrect
+                            ? 'bg-primary text-white hover:bg-primary/90'
+                            : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                            } font-medium py-3 px-6 rounded-lg transition-colors`}
                     >
                         {result?.isCorrect ? (
                             <>

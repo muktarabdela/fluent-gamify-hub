@@ -208,12 +208,18 @@ const userController = {
                 VALUES (?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE 
                     status = VALUES(status),
-                    score = VALUES(score)`,
+                    score = VALUES(score),
+                    updated_at = CURRENT_TIMESTAMP`,
                 [user_id, lesson_id, exercise_id, status, score]
             );
 
-            // Update streak
-            await updateStreak(user_id, pool);
+            // If lesson is completed, update user streak
+            if (status === 'completed') {
+                await updateStreak(user_id, pool);
+
+                // Check if this unlocks the next lesson
+                await unlockNextLesson(user_id, lesson_id, pool);
+            }
 
             // Get updated progress
             const [progress] = await pool.query(
@@ -371,6 +377,40 @@ const initializeUserProgress = async (userId, pool) => {
         console.log(`Initialized progress for user ${userId} with ${lessons.length} lessons`);
     } catch (error) {
         console.error('Error initializing user progress:', error);
+        throw error;
+    }
+};
+
+// Add this helper function
+const unlockNextLesson = async (userId, currentLessonId, pool) => {
+    try {
+        // Get current lesson's unit and order
+        const [currentLesson] = await pool.query(
+            'SELECT unit_id, order_number FROM Lessons WHERE lesson_id = ?',
+            [currentLessonId]
+        );
+
+        if (currentLesson.length === 0) return;
+
+        // Get next lesson in the same unit
+        const [nextLesson] = await pool.query(
+            `SELECT lesson_id FROM Lessons 
+            WHERE unit_id = ? AND order_number > ?
+            ORDER BY order_number ASC LIMIT 1`,
+            [currentLesson[0].unit_id, currentLesson[0].order_number]
+        );
+
+        if (nextLesson.length > 0) {
+            // Initialize progress for next lesson as 'started'
+            await pool.query(
+                `INSERT INTO UserProgress (user_id, lesson_id, status, score)
+                VALUES (?, ?, 'started', 0)
+                ON DUPLICATE KEY UPDATE status = 'started'`,
+                [userId, nextLesson[0].lesson_id]
+            );
+        }
+    } catch (error) {
+        console.error('Error unlocking next lesson:', error);
         throw error;
     }
 };

@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { getLessonById } from '@/api/lessonService';
 import { getExercisesByLesson } from '@/api/exerciseService';
+import { getTelegramUser } from '@/utils/telegram';
 
 const exerciseTypeIcons = {
     'sentence_building': BookOpen,
@@ -28,6 +29,7 @@ const exerciseTypeLabels = {
 };
 
 export default function LessonActionButton({ status, lessonId, onClick }) {
+    const telegramUser = getTelegramUser();
     const navigate = useNavigate();
     const [lesson, setLesson] = useState(null);
     const [exercises, setExercises] = useState([]);
@@ -40,7 +42,7 @@ export default function LessonActionButton({ status, lessonId, onClick }) {
                 setLoading(true);
                 const [lessonData, exercisesData] = await Promise.all([
                     getLessonById(lessonId),
-                    getExercisesByLesson(lessonId, '2') // Replace with actual userId
+                    getExercisesByLesson(lessonId, telegramUser?.id) // Replace with actual userId
                 ]);
                 setLesson(lessonData);
                 setExercises(exercisesData);

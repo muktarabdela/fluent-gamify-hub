@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, RefreshCw } from 'lucide-react';
+import { playCorrectSound, playWrongSound } from '@/utils/soundEffects';
 
 const FillBlankExercise = ({ exercise, onSubmit, onContinue }) => {
     const [answer, setAnswer] = useState('');
@@ -13,20 +14,45 @@ const FillBlankExercise = ({ exercise, onSubmit, onContinue }) => {
         setResult(null);
     }, [exercise]);
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!answer.trim()) return;
         
         const isCorrect = answer.toLowerCase() === exercise.correct_answer.toLowerCase();
-        const submitResult = isCorrect ? onSubmit(answer) : null;
-        
-        setResult({
-            isCorrect,
-            correctAnswer: exercise.correct_answer,
-            userAnswer: answer,
-            showContinue: isCorrect ? submitResult.showContinue : false
-        });
-        
-        setSubmitted(true);
+        let submitResult;
+
+        try {
+            setSubmitted(true);
+            
+            if (isCorrect) {
+                submitResult = onSubmit(answer);
+                // Set result before playing sound
+                setResult({
+                    isCorrect: true,
+                    correctAnswer: exercise.correct_answer,
+                    userAnswer: answer,
+                    showContinue: submitResult.showContinue
+                });
+                await playCorrectSound();
+            } else {
+                // Set result before playing sound
+                setResult({
+                    isCorrect: false,
+                    correctAnswer: exercise.correct_answer,
+                    userAnswer: answer,
+                    showContinue: false
+                });
+                await playWrongSound();
+            }
+        } catch (error) {
+            console.error('Error playing sound effect:', error);
+            // Set result even if sound fails
+            setResult({
+                isCorrect,
+                correctAnswer: exercise.correct_answer,
+                userAnswer: answer,
+                showContinue: isCorrect ? submitResult?.showContinue : false
+            });
+        }
     };
 
     const handleReset = () => {
