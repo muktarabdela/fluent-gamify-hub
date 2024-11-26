@@ -8,18 +8,22 @@ import Header from "@/components/Header";
 import Navigation from "@/components/Navigation";
 import LessonDetail from "./pages/LessonDetail";
 import TelegramAuth from '@/auth/TelegramAuth';
+import { useEffect } from 'react';
+import { getTelegramUser } from "./utils/telegram";
 
 const queryClient = new QueryClient();
 
 // Protected Route component to handle redirects based on onboarding status
 const ProtectedRoute = ({ children }) => {
   const userPreferences = localStorage.getItem("userPreferences");
-  const user = localStorage.getItem("user");
+  const telegramUser = getTelegramUser();
 
-  // // If no user is logged in, show Telegram auth
-  // if (!user) {
-  //   return <TelegramAuth />;
-  // }
+  useEffect(() => {
+    if (telegramUser) {
+      // Store the user data in localStorage or your state management system
+      localStorage.setItem("user", JSON.stringify(telegramUser));
+    }
+  }, []);
 
   // If trying to access onboarding page but already completed
   if (window.location.pathname === "/" && userPreferences) {
