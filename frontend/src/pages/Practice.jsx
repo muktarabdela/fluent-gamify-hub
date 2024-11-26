@@ -2,9 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { 
-    Mic, 
-    MessageSquare, 
+import {
+    Mic,
+    MessageSquare,
     BookOpen,
     Headphones,
     ScrollText,
@@ -92,17 +92,17 @@ const Practice = () => {
 
     const handleCategoryClick = (category, index) => {
         setSelectedCategory(category);
-        
+
         // Scroll the button into view
         const container = scrollContainerRef.current;
         const buttons = container.getElementsByTagName('button');
         const button = buttons[index];
-        
+
         if (button) {
             const containerWidth = container.offsetWidth;
             const buttonWidth = button.offsetWidth;
             const scrollLeft = button.offsetLeft - (containerWidth / 2) + (buttonWidth / 2);
-            
+
             container.scrollTo({
                 left: scrollLeft,
                 behavior: 'smooth'
@@ -111,11 +111,11 @@ const Practice = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-primary/20 to-secondary/20">
+        <div className=" min-h-screen bg-gradient-to-br from-primary/20 to-secondary/20">
             {/* Categories Navigation */}
             <div className="sticky top-0 bg-white/95 backdrop-blur-md shadow-sm z-10">
                 <div className="px-2 py-3">
-                    <div 
+                    <div
                         ref={scrollContainerRef}
                         className="flex overflow-x-auto no-scrollbar gap-2"
                     >
@@ -153,8 +153,8 @@ const Practice = () => {
                 {/* Exercises List */}
                 <div className="space-y-3">
                     {selectedCategory.exercises.map((exercise, idx) => (
-                        <Card 
-                            key={idx} 
+                        <Card
+                            key={idx}
                             className="group active:scale-98 transition-transform"
                         >
                             <div className="p-4">
@@ -162,8 +162,8 @@ const Practice = () => {
                                     <h3 className="text-base font-semibold text-gray-900">
                                         {exercise.name}
                                     </h3>
-                                    <Button 
-                                        variant="ghost" 
+                                    <Button
+                                        variant="ghost"
                                         size="sm"
                                         className="h-8 px-3 text-white bg-primary"
                                     >

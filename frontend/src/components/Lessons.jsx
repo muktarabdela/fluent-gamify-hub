@@ -42,7 +42,7 @@ function LessonCard({ lesson }) {
             case 'active':
                 return 'border-l-4 border-l-blue-500 bg-blue-50';
             default:
-                return 'border-l-4 border-l-gray-300 bg-gray-150';
+                return 'border-l-4 border-l-gray-300 bg-gray-200';
         }
     };
 
@@ -58,7 +58,7 @@ function LessonCard({ lesson }) {
     return (
         <AccordionItem
             value={`item-${lesson.lesson_id}`}
-            className={`mb-4 mt-10 rounded-lg overflow-hidden shadow-md transition-all duration-300 ${getStatusStyles(lesson.status)}`}
+            className={`mb-4 -mt-1 rounded-lg overflow-hidden shadow-md transition-all duration-300 ${getStatusStyles(lesson.status)}`}
         >
             <AccordionTrigger className="hover:no-underline px-2 py-4 [&>svg]:hidden group">
                 <div className="flex items-center justify-between w-full rounded-lg transition-all duration-200 group-hover:bggray-50">
@@ -87,7 +87,7 @@ function LessonCard({ lesson }) {
                         </div>
                         <div className="flex-1">
                             <div className="flex text-end gap-3 mb-1">
-                                <h4 className="text-lg font-semibold text-start whitespace-nowrap text-gray-800 group-hover:text-primary transition-colors">
+                                <h4 className="text-lg font-semibold text-start whitespace-nowrap text-gray-800 group-hoverprimary transition-colors">
                                     {lesson.title}
                                 </h4>
                             </div>
@@ -266,7 +266,7 @@ export default function MobileLessonDashboard() {
     }, {});
 
     return (
-        <div className="bg-gray-0">
+        <div className="bg-gra0">
             <div className="container mx-auto px-4">
                 {loading ? (
                     // Show skeletons while loading
