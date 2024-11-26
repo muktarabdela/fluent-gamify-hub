@@ -20,22 +20,39 @@ const ProtectedRoute = ({ children }) => {
 
   useEffect(() => {
     if (telegramUser) {
-      // Store the user data in localStorage or your state management system
       localStorage.setItem("user", JSON.stringify(telegramUser));
     }
   }, []);
 
-  // If trying to access onboarding page but already completed
-  if (window.location.pathname === "/" && userPreferences) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  // Add debug display for Telegram user data
+  return (
+    <>
+      {/* Debug display */}
+      <div style={{ 
+        position: 'fixed', 
+        top: '10px', 
+        right: '10px', 
+        background: '#f0f0f0', 
+        padding: '10px', 
+        borderRadius: '5px',
+        zIndex: 9999,
+        maxWidth: '300px',
+        fontSize: '12px'
+      }}>
+        <h4>Telegram User Data:</h4>
+        <pre>{JSON.stringify(telegramUser, null, 2)}</pre>
+      </div>
 
-  // If trying to access any other page but haven't completed onboarding
-  if (window.location.pathname !== "/" && !userPreferences) {
-    return <Navigate to="/" replace />;
-  }
-
-  return children;
+      {/* Existing protection logic */}
+      {window.location.pathname === "/" && userPreferences ? (
+        <Navigate to="/dashboard" replace />
+      ) : window.location.pathname !== "/" && !userPreferences ? (
+        <Navigate to="/" replace />
+      ) : (
+        children
+      )}
+    </>
+  );
 };
 
 const AppLayout = ({ children }) => {
