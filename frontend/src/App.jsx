@@ -8,30 +8,45 @@ import Header from "@/components/Header";
 import Navigation from "@/components/Navigation";
 import LessonDetail from "./pages/LessonDetail";
 import TelegramAuth from '@/auth/TelegramAuth';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { getTelegramUser } from "./utils/telegram";
+import { getUserById } from "./api/userService";
 
 const queryClient = new QueryClient();
 
 // Protected Route component to handle redirects based on onboarding status
 const ProtectedRoute = ({ children }) => {
-  const userPreferences = localStorage.getItem("userPreferences");
   const telegramUser = getTelegramUser();
+  const [userPreferences, setUserPreferences] = useState(null);
 
   useEffect(() => {
-    if (telegramUser) {
-      // Store the user data in localStorage or your state management system
-      localStorage.setItem("user", JSON.stringify(telegramUser));
-    }
-  }, []);
+    const fetchUserPreferences = async () => {
+      if (telegramUser?.id) {
+        try {
+          const userData = await getUserById(telegramUser.id);
+          if (userData.onboarding_completed) {
+            setUserPreferences(userData);
+            localStorage.setItem("userPreferences", JSON.stringify({
+              country: userData.country,
+              interests: userData.interests
+            }));
+          }
+        } catch (error) {
+          console.error('Error fetching user preferences:', error);
+        }
+      }
+    };
+
+    fetchUserPreferences();
+  }, [telegramUser]);
 
   // If trying to access onboarding page but already completed
-  if (window.location.pathname === "/" && userPreferences) {
+  if (window.location.pathname === "/" && userPreferences?.onboarding_completed) {
     return <Navigate to="/dashboard" replace />;
   }
 
   // If trying to access any other page but haven't completed onboarding
-  if (window.location.pathname !== "/" && !userPreferences) {
+  if (window.location.pathname !== "/" && !userPreferences?.onboarding_completed) {
     return <Navigate to="/" replace />;
   }
 

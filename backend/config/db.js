@@ -29,11 +29,13 @@ const initializeTables = async (promisePool) => {
         // Create tables in the correct order due to foreign key constraints
         const tables = [
             // Uncomment these lines to create tables
-            // { name: 'Units', query: tableQueries.createUnitsTable },
-            // { name: 'Lessons', query: tableQueries.createLessonsTable },
-            // { name: 'Dialogues', query: tableQueries.createDialoguesTable },
-            // { name: 'Exercises', query: tableQueries.createExercisesTable },
-            // { name: 'UserProgress', query: tableQueries.createUserProgressTable }
+            { name: 'Units', query: tableQueries.createUnitsTable },
+            { name: 'Lessons', query: tableQueries.createLessonsTable },
+            { name: 'Dialogues', query: tableQueries.createDialoguesTable },
+            { name: 'Exercises', query: tableQueries.createExercisesTable },
+            { name: 'UserProgress', query: tableQueries.createUserProgressTable },
+            { name: 'Users', query: tableQueries.createUsersTable },
+            { name: 'UserStreaks', query: tableQueries.createStreaksTable }
         ];
 
         for (const table of tables) {

@@ -7,6 +7,9 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import WelcomeScreens from "@/components/WelcomeScreens.jsx";
 import { CheckCircle } from "lucide-react";
+import { updateUserPreferences } from "@/api/userService";
+import { getTelegramUser } from "@/utils/telegram";
+import { useInitialSetup } from '@/hooks/useInitialSetup';
 
 const interests = [
   { id: "business", label: "Business", icon: "office" },
@@ -21,8 +24,8 @@ const interests = [
 ];
 
 const Onboarding = () => {
+  const { loading, user, showWelcome, setShowWelcome } = useInitialSetup();
   const navigate = useNavigate();
-  const [showWelcome, setShowWelcome] = useState(true);
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     country: "",
@@ -38,7 +41,7 @@ const Onboarding = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (step === 1 && !formData.country) {
       toast.error("Please enter your country");
@@ -48,13 +51,32 @@ const Onboarding = () => {
       toast.error("Please select at least three interests");
       return;
     }
+    
     if (step === 1) {
       setStep(2);
     } else {
-      // Save user preferences and redirect
-      localStorage.setItem("userPreferences", JSON.stringify(formData));
-      toast.success("Welcome to FluentHub!");
-      navigate("/dashboard");
+      try {
+        if (!user?.user_id) {
+          toast.error("User not found!");
+          return;
+        }
+
+        // Save preferences to database
+        await updateUserPreferences(user.user_id, {
+          country: formData.country,
+          interests: formData.interests,
+          onboarding_completed: true
+        });
+
+        // Save to localStorage for client-side use
+        localStorage.setItem("userPreferences", JSON.stringify(formData));
+        
+        toast.success("Welcome to FluentHub!");
+        navigate("/dashboard");
+      } catch (error) {
+        console.error('Error saving preferences:', error);
+        toast.error("Failed to save preferences. Please try again.");
+      }
     }
   };
 
@@ -64,6 +86,39 @@ const Onboarding = () => {
     }
   };
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If no user data, show error
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+        <Card className="w-full max-w-md p-6">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-red-600">Error</h1>
+            <p className="mt-2 text-gray-600">Unable to load user data</p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // If user has completed onboarding, redirect to dashboard
+  if (user.onboarding_completed) {
+    navigate('/dashboard');
+    return null;
+  }
+
+  // Show welcome screens if needed
   if (showWelcome) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center p-4">

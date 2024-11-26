@@ -81,12 +81,27 @@ const tableQueries = {
         CREATE TABLE IF NOT EXISTS Users (
             user_id BIGINT PRIMARY KEY,  -- Telegram user ID
             username VARCHAR(255),
-            first_name VARCHAR(255),
-            last_name VARCHAR(255),
-            photo_url VARCHAR(255),
+            first_name VARCHAR(255) NOT NULL,
+            last_name VARCHAR(255) DEFAULT NULL,
             auth_date TIMESTAMP,
+            country VARCHAR(255),
+            interests JSON,
+            onboarding_completed BOOLEAN DEFAULT FALSE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )
+    `,
+
+    createStreaksTable: `
+        CREATE TABLE IF NOT EXISTS UserStreaks (
+            streak_id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id BIGINT NOT NULL,
+            current_streak INT DEFAULT 0,
+            longest_streak INT DEFAULT 0,
+            last_activity_date DATE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES Users(user_id)
         )
     `
 };

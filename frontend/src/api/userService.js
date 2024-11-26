@@ -38,4 +38,44 @@ export const deleteUser = async (userId) => {
     console.error('Error deleting user:', error);
     throw error;
   }
+};
+
+export const getUserProgress = async (userId) => {
+  try {
+    const response = await instance.get(`/users/${userId}/progress`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user progress:', error);
+    throw error;
+  }
+};
+
+export const updateUserProgress = async (userId, progressData) => {
+  try {
+    const response = await instance.post(`/users/${userId}/progress`, progressData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating user progress:', error);
+    throw error;
+  }
+};
+
+export const getUserStreak = async (userId) => {
+  try {
+    const response = await instance.get(`/users/${userId}/streak`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user streak:', error);
+    throw error;
+  }
+};
+
+export const updateUserStreak = async (userId) => {
+  try {
+    const response = await instance.put(`/users/${userId}/streak`);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating user streak:', error);
+    throw error;
+  }
 }; 

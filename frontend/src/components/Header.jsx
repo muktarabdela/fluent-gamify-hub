@@ -1,8 +1,51 @@
 import { Link } from "react-router-dom";
 import logo from "../../public/fluent logo.png"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { useEffect, useState } from "react";
+import { getUserStreak } from "../api/userService";
+import { getTelegramUser } from "../utils/telegram";
+
+const ProfileInitial = ({ name, size = "text-sm" }) => {
+    const initial = name ? name.charAt(0).toUpperCase() : '?';
+    const colors = [
+        'bg-blue-500',
+        'bg-green-500',
+        'bg-purple-500',
+        'bg-pink-500',
+        'bg-indigo-500',
+        'bg-yellow-500',
+        'bg-red-500',
+    ];
+
+    const colorIndex = name ? name.length % colors.length : 0;
+    const bgColor = colors[colorIndex];
+
+    return (
+        <div className={`w-full h-full rounded-full ${bgColor} flex items-center justify-center`}>
+            <span className={`${size} font-bold text-white`}>{initial}</span>
+        </div>
+    );
+};
 
 const Header = () => {
+    const [streakData, setStreakData] = useState({ current_streak: 0, longest_streak: 0 });
+    const telegramUser = getTelegramUser();
+
+    useEffect(() => {
+        const fetchStreak = async () => {
+            try {
+                if (telegramUser?.id) {
+                    const data = await getUserStreak(telegramUser.id);
+                    setStreakData(data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch streak data:", error);
+            }
+        };
+
+        fetchStreak();
+    }, [telegramUser]);
+
     return (
         <header className="sticky top-0 bg-white/95 backdrop-blur-md z-50 shadow-sm">
             <div className="max-w-[430px] mx-auto px-4 py-3">
@@ -17,7 +60,9 @@ const Header = () => {
                             <DropdownMenuTrigger asChild>
                                 <div className="flex items-center bg-gradient-to-r from-orange-100 to-orange-50 px-3 py-1.5 rounded-full cursor-pointer hover:from-orange-200 hover:to-orange-100 transition-colors">
                                     <span className="mr-1.5 animate-bounce">🔥</span>
-                                    <p className="text-sm font-semibold text-orange-600">3 days streak!</p>
+                                    <p className="text-sm font-semibold text-orange-600">
+                                        {streakData.current_streak} days streak!
+                                    </p>
                                 </div>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-56">
@@ -27,11 +72,11 @@ const Header = () => {
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center">
                                             <span className="text-sm text-gray-500">Current Streak</span>
-                                            <span className="font-medium">3 days</span>
+                                            <span className="font-medium">{streakData.current_streak} days</span>
                                         </div>
                                         <div className="flex justify-between items-center">
                                             <span className="text-sm text-gray-500">Longest Streak</span>
-                                            <span className="font-medium">7 days</span>
+                                            <span className="font-medium">{streakData.longest_streak} days</span>
                                         </div>
                                     </div>
                                 </div>
@@ -40,12 +85,14 @@ const Header = () => {
                     </Link>
 
                     <Link to="/profile" className="flex items-center gap-3">
-                        <button className="relative group p-2.5 rounded-full bg-gray-300 hover:bg-gray-100 transition-colors duration-200">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-gray-500 group-hover:text-gray-900">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
+                        <div className="relative group w-11 h-11">
+                            <div className="w-full h-full rounded-full overflow-hidden">
+
+                                <ProfileInitial name={telegramUser?.first_name} />
+
+                            </div>
                             <span className="absolute top-0 right-0 h-2 w-2 bg-primary rounded-full"></span>
-                        </button>
+                        </div>
                     </Link>
                 </div>
             </div>
