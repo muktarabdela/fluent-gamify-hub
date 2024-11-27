@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { getTelegramUser } from '@/utils/telegram';
 import { updateUserProgress } from '../api/userService';
+import { updateUserPreferences } from '../api/userService';
 
 const LessonDetail = () => {
     const telegramUser = getTelegramUser();
@@ -108,7 +109,12 @@ const LessonDetail = () => {
             await updateUserProgress(telegramUser?.id, {
                 lesson_id: lessonId,
                 status: 'completed',
-                score: 100  // Or calculate based on exercise scores
+                score: 100
+            });
+
+            // Award LIKE coins (10 per lesson completion)
+            await updateUserPreferences(telegramUser?.id, {
+                like_coins_increment: 10
             });
             
             setIsComplete(true);

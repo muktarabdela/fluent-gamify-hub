@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Lock, Unlock, Headphones, BookOpen, Video, Mic, Users, CheckCircle, Coins, ChevronRight } from 'lucide-react';
+import { Lock, Unlock, Headphones, BookOpen, Video, Mic, Users, CheckCircle, Coins, ChevronRight, BookMarked, Book, MessageSquare, Gamepad2, Users2, Clock } from 'lucide-react';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import LessonActionButton from './StartLearningButton';
@@ -60,100 +60,146 @@ function LessonCard({ lesson }) {
             value={`item-${lesson.lesson_id}`}
             className={`mb-4 -mt-1 rounded-lg overflow-hidden shadow-md transition-all duration-300 ${getStatusStyles(lesson.status)}`}
         >
-            <AccordionTrigger className="hover:no-underline px-2 py-4 [&>svg]:hidden group">
-                <div className="flex items-center justify-between w-full rounded-lg transition-all duration-200 group-hover:bggray-50">
-                    <div className="flex items-center gap-4">
+            <AccordionTrigger className="hover:no-underline px-4 py-6 [&>svg]:hidden group">
+                <div className="flex items-center justify-between w-full rounded-xl transition-all duration-300  backdrop-blur-sm">
+                    <div className="flex items-center gap-6">
                         <div className="relative">
-                            <img
-                                src={`https://tools-api.webcrumbs.org/image-placeholder/48/48/${lesson.topic}/1`}
-                                alt={lesson.title}
-                                className="w-14 h-14 rounded-xl object-cover shadow-sm"
-                            />
+                            <div className="relative w-16 h-16 rounded-2xl overflow-hidden shadow-lg ring-2 ring-white/50">
+                                <img
+                                    src={`https://tools-api.webcrumbs.org/image-placeholder/48/48/${lesson.topic}/1`}
+                                    alt={lesson.title}
+                                    className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-300"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                            </div>
                             {lesson.status === 'completed' && (
-                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                                    <CheckCircle size={12} className="text-white" />
+                                <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white">
+                                    <CheckCircle size={14} className="text-white" />
                                 </div>
                             )}
                             {(!lesson.status || lesson.status === 'locked') && (
-                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-gray-400 rounded-full flex items-center justify-center">
-                                    <Lock size={12} className="text-white" />
+                                <div className="absolute -top-2 -right-2 w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white">
+                                    <Lock size={14} className="text-white" />
                                 </div>
                             )}
                             {lesson.status === 'active' && (
-                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                                    <ChevronRight size={12} className="text-white" />
+                                <div className="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white">
+                                    <ChevronRight size={14} className="text-white" />
                                 </div>
                             )}
                         </div>
                         <div className="flex-1">
-                            <div className="flex text-end gap-3 mb-1">
-                                <h4 className="text-lg font-semibold text-start whitespace-nowrap text-gray-800 group-hoverprimary transition-colors">
+                            <div className="flex items-center gap-3 mb-2">
+                                <h4 className="text-xl font-bold text-start text-gray-800  transition-colors">
                                     {lesson.title}
                                 </h4>
                             </div>
-                            <p className="text-sm text-gray-500 line-clamp-2 text-start">{lesson.description}</p>
+                            <p className="text-sm text-gray-600 line-clamp-2 text-start leading-relaxed group-hover:text-gray-700 transition-colors">
+                                {lesson.description}
+                            </p>
                         </div>
                     </div>
                 </div>
             </AccordionTrigger>
 
             <AccordionContent>
-                <div className="px-4 py-3 space-y-4">
-                    <p className="text-sm text-gray-600">{lesson.description}</p>
+                <div className="px-6 py-4 space-y-6 bg-white/50 backdrop-blur-sm rounded-xl">
+                    {/* Description with styled typography */}
+                    <p className="text-sm leading-relaxed text-gray-600 font-medium">{lesson.description}</p>
 
+                    {/* Grammar Focus Section */}
                     {lesson.grammar_focus && (
-                        <div className="border-t pt-3">
-                            <h3 className="text-sm font-semibold text-gray-700 mb-2">Grammar Focus:</h3>
+                        <div className="space-y-3">
+                            <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                                <BookOpen className="w-4 h-4 text-primary" />
+                                Grammar Focus
+                            </h3>
                             <div className="flex flex-wrap gap-2">
                                 {parseJSON(lesson.grammar_focus).map((point, index) => (
-                                    <span key={index} className="inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded-full">
-                                        <span className="ml-1 text-xs">{point}</span>
+                                    <span 
+                                        key={index} 
+                                        className="inline-flex items-center bg-primary/10 text-primary text-xs font-medium px-3 py-1 rounded-full hover:bg-primary/20 transition-colors"
+                                    >
+                                        {point}
                                     </span>
                                 ))}
                             </div>
                         </div>
                     )}
 
-                    <div>
-                        <h3 className="text-sm font-semibold text-gray-700 mb-2">Vocabulary:</h3>
-                        <div className="flex space-x-4">
-                            <Badge variant="outline">{lesson.vocabulary_words} words</Badge>
-                            <Badge variant="outline">{lesson.vocabulary_phrases} phrases</Badge>
+                    {/* Vocabulary Stats */}
+                    <div className="space-y-3">
+                        <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                            <BookMarked className="w-4 h-4 text-primary" />
+                            Vocabulary
+                        </h3>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="flex items-center gap-2 bg-blue-50 p-3 rounded-lg">
+                                <Book className="w-4 h-4 text-blue-600" />
+                                <div>
+                                    <div className="text-lg font-bold text-blue-600">{lesson.vocabulary_words}</div>
+                                    <div className="text-xs text-blue-600/80">New Words</div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 bg-indigo-50 p-3 rounded-lg">
+                                <MessageSquare className="w-4 h-4 text-indigo-600" />
+                                <div>
+                                    <div className="text-lg font-bold text-indigo-600">{lesson.vocabulary_phrases}</div>
+                                    <div className="text-xs text-indigo-600/80">Key Phrases</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
+                    {/* Interactive Practices */}
                     {lesson.practices && (
-                        <div>
-                            <h3 className="text-sm font-semibold text-gray-700 mb-2">Interactive Practices:</h3>
-                            <div className="flex flex-wrap gap-1 mb-3">
+                        <div className="space-y-3">
+                            <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                                <Gamepad2 className="w-4 h-4 text-primary" />
+                                Interactive Practices
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
                                 {lesson.practices.map((practice, index) => (
-                                    <span key={index} className="inline-flex items-center bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded-full">
+                                    <span 
+                                        key={index} 
+                                        className="inline-flex items-center bg-green-50 text-green-700 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-green-100 transition-colors"
+                                    >
                                         {practiceIcons[practice]}
-                                        <span className="ml-1 text-xs">{practice}</span>
+                                        <span className="ml-1.5">{practice}</span>
                                     </span>
                                 ))}
                             </div>
                         </div>
                     )}
 
+                    {/* Live Session Card */}
                     {lesson.live_session_title && (
-                        <div className="bg-yellow-100 rounded-md p-3">
-                            <h3 className="text-sm font-semibold text-yellow-800 mb-2 flex items-center">
-                                <Users size={16} className="mr-2" />
+                        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200/50 shadow-sm">
+                            <h3 className="text-sm font-semibold text-amber-900 mb-3 flex items-center gap-2">
+                                <Users className="w-4 h-4 text-amber-600" />
                                 Live Group Session
                             </h3>
-                            <p className="text-sm text-yellow-800 mb-1">{lesson.live_session_title}</p>
-                            <div className="flex justify-between text-xs text-yellow-700">
-                                <span>Max {lesson.live_session_max_participants} participants</span>
-                                <span>{lesson.live_session_duration}</span>
+                            <p className="text-sm text-amber-800 font-medium mb-3">{lesson.live_session_title}</p>
+                            <div className="flex justify-between text-xs text-amber-700/90">
+                                <span className="flex items-center gap-1">
+                                    <Users2 className="w-3.5 h-3.5" />
+                                    Max {lesson.live_session_max_participants} participants
+                                </span>
+                                <span className="flex items-center gap-1">
+                                    <Clock className="w-3.5 h-3.5" />
+                                    {lesson.live_session_duration}
+                                </span>
                             </div>
                         </div>
                     )}
 
-                    <LessonActionButton
-                        status={lesson.status || 'locked'}
-                        lessonId={lesson.lesson_id}
-                    />
+                    {/* Action Button */}
+                    <div className="pt-2">
+                        <LessonActionButton
+                            status={lesson.status || 'locked'}
+                            lessonId={lesson.lesson_id}
+                        />
+                    </div>
                 </div>
             </AccordionContent>
         </AccordionItem>

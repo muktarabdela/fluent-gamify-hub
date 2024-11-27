@@ -87,6 +87,7 @@ const tableQueries = {
             auth_date TIMESTAMP,
             country VARCHAR(255),
             interests JSON,
+            like_coins INT DEFAULT 0,
             onboarding_completed BOOLEAN DEFAULT FALSE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

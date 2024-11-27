@@ -116,19 +116,36 @@ const userController = {
     // Update user preferences
     updateUserPreferences: async (req, res) => {
         const { preferences } = req.body;
-        const { country, interests, onboarding_completed } = preferences;
+        const { country, interests, onboarding_completed, like_coins_increment } = preferences;
 
         try {
             const pool = getPool();
-            const [result] = await pool.query(
-                `UPDATE Users SET 
+            let query = '';
+            let params = [];
+
+            if (like_coins_increment) {
+                // Increment LIKE coins
+                query = `
+                    UPDATE Users SET 
+                    like_coins = like_coins + ?,
+                    updated_at = CURRENT_TIMESTAMP
+                    WHERE user_id = ?
+                `;
+                params = [like_coins_increment, req.params.id];
+            } else {
+                // Regular preferences update
+                query = `
+                    UPDATE Users SET 
                     country = ?,
                     interests = ?,
                     onboarding_completed = ?,
                     updated_at = CURRENT_TIMESTAMP
-                WHERE user_id = ?`,
-                [country, JSON.stringify(interests), onboarding_completed, req.params.id]
-            );
+                    WHERE user_id = ?
+                `;
+                params = [country, JSON.stringify(interests), onboarding_completed, req.params.id];
+            }
+
+            const [result] = await pool.query(query, params);
 
             if (result.affectedRows === 0) {
                 return res.status(404).json({ message: 'User not found' });
@@ -139,7 +156,8 @@ const userController = {
                 preferences: {
                     country,
                     interests,
-                    onboarding_completed
+                    onboarding_completed,
+                    like_coins_increment
                 }
             });
         } catch (error) {

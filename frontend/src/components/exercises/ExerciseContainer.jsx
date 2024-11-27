@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import SentenceBuildingExercise from './SentenceBuildingExercise';
 import MultipleChoiceExercise from './MultipleChoiceExercise';
 import ShadowingExercise from './ShadowingExercise';
 import FillBlankExercise from './FillBlankExercise';
 import { Progress } from "@/components/ui/progress";
 import { updateUserProgress } from '@/api/userService';
+import LessonCompletionDialog from '../dialogs/LessonCompletionDialog';
 
 const ExerciseContainer = ({ exercises, userId, lessonId, onComplete }) => {
+    const navigate = useNavigate();
     const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
     const [completedExercises, setCompletedExercises] = useState(new Set());
+    const [showCompletionDialog, setShowCompletionDialog] = useState(false);
+    const [completionData, setCompletionData] = useState(null);
 
     const currentExercise = exercises[currentExerciseIndex];
     const progress = (completedExercises.size / exercises.length) * 100;
@@ -21,19 +26,34 @@ const ExerciseContainer = ({ exercises, userId, lessonId, onComplete }) => {
         // Check if all exercises are completed
         if (newCompletedExercises.size === exercises.length) {
             try {
+                // Update progress
                 await updateUserProgress(userId, {
                     lesson_id: lessonId,
                     status: 'completed',
                     score: 100
                 });
+
+                // Get next lesson info and user data
+                const [nextLessonData, userData] = await Promise.all([
+                    getLessonById(parseInt(lessonId) + 1).catch(() => null),
+                    getUserById(userId)
+                ]);
+
+                setCompletionData({
+                    likeCoins: 10,
+                    nextLesson: nextLessonData,
+                    currentStreak: userData.current_streak || 0
+                });
+
+                setShowCompletionDialog(true);
                 onComplete();
             } catch (error) {
                 console.error('Error updating lesson progress:', error);
             }
         }
 
-        return { 
-            isCorrect: true, 
+        return {
+            isCorrect: true,
             showContinue: currentExerciseIndex < exercises.length - 1
         };
     };
@@ -84,9 +104,18 @@ const ExerciseContainer = ({ exercises, userId, lessonId, onComplete }) => {
             <span className="inline-block px-3 py-1 text-sm font-semibold text-primary bg-primary/10 rounded-full mb-4">
                 {exercises[currentExerciseIndex].type.replace('_', ' ').toUpperCase()}
             </span>
-            
+
             {/* Current exercise */}
             {renderExercise()}
+
+            {/* Completion Dialog */}
+            <LessonCompletionDialog
+                isOpen={showCompletionDialog}
+                onClose={() => setShowCompletionDialog(false)}
+                likeCoins={completionData?.likeCoins}
+                nextLesson={completionData?.nextLesson}
+                currentStreak={completionData?.currentStreak}
+            />
         </div>
     );
 };

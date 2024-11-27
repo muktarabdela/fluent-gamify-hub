@@ -78,4 +78,14 @@ export const updateUserStreak = async (userId) => {
     console.error('Error updating user streak:', error);
     throw error;
   }
+};
+
+export const getAllUsers = async () => {
+  try {
+    const response = await instance.get('/users');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching all users:', error);
+    throw error;
+  }
 }; 
