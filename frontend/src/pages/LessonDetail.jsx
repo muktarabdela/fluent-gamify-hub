@@ -15,6 +15,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { getTelegramUser } from '@/utils/telegram';
+import { updateUserProgress } from '../api/userService';
 
 const LessonDetail = () => {
     const telegramUser = getTelegramUser();
@@ -101,8 +102,19 @@ const LessonDetail = () => {
         }
     };
 
-    const handleExerciseComplete = () => {
-        setIsComplete(true);
+    const handleExerciseComplete = async () => {
+        try {
+            // Mark lesson as completed
+            await updateUserProgress(telegramUser?.id, {
+                lesson_id: lessonId,
+                status: 'completed',
+                score: 100  // Or calculate based on exercise scores
+            });
+            
+            setIsComplete(true);
+        } catch (error) {
+            console.error('Error updating lesson progress:', error);
+        }
     };
 
     const ExitConfirmationDialog = () => (

@@ -1,17 +1,57 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Pause, RotateCcw, Mic, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { speak } from '@/utils/textToSpeech';
 
 const Dialogue = ({ dialogue, isTeacher, isActive, isLatest }) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [hasRecorded, setHasRecorded] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
+    const [isSpeaking, setIsSpeaking] = useState(false);
 
     // Reset states when dialogue changes
     useEffect(() => {
         setIsPlaying(false);
         setHasRecorded(false);
         setIsRecording(false);
+    }, [dialogue]);
+
+    // Play audio when dialogue appears and is latest
+    useEffect(() => {
+        if (isLatest && dialogue.content) {
+            handlePlay();
+        }
+    }, [dialogue, isLatest]);
+
+    // Handle play/pause
+    const handlePlay = async () => {
+        if (isSpeaking) {
+            window.speechSynthesis.cancel();
+            setIsSpeaking(false);
+            return;
+        }
+
+        try {
+            setIsSpeaking(true);
+            await speak(dialogue.content, {
+                lang: 'en-US', // You might want to make this dynamic based on dialogue language
+                rate: 0.9,     // Slightly slower for better clarity
+                pitch: 1,
+                volume: 1
+            });
+            setIsSpeaking(false);
+        } catch (error) {
+            console.error('Speech synthesis error:', error);
+            setIsSpeaking(false);
+        }
+    };
+
+    // Cancel speech when component unmounts or dialogue changes
+    useEffect(() => {
+        return () => {
+            window.speechSynthesis.cancel();
+            setIsSpeaking(false);
+        };
     }, [dialogue]);
 
     // Animation variants
@@ -84,12 +124,13 @@ const Dialogue = ({ dialogue, isTeacher, isActive, isLatest }) => {
                         <div className="flex items-center gap-2">
                             {/* Audio Controls */}
                             <button 
-                                onClick={() => setIsPlaying(!isPlaying)}
+                                onClick={handlePlay}
                                 className={`p-2 rounded-full transition-colors
-                                    ${isTeacher ? 'hover:bg-blue-100' : 'hover:bg-gray-100'}`}
+                                    ${isTeacher ? 'hover:bg-blue-100' : 'hover:bg-gray-100'}
+                                    ${isSpeaking ? 'bg-primary/10 text-primary' : ''}`}
                                 disabled={!isActive}
                             >
-                                {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+                                {isSpeaking ? <Pause size={16} /> : <Play size={16} />}
                             </button>
                             {!isTeacher && (
                                 <button 

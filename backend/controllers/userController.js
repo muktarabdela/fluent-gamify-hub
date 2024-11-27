@@ -195,29 +195,30 @@ const userController = {
 
     // Update user progress
     updateUserProgress: async (req, res) => {
-        const { lesson_id, exercise_id, status, score } = req.body;
+        const { lesson_id, status, score } = req.body;
         const user_id = req.params.id;
 
         try {
             const pool = getPool();
             
-            // Insert or update progress
+            // Update progress
             await pool.query(
                 `INSERT INTO UserProgress 
-                    (user_id, lesson_id, exercise_id, status, score) 
-                VALUES (?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE 
-                    status = VALUES(status),
-                    score = VALUES(score),
-                    updated_at = CURRENT_TIMESTAMP`,
-                [user_id, lesson_id, exercise_id, status, score]
+                 (user_id, lesson_id, status, score) 
+                 VALUES (?, ?, ?, ?)
+                 ON DUPLICATE KEY UPDATE 
+                 status = VALUES(status),
+                 score = VALUES(score),
+                 updated_at = CURRENT_TIMESTAMP`,
+                [user_id, lesson_id, status, score]
             );
 
-            // If lesson is completed, update user streak
+            // If lesson is completed
             if (status === 'completed') {
+                // Update streak
                 await updateStreak(user_id, pool);
-
-                // Check if this unlocks the next lesson
+                
+                // Unlock next lesson
                 await unlockNextLesson(user_id, lesson_id, pool);
             }
 
@@ -392,20 +393,34 @@ const unlockNextLesson = async (userId, currentLessonId, pool) => {
 
         if (currentLesson.length === 0) return;
 
+        // Update current lesson status to completed
+        await pool.query(
+            `UPDATE Lessons SET status = 'completed' 
+             WHERE lesson_id = ?`,
+            [currentLessonId]
+        );
+
         // Get next lesson in the same unit
         const [nextLesson] = await pool.query(
             `SELECT lesson_id FROM Lessons 
-            WHERE unit_id = ? AND order_number > ?
-            ORDER BY order_number ASC LIMIT 1`,
+             WHERE unit_id = ? AND order_number > ?
+             ORDER BY order_number ASC LIMIT 1`,
             [currentLesson[0].unit_id, currentLesson[0].order_number]
         );
 
         if (nextLesson.length > 0) {
-            // Initialize progress for next lesson as 'started'
+            // Update next lesson status to active
+            await pool.query(
+                `UPDATE Lessons SET status = 'active' 
+                 WHERE lesson_id = ?`,
+                [nextLesson[0].lesson_id]
+            );
+
+            // Initialize progress for next lesson
             await pool.query(
                 `INSERT INTO UserProgress (user_id, lesson_id, status, score)
-                VALUES (?, ?, 'started', 0)
-                ON DUPLICATE KEY UPDATE status = 'started'`,
+                 VALUES (?, ?, 'started', 0)
+                 ON DUPLICATE KEY UPDATE status = 'started'`,
                 [userId, nextLesson[0].lesson_id]
             );
         }

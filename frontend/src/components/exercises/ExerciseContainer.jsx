@@ -14,18 +14,17 @@ const ExerciseContainer = ({ exercises, userId, lessonId, onComplete }) => {
     const progress = (completedExercises.size / exercises.length) * 100;
 
     const handleExerciseSubmit = async (answer) => {
-        // Mark the current exercise as completed
+        // Mark the current exercise as completed immediately
         const newCompletedExercises = new Set([...completedExercises, currentExercise.exercise_id]);
         setCompletedExercises(newCompletedExercises);
 
         // Check if all exercises are completed
         if (newCompletedExercises.size === exercises.length) {
             try {
-                // Update user progress to mark lesson as completed
                 await updateUserProgress(userId, {
                     lesson_id: lessonId,
                     status: 'completed',
-                    score: 100 // You might want to calculate this based on exercise performance
+                    score: 100
                 });
                 onComplete();
             } catch (error) {
