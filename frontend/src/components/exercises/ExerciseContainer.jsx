@@ -5,8 +5,9 @@ import MultipleChoiceExercise from './MultipleChoiceExercise';
 import ShadowingExercise from './ShadowingExercise';
 import FillBlankExercise from './FillBlankExercise';
 import { Progress } from "@/components/ui/progress";
-import { updateUserProgress } from '@/api/userService';
+import { getUserById, updateUserProgress } from '@/api/userService';
 import LessonCompletionDialog from '../dialogs/LessonCompletionDialog';
+import { getLessonById } from '@/api/lessonService';
 
 const ExerciseContainer = ({ exercises, userId, lessonId, onComplete }) => {
     const navigate = useNavigate();

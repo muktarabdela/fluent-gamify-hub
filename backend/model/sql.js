@@ -46,6 +46,20 @@ const tableQueries = {
             FOREIGN KEY (lesson_id) REFERENCES Lessons(lesson_id)
         )
     `,
+    createQuickLessonsTable: `
+    CREATE TABLE IF NOT EXISTS QuickLessons (
+        quick_lesson_id INT AUTO_INCREMENT PRIMARY KEY,
+        lesson_id INT NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        content TEXT NOT NULL,
+        key_points JSON,  -- Store array of important points to remember
+        example_sentences JSON,  -- Store array of example sentences
+        image_url VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (lesson_id) REFERENCES Lessons(lesson_id)
+        )
+    `,
 
     createExercisesTable: `
         CREATE TABLE IF NOT EXISTS Exercises (
@@ -104,6 +118,40 @@ const tableQueries = {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES Users(user_id)
+        )
+    `,
+
+    createLiveSessionsTable: `
+    CREATE TABLE IF NOT EXISTS LiveSessions (
+        session_id INT AUTO_INCREMENT PRIMARY KEY,
+        session_type ENUM('lesson', 'free_talk') NOT NULL,
+        lesson_id INT,  -- NULL for free_talk sessions
+        topic VARCHAR(255) NOT NULL,
+        level ENUM('Beginner', 'Intermediate', 'Advanced') NOT NULL,
+        start_time DATETIME NOT NULL,
+        inviteLink VARCHAR(255) DEFAULT NULL,
+        duration VARCHAR(50) NOT NULL,
+        max_participants INT NOT NULL DEFAULT 4,
+        current_participants INT DEFAULT 0,
+        status ENUM('Scheduled', 'Ongoing', 'Ended', 'Cancelled') DEFAULT 'Scheduled',
+        host_user_id BIGINT,
+        telegram_group_id INT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (lesson_id) REFERENCES Lessons(lesson_id),
+            FOREIGN KEY (host_user_id) REFERENCES Users(user_id),
+            FOREIGN KEY (telegram_group_id) REFERENCES TelegramGroups(group_id)
+        )
+    `,
+
+    createTelegramGroupsTable: `
+        CREATE TABLE IF NOT EXISTS TelegramGroups (
+            group_id INT AUTO_INCREMENT PRIMARY KEY,
+            telegram_chat_id BIGINT NOT NULL,
+            status ENUM('available', 'in_use', 'archived') DEFAULT 'available',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            last_used_at TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )
     `
 };

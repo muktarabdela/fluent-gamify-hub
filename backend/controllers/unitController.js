@@ -8,9 +8,13 @@ const unitController = {
             const [units] = await pool.query(`
                 SELECT 
                     u.*,
-                    COUNT(l.lesson_id) as total_lessons,
-                    COUNT(CASE WHEN up.status = 'completed' THEN 1 END) as completed_lessons,
-                    IFNULL(ROUND((COUNT(CASE WHEN up.status = 'completed' THEN 1 END) / COUNT(l.lesson_id)) * 100, 2), 0) as progress_percentage
+                    (SELECT COUNT(*) FROM Lessons WHERE unit_id = u.unit_id) as total_lessons,
+                    COUNT(DISTINCT CASE WHEN up.status = 'completed' THEN up.lesson_id END) as completed_lessons,
+                    IFNULL(
+                        ROUND((COUNT(DISTINCT CASE WHEN up.status = 'completed' THEN up.lesson_id END) / 
+                        (SELECT COUNT(*) FROM Lessons WHERE unit_id = u.unit_id)) * 100, 2), 
+                        0
+                    ) as progress_percentage
                 FROM Units u
                 LEFT JOIN Lessons l ON u.unit_id = l.unit_id
                 LEFT JOIN UserProgress up ON l.lesson_id = up.lesson_id

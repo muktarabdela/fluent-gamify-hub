@@ -59,15 +59,15 @@ const RewardsPage = () => {
 
     return (
         <div className="max-w-[430px] mx-auto p-4 mb-20">
-            <h1 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2">
+            <h1 className="text-2xl font-bold mb-6 text-gray-100 flex items-center gap-2">
                 <Award className="w-7 h-7 text-primary" />
                 Rewards Program
             </h1>
 
             <Tabs defaultValue="rewards" className="mb-8">
                 <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="rewards">Rewards</TabsTrigger>
-                    <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
+                    <TabsTrigger value="rewards" className="data-[state=active]:bg-primary data-[state=active]:text-white text-gray-800">Rewards</TabsTrigger>
+                    <TabsTrigger value="leaderboard" className="data-[state=active]:bg-primary data-[state=active]:text-white text-gray-800">Leaderboard</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="rewards">
@@ -92,7 +92,7 @@ const RewardsPage = () => {
 
                     {/* Levels Section - Updated styling */}
                     <div className="space-y-4">
-                        <h2 className="text-xl font-semibold flex items-center gap-2 text-gray-800 mb-6">
+                        <h2 className="text-xl font-semibold flex items-center gap-2 text-gray-100 mb-6">
                             <Award className="w-5 h-5 text-primary" />
                             Reward Levels
                         </h2>

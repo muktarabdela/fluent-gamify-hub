@@ -6,6 +6,7 @@ import LessonActionButton from './StartLearningButton';
 import { getAllUnits } from '@/api/unitService';
 import { getLessonsByUnit } from '@/api/lessonService';
 import { Skeleton } from "@/components/ui/skeleton";
+import image from "../../public/fluent logo.png"
 const practiceIcons = {
     "Shadowing": <Mic size={14} />,
     "Flashcards": <BookOpen size={14} />,
@@ -64,33 +65,36 @@ function LessonCard({ lesson }) {
                 <div className="flex items-center justify-between w-full rounded-xl transition-all duration-300  backdrop-blur-sm">
                     <div className="flex items-center gap-6">
                         <div className="relative">
-                            <div className="relative w-16 h-16 rounded-2xl overflow-hidden shadow-lg ring-2 ring-white/50">
-                                <img
-                                    src={`https://tools-api.webcrumbs.org/image-placeholder/48/48/${lesson.topic}/1`}
-                                    alt={lesson.title}
-                                    className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-300"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                            <div className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-lg">
+                                <div className="w-full h-full bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center">
+                                    <img
+                                        src={`https://tools-api.webcrumbs.org/image-placeholder/48/48/${lesson.topic}/1`}
+                                        alt={lesson.title}
+                                        className="w-full h-full object-cover transform group-hover:scale-110 
+                                    transition-transform duration-300"
+                                    />
+                                </div>
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
                             </div>
                             {lesson.status === 'completed' && (
-                                <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white">
-                                    <CheckCircle size={14} className="text-white" />
+                                <div className="absolute -top-2 -right-2 w-7 h-7 bg-green-500 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white transform hover:scale-110 transition-transform">
+                                    <CheckCircle size={16} className="text-white" strokeWidth={2.5} />
                                 </div>
                             )}
                             {(!lesson.status || lesson.status === 'locked') && (
-                                <div className="absolute -top-2 -right-2 w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white">
-                                    <Lock size={14} className="text-white" />
+                                <div className="absolute -top-2 -right-2 w-7 h-7 bg-gray-500 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white transform hover:scale-110 transition-transform">
+                                    <Lock size={16} className="text-white" strokeWidth={2.5} />
                                 </div>
                             )}
                             {lesson.status === 'active' && (
-                                <div className="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white">
-                                    <ChevronRight size={14} className="text-white" />
+                                <div className="absolute -top-2 -right-2 w-7 h-7 bg-primary rounded-full flex items-center justify-center shadow-lg ring-2 ring-white transform hover:scale-110 transition-transform">
+                                    <ChevronRight size={16} className="text-white" strokeWidth={2.5} />
                                 </div>
                             )}
                         </div>
                         <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
-                                <h4 className="text-xl font-bold text-start text-gray-800  transition-colors">
+                                <h4 className="text-xl font-bold text-start text-gray-800 group-hover:text-primary transition-colors">
                                     {lesson.title}
                                 </h4>
                             </div>
@@ -116,8 +120,8 @@ function LessonCard({ lesson }) {
                             </h3>
                             <div className="flex flex-wrap gap-2">
                                 {parseJSON(lesson.grammar_focus).map((point, index) => (
-                                    <span 
-                                        key={index} 
+                                    <span
+                                        key={index}
                                         className="inline-flex items-center bg-primary/10 text-primary text-xs font-medium px-3 py-1 rounded-full hover:bg-primary/20 transition-colors"
                                     >
                                         {point}
@@ -160,8 +164,8 @@ function LessonCard({ lesson }) {
                             </h3>
                             <div className="flex flex-wrap gap-2">
                                 {lesson.practices.map((practice, index) => (
-                                    <span 
-                                        key={index} 
+                                    <span
+                                        key={index}
                                         className="inline-flex items-center bg-green-50 text-green-700 text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-green-100 transition-colors"
                                     >
                                         {practiceIcons[practice]}
@@ -333,7 +337,7 @@ export default function MobileLessonDashboard() {
                                     </div>
                                 </section>
                             </div>
-                            
+
                             {/* Lesson Cards Skeletons */}
                             {Array(3).fill(0).map((_, lessonIndex) => (
                                 <LessonCardSkeleton key={`lesson-skeleton-${lessonIndex}`} />

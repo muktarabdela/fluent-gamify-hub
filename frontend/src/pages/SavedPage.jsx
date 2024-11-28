@@ -38,7 +38,7 @@ const SavedPage = () => {
     return (
         <div className="max-w-[430px] mx-auto p-4">
             <div className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl font-bold flex items-center gap-2 text-gray-800">
+                <h1 className="text-2xl font-bold flex items-center gap-2 text-gray-100">
                     <Bookmark className="w-6 h-6" />
                     Saved Items
                 </h1>

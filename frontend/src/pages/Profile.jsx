@@ -52,7 +52,7 @@ const Profile = () => {
 
     return (
         <>
-            <div className="min-h-screen bg-gradient-to-br from-primary/20 to-secondary/20 p-4 pb-20">
+            <div className="min-h-screen bp-4 pb-20">
                 <div className="max-w-md mx-auto space-y-4">
                     <div className="text-center mb-6">
                         {/* <div className="w-24 h-24 rounded-full bg-primary/20 mx-auto mb-4 flex items-center justify-center">
@@ -66,15 +66,15 @@ const Profile = () => {
                                 <span className="text-3xl">👤</span>
                             )}
                         </div> */}
-                        <h1 className="text-2xl font-bold">
+                        <h1 className="text-2xl font-bold text-gray-100">
                             {userData?.first_name} {userData?.last_name}
                         </h1>
-                        <p className="text-gray-600">
+                        <p className="text-gray-300">
                             Joined {format(new Date(userData?.created_at), 'MMMM yyyy')}
                         </p>
                     </div>
 
-                    <Card className="p-4 card-hover">
+                    <Card className="p-4 card-hover bg-secondary">
                         <div className="flex items-center space-x-3 mb-3">
                             <Award className="h-6 w-6 text-primary" />
                             <div>

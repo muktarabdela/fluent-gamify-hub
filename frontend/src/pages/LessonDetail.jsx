@@ -5,7 +5,7 @@ import { getLessonById } from '../api/lessonService';
 import { getExercisesByLesson } from '../api/exerciseService';
 import Dialogue from '../components/Dialogue';
 import ExerciseContainer from '../components/exercises/ExerciseContainer';
-import { ArrowLeft, MessageCircle, BookOpen, ChevronRight, AlertCircle } from 'lucide-react';
+import { ArrowLeft, MessageCircle, BookOpen, ChevronRight, AlertCircle, ListChecks } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -17,6 +17,8 @@ import {
 import { getTelegramUser } from '@/utils/telegram';
 import { updateUserProgress } from '../api/userService';
 import { updateUserPreferences } from '../api/userService';
+import { getQuickLessonByLessonId } from '../api/quickLessonService';
+import QuickLesson from '../components/QuickLesson';
 
 const LessonDetail = () => {
     const telegramUser = getTelegramUser();
@@ -33,6 +35,7 @@ const LessonDetail = () => {
     const [isComplete, setIsComplete] = useState(false);
     const [showExitDialog, setShowExitDialog] = useState(false);
     const dialoguesContainerRef = useRef(null);
+    const [quickLesson, setQuickLesson] = useState(null);
 
     // Add beforeunload event listener
     useEffect(() => {
@@ -64,15 +67,17 @@ const LessonDetail = () => {
                 console.log('Fetching lesson data...');
                 setLoading(true);
 
-                const [lessonData, dialoguesData, exercisesData] = await Promise.all([
+                const [lessonData, dialoguesData, exercisesData, quickLessonData] = await Promise.all([
                     getLessonById(lessonId),
                     getDialoguesByLesson(lessonId),
-                    getExercisesByLesson(lessonId, telegramUser?.id) // Replace with actual userId
+                    getExercisesByLesson(lessonId, telegramUser?.id),
+                    getQuickLessonByLessonId(lessonId)
                 ]);
 
                 setLesson(lessonData);
                 setDialogues(dialoguesData);
                 setExercises(exercisesData);
+                setQuickLesson(quickLessonData);
             } catch (err) {
                 console.error('Error fetching lesson data:', err);
                 setError(err.response?.data?.message || err.message);
@@ -116,7 +121,7 @@ const LessonDetail = () => {
             await updateUserPreferences(telegramUser?.id, {
                 like_coins_increment: 10
             });
-            
+
             setIsComplete(true);
         } catch (error) {
             console.error('Error updating lesson progress:', error);
@@ -174,7 +179,7 @@ const LessonDetail = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-[#243642]">
             {/* Fixed Header */}
             <div className="fixed top-0 left-0 right-0 bg-white shadow-sm z-50">
                 <div className="flex items-center p-4 max-w-lg mx-auto">
@@ -203,7 +208,7 @@ const LessonDetail = () => {
                 ref={dialoguesContainerRef}
                 className="pt-20 pb-32 px-4 max-w-lg mx-auto relative overflow-y-auto"
             >
-                {!showExercises ? (
+                {!showExercises && (
                     <>
                         {/* Lesson Info Card */}
                         <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
@@ -219,6 +224,9 @@ const LessonDetail = () => {
                             <p className="text-sm text-gray-600">{lesson?.description}</p>
                         </div>
 
+                        {/* Quick Lesson - Now displayed first */}
+                        {quickLesson && <QuickLesson quickLesson={quickLesson} />}
+
                         {/* Dialogues */}
                         <div className="space-y-4 relative">
                             {dialogues.slice(0, currentDialogueIndex + 1).map((dialogue, index) => (
@@ -232,7 +240,9 @@ const LessonDetail = () => {
                             ))}
                         </div>
                     </>
-                ) : (
+                )}
+
+                {showExercises ? (
                     <>
                         {/* Exercise Info Card */}
                         {/* <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
@@ -254,6 +264,13 @@ const LessonDetail = () => {
                             lessonId={lessonId}
                             onComplete={handleExerciseComplete}
                         />
+                    </>
+                ) : (
+                    <>
+                        {/* Show Quick Lesson after all dialogues are complete */}
+                        {currentDialogueIndex === dialogues.length - 1 && (
+                            <QuickLesson quickLesson={quickLesson} />
+                        )}
                     </>
                 )}
             </div>

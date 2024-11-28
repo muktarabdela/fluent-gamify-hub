@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Trophy, Heart, ChevronRight, Sparkles, Flame } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { useNavigate } from 'react-router-dom';
 
 const LessonCompletionDialog = ({ isOpen, onClose, likeCoins, nextLesson, currentStreak }) => {
+    const navigate = useNavigate();
     // Trigger confetti when dialog opens
     React.useEffect(() => {
         if (isOpen) {
@@ -94,23 +96,32 @@ const LessonCompletionDialog = ({ isOpen, onClose, likeCoins, nextLesson, curren
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.9 }}
-                                className="flex gap-3 pt-4"
+                                className="flex flex-col gap-3 pt-4"
                             >
                                 <button
-                                    onClick={() => navigate('/')}
-                                    className="flex-1 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+                                    onClick={() => navigate('/live-session', { state: { fromLesson: true } })}
+                                    className="w-full px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
                                 >
-                                    Back to Home
+                                    Practice in Live Session
+                                    <ChevronRight className="w-4 h-4" />
                                 </button>
+
                                 {nextLesson && (
                                     <button
-                                        onClick={() => navigate(`/lessons/${nextLesson.lesson_id}`)}
-                                        className="flex-1 px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                                        onClick={() => navigate(`/live-session`)}
+                                        className="w-full px-4 py-2 rounded-lg border border-primary text-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
                                     >
                                         Next Lesson
                                         <ChevronRight className="w-4 h-4" />
                                     </button>
                                 )}
+
+                                <button
+                                    onClick={() => navigate('/')}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+                                >
+                                    Back to Home
+                                </button>
                             </motion.div>
                         </div>
                     )}

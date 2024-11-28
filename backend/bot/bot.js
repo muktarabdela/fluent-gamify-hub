@@ -9,7 +9,7 @@ const token = "7300307978:AAHNBsXlsdoxvjME33YgEOThUiFLgIqkrPA";
 // Create an instance of the bot
 const bot = new TelegramBot(token, { polling: true });
 
-const channelLink = 'https://t.me/everyday_change';
+const channelLink = 'https://t.me/fluent_hub';
 const webAppUrl = 'https://fluent-gamify-hub.vercel.app'; // Replace with your Mini App URL
 const imageUrl = 'https://res.cloudinary.com/dczvebr3j/image/upload/v1727264037/hbampjrcszlxoohetngs.jpg';
 

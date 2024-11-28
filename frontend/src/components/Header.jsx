@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import logo from "../../public/fluent logo.png"
+import logo from "../../public/logo.png"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { useEffect, useState } from "react";
 import { getUserById, getUserStreak } from "../api/userService";
@@ -64,21 +64,26 @@ const Header = () => {
     }, [telegramUser]);
 
     return (
-        <header className="sticky top-0 bg-white/95 backdrop-blur-md z-50 shadow-sm">
+        <header className="sticky top-0 bg-[#1c2b36] glass-effect z-50 border-b border-white/10">
             <div className="max-w-[430px] mx-auto px-3 py-2">
                 <div className="flex items-center justify-between">
                     <Link to="/" className="flex items-center space-x-4">
-                        <img
-                            src={logo}
-                            alt="FluentHub"
-                            className="h-9 w-auto transition-transform hover:scale-105"
-                        />
+                        <div className="flex items-center">
+                            <img
+                                src={logo}
+                                alt="FluentHub"
+                                className="h-9 w-auto transition-transform hover:scale-105"
+                            />
+                            <span className="ml-2 font-semibold text-lg bg-gradient-to-r from-blue-400 to-primary bg-clip-text text-transparent">
+                                FluentHub
+                            </span>
+                        </div>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <div className="flex items-center bg-gradient-to-r from-orange-100 to-orange-50 px-3 py-1.5 rounded-full cursor-pointer hover:from-orange-200 hover:to-orange-100 transition-colors">
                                     <span className="mr-1.5 animate-bounce">🔥</span>
                                     <p className="text-sm font-semibold text-orange-600">
-                                        {streakData.current_streak} streak!
+                                        {streakData.current_streak}
                                     </p>
                                 </div>
                             </DropdownMenuTrigger>

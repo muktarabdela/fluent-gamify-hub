@@ -5,11 +5,18 @@ const lessonRoutes = require('./lessonRoutes');
 const dialogueRoutes = require('./dialogueRoutes');
 const exerciseRoutes = require('./exerciseRoutes');
 const userRoutes = require('./userRoutes');
-
+const liveSessionRoutes = require('./liveSessionRoutes');
+const telegramGroupRoutes = require('./telegramGroupRoutes');
+const botRoutes = require('./botRoutes');
+const quickLessonRoutes = require('./quickLessonRoutes');
 router.use('/units', unitRoutes);
 router.use('/lessons', lessonRoutes);
 router.use('/dialogues', dialogueRoutes);
 router.use('/exercises', exerciseRoutes);
 router.use('/users', userRoutes);
+router.use('/live-sessions', liveSessionRoutes);
+router.use('/telegram-groups', telegramGroupRoutes);
+router.use('/bot', botRoutes);
+router.use('/quick-lessons', quickLessonRoutes);
 
 module.exports = router; 
