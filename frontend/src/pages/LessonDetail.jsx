@@ -36,6 +36,7 @@ const LessonDetail = () => {
     const [showExitDialog, setShowExitDialog] = useState(false);
     const dialoguesContainerRef = useRef(null);
     const [quickLesson, setQuickLesson] = useState(null);
+    const [showDialogues, setShowDialogues] = useState(false);
 
     // Add beforeunload event listener
     useEffect(() => {
@@ -90,6 +91,12 @@ const LessonDetail = () => {
     }, [lessonId]);
 
     const handleContinue = () => {
+        if (!showDialogues) {
+            setShowDialogues(true);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
         if (currentDialogueIndex < dialogues.length - 1) {
             setCurrentDialogueIndex(prev => prev + 1);
             setTimeout(() => {
@@ -181,7 +188,7 @@ const LessonDetail = () => {
     return (
         <div className="min-h-screen bg-[#243642]">
             {/* Fixed Header */}
-            <div className="fixed top-0 left-0 right-0 bg-white shadow-sm z-50">
+            <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-blue-100 via-blue-50/80 to shadow-sm z-50">
                 <div className="flex items-center p-4 max-w-lg mx-auto">
                     <button
                         onClick={handleBack}
@@ -192,10 +199,11 @@ const LessonDetail = () => {
                     <div className="ml-4 flex-1">
                         <h1 className="text-lg font-semibold text-gray-900">{lesson?.title}</h1>
                         <p className="text-sm text-gray-500">
-                            {showExercises ? 'Practice Exercises' : 'Dialogue Practice'}
+                            {!showDialogues ? 'Quick Introduction' :
+                                showExercises ? 'Practice Exercises' : 'Dialogue Practice'}
                         </p>
                     </div>
-                    {!showExercises && (
+                    {showDialogues && !showExercises && (
                         <div className="text-sm font-medium text-gray-500">
                             {currentDialogueIndex + 1}/{dialogues.length}
                         </div>
@@ -206,43 +214,31 @@ const LessonDetail = () => {
             {/* Main Content */}
             <div
                 ref={dialoguesContainerRef}
-                className="pt-20 pb-32 px-4 max-w-lg mx-auto relative overflow-y-auto"
+                className="pt-20 pb-32 px-4 max-w-lg mx-auto relative overflow-y-auto mt-5"
             >
-                {!showExercises && (
+                {!showExercises ? (
                     <>
-                        {/* Lesson Info Card */}
-                        <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
-                            <div className="flex items-center gap-4 mb-4">
-                                <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center">
-                                    <MessageCircle size={24} className="text-primary" />
+                        {!showDialogues ? (
+                            // Show QuickLesson initially
+                            quickLesson && <QuickLesson quickLesson={quickLesson} />
+                        ) : (
+                            <>
+                                {/* Dialogues */}
+                                <div className="space-y-4 relative">
+                                    {dialogues.slice(0, currentDialogueIndex + 1).map((dialogue, index) => (
+                                        <Dialogue
+                                            key={`${dialogue.dialogue_id}-${index}`}
+                                            dialogue={dialogue}
+                                            isTeacher={dialogue.speaker_role === 'Teacher'}
+                                            isActive={index === currentDialogueIndex}
+                                            isLatest={index === currentDialogueIndex}
+                                        />
+                                    ))}
                                 </div>
-                                <div>
-                                    <h2 className="font-semibold text-gray-900">Conversation Practice</h2>
-                                    <p className="text-sm text-gray-500">{dialogues.length} exchanges</p>
-                                </div>
-                            </div>
-                            <p className="text-sm text-gray-600">{lesson?.description}</p>
-                        </div>
-
-                        {/* Quick Lesson - Now displayed first */}
-                        {quickLesson && <QuickLesson quickLesson={quickLesson} />}
-
-                        {/* Dialogues */}
-                        <div className="space-y-4 relative">
-                            {dialogues.slice(0, currentDialogueIndex + 1).map((dialogue, index) => (
-                                <Dialogue
-                                    key={`${dialogue.dialogue_id}-${index}`}
-                                    dialogue={dialogue}
-                                    isTeacher={dialogue.speaker_role === 'Teacher'}
-                                    isActive={index === currentDialogueIndex}
-                                    isLatest={index === currentDialogueIndex}
-                                />
-                            ))}
-                        </div>
+                            </>
+                        )}
                     </>
-                )}
-
-                {showExercises ? (
+                ) : (
                     <>
                         {/* Exercise Info Card */}
                         {/* <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
@@ -265,13 +261,6 @@ const LessonDetail = () => {
                             onComplete={handleExerciseComplete}
                         />
                     </>
-                ) : (
-                    <>
-                        {/* Show Quick Lesson after all dialogues are complete */}
-                        {currentDialogueIndex === dialogues.length - 1 && (
-                            <QuickLesson quickLesson={quickLesson} />
-                        )}
-                    </>
                 )}
             </div>
 
@@ -283,7 +272,8 @@ const LessonDetail = () => {
                             onClick={handleContinue}
                             className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-4 px-6 rounded-xl flex items-center justify-center gap-2 transition-all"
                         >
-                            {currentDialogueIndex === dialogues.length - 1 ? 'Start Exercises' : 'Continue'}
+                            {!showDialogues ? 'Start Conversation' :
+                                currentDialogueIndex === dialogues.length - 1 ? 'Start Exercises' : 'Continue'}
                             <ChevronRight size={20} />
                         </button>
                     )}

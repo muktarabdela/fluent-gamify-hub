@@ -99,10 +99,10 @@ const ExerciseContainer = ({ exercises, userId, lessonId, onComplete }) => {
                     <span>Progress</span>
                     <span>{completedExercises.size} of {exercises.length} completed</span>
                 </div>
-                <Progress value={progress} className="h-2" />
+                <Progress value={progress} className="h-2 bg-primary/20" />
             </div>
 
-            <span className="inline-block px-3 py-1 text-sm font-semibold text-primary bg-primary/10 rounded-full mb-4">
+            <span className="inline-block px-3 py-1 text-sm font-semibold text-white bg-primary/40 rounded-full mb-4">
                 {exercises[currentExerciseIndex].type.replace('_', ' ').toUpperCase()}
             </span>
 

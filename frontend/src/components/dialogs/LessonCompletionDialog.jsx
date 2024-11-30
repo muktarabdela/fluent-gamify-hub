@@ -98,17 +98,17 @@ const LessonCompletionDialog = ({ isOpen, onClose, likeCoins, nextLesson, curren
                                 transition={{ delay: 0.9 }}
                                 className="flex flex-col gap-3 pt-4"
                             >
-                                <button
+                                {/* <button
                                     onClick={() => navigate('/live-session', { state: { fromLesson: true } })}
                                     className="w-full px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
                                 >
                                     Practice in Live Session
                                     <ChevronRight className="w-4 h-4" />
-                                </button>
+                                </button> */}
 
                                 {nextLesson && (
                                     <button
-                                        onClick={() => navigate(`/live-session`)}
+                                        onClick={() => navigate(`/`)}
                                         className="w-full px-4 py-2 rounded-lg border border-primary text-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
                                     >
                                         Next Lesson

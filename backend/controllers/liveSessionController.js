@@ -45,20 +45,23 @@ const liveSessionController = {
         try {
             const pool = getPool();
             const { sessionType } = req.params;
-            const { status } = req.query;
+            const { status, userId } = req.query;
 
             let query = `
-                SELECT ls.*, 
-                       l.title as lesson_title,
-                       u.username as host_username,
-                       u.first_name as host_first_name
+                SELECT 
+                    ls.*,
+                    l.title as lesson_title,
+                    u.username as host_username,
+                    u.first_name as host_first_name,
+                    lsp.status as user_status
                 FROM LiveSessions ls
                 LEFT JOIN Lessons l ON ls.lesson_id = l.lesson_id
                 LEFT JOIN Users u ON ls.host_user_id = u.user_id
+                LEFT JOIN LiveSessionParticipants lsp ON ls.session_id = lsp.session_id AND lsp.user_id = ?
                 WHERE ls.session_type = ?
             `;
 
-            const params = [sessionType];
+            const params = [userId, sessionType];
 
             if (status) {
                 query += ` AND ls.status = ?`;
@@ -314,6 +317,106 @@ const liveSessionController = {
         } catch (error) {
             console.error('Error fetching user sessions:', error);
             res.status(500).json({ message: error.message });
+        }
+    },
+
+    // Update telegram chat ID and status
+    updateTelegramChatId: async (req, res) => {
+        try {
+            const { sessionId } = req.params;
+            const { telegram_chat_id } = req.body;
+            console.log("telegram_chat_id", telegram_chat_id)
+            const pool = getPool();
+            const connection = await pool.getConnection();
+
+            try {
+                await connection.beginTransaction();
+                // Update LiveSession with telegram_group_id and status
+                const [updateResult] = await connection.query(
+                    `UPDATE LiveSessions 
+                     SET telegram_chat_id = ?,
+                         status = 'Ongoing',
+                         updated_at = CURRENT_TIMESTAMP
+                     WHERE session_id = ?`,
+                    [telegram_chat_id, sessionId]
+                );
+
+                if (updateResult.affectedRows === 0) {
+                    throw new Error('Session not found');
+                }
+
+                await connection.commit();
+
+                res.json({
+                    success: true,
+                    message: 'Session updated successfully',
+                    telegram_chat_id,
+                    sessionId
+                });
+
+            } catch (error) {
+                await connection.rollback();
+                throw error;
+            } finally {
+                connection.release();
+            }
+
+        } catch (error) {
+            console.error('Error updating telegram chat ID:', error);
+            res.status(error.message === 'Session not found' ? 404 : 500).json({
+                success: false,
+                message: error.message || 'Failed to update telegram chat ID'
+            });
+        }
+    },
+
+    // Add new method to handle session completion
+    completeUserSession: async (req, res) => {
+        const { sessionId } = req.params;
+        const { userId } = req.body;
+
+        try {
+            const pool = getPool();
+            const connection = await pool.getConnection();
+
+            try {
+                await connection.beginTransaction();
+
+                // Update participant status
+                const [updateResult] = await connection.query(
+                    `UPDATE LiveSessionParticipants 
+                     SET status = 'completed',
+                         completed_at = CURRENT_TIMESTAMP
+                     WHERE session_id = ? AND user_id = ?`,
+                    [sessionId, userId]
+                );
+
+                if (updateResult.affectedRows === 0) {
+                    throw new Error('Participant record not found');
+                }
+
+                await connection.commit();
+
+                res.json({
+                    success: true,
+                    message: 'Session completed for user',
+                    sessionId,
+                    userId
+                });
+
+            } catch (error) {
+                await connection.rollback();
+                throw error;
+            } finally {
+                connection.release();
+            }
+
+        } catch (error) {
+            console.error('Error completing session for user:', error);
+            res.status(error.message === 'Participant record not found' ? 404 : 500).json({
+                success: false,
+                message: error.message || 'Failed to complete session for user'
+            });
         }
     }
 };

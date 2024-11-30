@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import Navigation from "@/components/Navigation";
 import logo from "../../public/fluent logo.png";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getSessionsByType, updateSessionStatus } from "@/api/liveSessionService";
+import { completeUserSession, getSessionsByType, joinSession, updateSessionStatus, updateSessionTelegramChat } from "@/api/liveSessionService";
 import { getTelegramUser } from "@/utils/telegram";
 import { motion } from "framer-motion";
 import { BookOpen, Calendar, Users } from "lucide-react";
@@ -144,7 +144,7 @@ export default function LiveSession() {
         if (session.status === 'Ongoing') {
             return (
                 <Button
-                    className="w-full mt-4"
+                    className="w-full mt-4 bg-green-500"
                     variant="default"
                     onClick={() => window.open(session.inviteLink, '_blank')}
                 >
@@ -201,23 +201,22 @@ export default function LiveSession() {
 
     const handleJoinSession = async (session, groupId) => {
         try {
-            // If session is already created (has inviteLink), just open it
-            // if (session.inviteLink) {
-            //     console.log(session)
-            //     window.open(session.inviteLink, '_blank');
-            //     setIsJoinDialogOpen(false);
-            //     return;
-            // }
-
             // Create new session with the obtained groupId
             const data = await createNewSession({
                 topic: session.topic,
-                // lessonId: session.lesson_id,
+                sessionId: session.session_id,
                 group_id: groupId
             });
 
             // Update the session status to Ongoing
             await updateSessionStatus(session.session_id, 'Ongoing', data.inviteLink);
+            await updateSessionTelegramChat(session.session_id, groupId);
+
+            // First join the session
+            await joinSession(session.session_id, telegramUser.id);
+
+            // Then complete it
+            await completeUserSession(session.session_id, telegramUser.id);
 
             setJoinStatus({
                 loading: false,
@@ -228,7 +227,12 @@ export default function LiveSession() {
             // Update the sessions list
             const updatedSessions = sessions.map(s =>
                 s.session_id === session.session_id
-                    ? { ...s, status: 'Ongoing', inviteLink: data.inviteLink }
+                    ? {
+                        ...s,
+                        status: 'Ongoing',
+                        inviteLink: data.inviteLink,
+                        user_status: 'completed'
+                    }
                     : s
             );
             setSessions(updatedSessions);
@@ -393,7 +397,7 @@ export default function LiveSession() {
                             <div className="text-center space-y-4">
                                 <p className="text-green-600">Session created successfully!</p>
                                 <Button
-                                    className="w-full"
+                                    className="w-full bg-green-500"
                                     onClick={() => window.open(joinStatus.inviteLink, '_blank')}
                                 >
                                     Join Now

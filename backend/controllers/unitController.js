@@ -4,15 +4,20 @@ const unitController = {
     // Get all units with lesson counts and progress
     getAllUnits: async (req, res) => {
         try {
+            const userId = req.query.userId; // Get userId from query params
             const pool = getPool();
-            const [units] = await pool.query(`
+            
+            const query = `
                 SELECT 
                     u.*,
-                    (SELECT COUNT(*) FROM Lessons WHERE unit_id = u.unit_id) as total_lessons,
-                    COUNT(DISTINCT CASE WHEN up.status = 'completed' THEN up.lesson_id END) as completed_lessons,
+                    COUNT(DISTINCT l.lesson_id) as total_lessons,
+                    COUNT(DISTINCT CASE WHEN up.status = 'completed' AND up.user_id = ? THEN l.lesson_id END) as completed_lessons,
                     IFNULL(
-                        ROUND((COUNT(DISTINCT CASE WHEN up.status = 'completed' THEN up.lesson_id END) / 
-                        (SELECT COUNT(*) FROM Lessons WHERE unit_id = u.unit_id)) * 100, 2), 
+                        ROUND(
+                            (COUNT(DISTINCT CASE WHEN up.status = 'completed' AND up.user_id = ? THEN l.lesson_id END) * 100.0) /
+                            NULLIF(COUNT(DISTINCT l.lesson_id), 0),
+                            2
+                        ),
                         0
                     ) as progress_percentage
                 FROM Units u
@@ -20,7 +25,9 @@ const unitController = {
                 LEFT JOIN UserProgress up ON l.lesson_id = up.lesson_id
                 GROUP BY u.unit_id
                 ORDER BY u.order_number
-            `);
+            `;
+
+            const [units] = await pool.query(query, [userId, userId]);
             res.json(units);
         } catch (error) {
             console.error('Error fetching units:', error);
@@ -50,7 +57,7 @@ const unitController = {
 
     // Create new unit
     createUnit: async (req, res) => {
-        console.log('Received request to create unit:', req.body);
+        // console.log('Received request to create unit:', req.body);
         const { 
             title, 
             description, 
@@ -92,7 +99,7 @@ const unitController = {
                 ]
             );
 
-            console.log('Unit created successfully:', result);
+            // console.log('Unit created successfully:', result);
 
             // Fetch the created unit
             const [newUnit] = await pool.query(
@@ -100,7 +107,7 @@ const unitController = {
                 [result.insertId]
             );
 
-            console.log('Created unit:', newUnit[0]);
+            // console.log('Created unit:', newUnit[0]);
             res.status(201).json(newUnit[0]);
         } catch (error) {
             console.error('Error creating unit:', error);

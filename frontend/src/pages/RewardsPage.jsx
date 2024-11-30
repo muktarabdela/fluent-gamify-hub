@@ -72,7 +72,7 @@ const RewardsPage = () => {
 
                 <TabsContent value="rewards">
                     {/* Share Section - Updated styling */}
-                    <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-xl p-6 mb-8 border border-primary/10">
+                    <div className="bg-gray-100 backdrop-blur-sm shadow-sm rounded-xl p-6 mb-8 border border-primary/10">
                         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-gray-800">
                             <Share2 className="w-5 h-5 text-primary" />
                             Invite Friends
@@ -100,7 +100,7 @@ const RewardsPage = () => {
                         {rewardLevels.map((reward) => (
                             <div
                                 key={reward.level}
-                                className="bg-white/80 backdrop-blur-sm border border-primary/10 
+                                className="bg-gray-100 backdrop-blur-sm border border-primary/10 
                                          rounded-xl p-5 hover:bg-white hover:shadow-md 
                                          transition-all duration-200"
                             >
@@ -117,10 +117,10 @@ const RewardsPage = () => {
                                 </p>
                                 <div className="space-y-2">
                                     {reward.rewards.map((item, index) => (
-                                        <div 
-                                            key={index} 
+                                        <div
+                                            key={index}
                                             className="flex items-center gap-3 text-sm text-gray-700 
-                                                     bg-primary/5 p-2 rounded-lg"
+                                                     bg-primary/20 p-2 rounded-lg"
                                         >
                                             <Gift className="w-4 h-4 text-primary" />
                                             <span>{item}</span>
@@ -145,9 +145,8 @@ const RewardsPage = () => {
                                     className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-100"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <span className={`w-6 h-6 flex items-center justify-center rounded-full ${
-                                            index < 3 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'
-                                        } font-semibold text-sm`}>
+                                        <span className={`w-6 h-6 flex items-center justify-center rounded-full ${index < 3 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'
+                                            } font-semibold text-sm`}>
                                             {index + 1}
                                         </span>
                                         <span className="font-medium">{user.first_name}</span>

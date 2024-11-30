@@ -1,8 +1,9 @@
 import instance from "./axios";
-export const getAllUnits = async () => {
+export const getAllUnits = async (userId) => {
   try {
-    const response = await instance.get('/units');
-    // console.log("response", response);
+    const response = await instance.get('/units', {
+      params: { userId }
+    });
     return response.data;
   } catch (error) {
     console.error('Error fetching units:', error);

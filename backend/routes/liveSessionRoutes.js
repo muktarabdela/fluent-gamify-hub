@@ -9,7 +9,9 @@ const {
     joinSession,
     leaveSession,
     getSessionsByType,
-    getSessionsByUser
+    getSessionsByUser,
+    updateTelegramChatId,
+    completeUserSession
 } = require('../controllers/liveSessionController');
 const { getPool } = require('../config/db');
 
@@ -39,5 +41,7 @@ router.patch('/:id/status', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+router.patch('/:sessionId/telegram-chat', updateTelegramChatId);
+router.post('/:sessionId/complete', completeUserSession);
 
 module.exports = router; 

@@ -40,17 +40,20 @@ const quickLessonController = {
         const {
             lesson_id,
             title,
-            content,
+            introduction,
+            grammar_focus,
+            vocabulary_words,
+            vocabulary_phrases,
             key_points,
             example_sentences,
             image_url
         } = req.body;
 
         // Validate required fields
-        if (!lesson_id || !title || !content) {
+        if (!lesson_id || !title || !introduction) {
             console.log('Missing required fields');
             return res.status(400).json({
-                message: 'lesson_id, title, and content are required'
+                message: 'lesson_id, title, and introduction are required'
             });
         }
 
@@ -70,11 +73,17 @@ const quickLessonController = {
             // Create the quick lesson
             const [result] = await pool.query(
                 `INSERT INTO QuickLessons (
-                    lesson_id, title, content, key_points,
+                    lesson_id, title, introduction, grammar_focus,
+                    vocabulary_words, vocabulary_phrases, key_points,
                     example_sentences, image_url
-                ) VALUES (?, ?, ?, ?, ?, ?)`,
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
-                    lesson_id, title, content,
+                    lesson_id,
+                    title,
+                    introduction,
+                    JSON.stringify(grammar_focus || []),
+                    JSON.stringify(vocabulary_words || []),
+                    JSON.stringify(vocabulary_phrases || []),
                     JSON.stringify(key_points || []),
                     JSON.stringify(example_sentences || []),
                     image_url

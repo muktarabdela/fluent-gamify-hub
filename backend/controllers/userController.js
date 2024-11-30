@@ -358,40 +358,29 @@ const updateStreak = async (userId, pool) => {
 // Helper function to initialize user progress
 const initializeUserProgress = async (userId, pool) => {
     try {
-        // Get all lessons
+        // Get all lessons ordered by unit and lesson order
         const [lessons] = await pool.query(`
             SELECT l.lesson_id, l.unit_id, l.order_number
             FROM Lessons l
-            ORDER BY l.unit_id, l.order_number
+            JOIN Units u ON l.unit_id = u.unit_id
+            ORDER BY u.order_number, l.order_number
         `);
 
         if (lessons.length === 0) return;
 
-        // Set first lesson as 'active' and others as 'locked'
-        const firstLesson = lessons[0];
+        // First lesson of first unit should be 'started', rest should be 'locked'
+        const values = lessons.map((lesson, index) => {
+            const status = index === 0 ? 'started' : 'locked';
+            return [userId, lesson.lesson_id, status, 0];
+        });
         
-        // Initialize progress for first lesson as 'started'
+        // Batch insert all progress records
         await pool.query(
-            `INSERT INTO UserProgress (user_id, lesson_id, status, score)
-            VALUES (?, ?, 'started', 0)`,
-            [userId, firstLesson.lesson_id]
+            `INSERT INTO UserProgress 
+                (user_id, lesson_id, status, score)
+            VALUES ?`,
+            [values]
         );
-
-        // Initialize remaining lessons as 'locked' (through default lesson status)
-        const remainingLessons = lessons.slice(1);
-        if (remainingLessons.length > 0) {
-            const values = remainingLessons.map(lesson => 
-                [userId, lesson.lesson_id, 'started', 0]
-            );
-            
-            // Batch insert for better performance
-            await pool.query(
-                `INSERT INTO UserProgress 
-                    (user_id, lesson_id, status, score)
-                VALUES ?`,
-                [values]
-            );
-        }
 
         console.log(`Initialized progress for user ${userId} with ${lessons.length} lessons`);
     } catch (error) {
@@ -411,13 +400,6 @@ const unlockNextLesson = async (userId, currentLessonId, pool) => {
 
         if (currentLesson.length === 0) return;
 
-        // Update current lesson status to completed
-        await pool.query(
-            `UPDATE Lessons SET status = 'completed' 
-             WHERE lesson_id = ?`,
-            [currentLessonId]
-        );
-
         // Get next lesson in the same unit
         const [nextLesson] = await pool.query(
             `SELECT lesson_id FROM Lessons 
@@ -427,13 +409,6 @@ const unlockNextLesson = async (userId, currentLessonId, pool) => {
         );
 
         if (nextLesson.length > 0) {
-            // Update next lesson status to active
-            await pool.query(
-                `UPDATE Lessons SET status = 'active' 
-                 WHERE lesson_id = ?`,
-                [nextLesson[0].lesson_id]
-            );
-
             // Initialize progress for next lesson
             await pool.query(
                 `INSERT INTO UserProgress (user_id, lesson_id, status, score)

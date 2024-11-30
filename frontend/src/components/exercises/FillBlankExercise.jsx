@@ -74,7 +74,7 @@ const FillBlankExercise = ({ exercise, onSubmit, onContinue }) => {
                                 onChange={(e) => setAnswer(e.target.value)}
                                 disabled={submitted}
                                 className="mx-2 px-3 py-1 border-b-2 border-primary focus:outline-none w-32 text-center"
-                                placeholder="Type here"
+                                placeholder=""
                             />
                         )}
                     </React.Fragment>

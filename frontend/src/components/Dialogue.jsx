@@ -132,7 +132,7 @@ const Dialogue = ({ dialogue, isTeacher, isActive, isLatest }) => {
                             >
                                 {isSpeaking ? <Pause size={16} /> : <Play size={16} />}
                             </button>
-                            {!isTeacher && (
+                            {/* {!isTeacher && (
                                 <button 
                                     onClick={() => setIsRecording(!isRecording)}
                                     className={`p-2 rounded-full transition-colors
@@ -143,7 +143,7 @@ const Dialogue = ({ dialogue, isTeacher, isActive, isLatest }) => {
                                 >
                                     {hasRecorded ? <Check size={16} /> : <Mic size={16} />}
                                 </button>
-                            )}
+                            )} */}
                         </div>
                     </motion.div>
                     
@@ -165,13 +165,12 @@ const Dialogue = ({ dialogue, isTeacher, isActive, isLatest }) => {
                             transition={{ delay: 0.5 }}
                             className="flex gap-2 mt-3"
                         >
-                            <button 
+                            {/* <button 
                                 className="text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center gap-1"
-                                onClick={() => {/* Add reset logic */}}
                             >
                                 <RotateCcw size={12} />
                                 Reset
-                            </button>
+                            </button> */}
                         </motion.div>
                     )}
                 </div>

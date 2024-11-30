@@ -118,4 +118,28 @@ export const updateSessionStatus = async (sessionId, status, inviteLink = null) 
         console.error('Error updating session status:', error);
         throw error;
     }
+};
+
+// Add new method to update telegram chat ID
+export const updateSessionTelegramChat = async (sessionId, telegram_chat_id) => {
+    try {
+        const response = await instance.patch(
+            `/live-sessions/${sessionId}/telegram-chat`,
+            { telegram_chat_id }
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Error updating session telegram chat:', error);
+        throw error;
+    }
+};
+
+export const completeUserSession = async (sessionId, userId) => {
+    try {
+        const response = await instance.post(`/live-sessions/${sessionId}/complete`, { userId });
+        return response.data;
+    } catch (error) {
+        console.error('Error completing session:', error);
+        throw error;
+    }
 }; 

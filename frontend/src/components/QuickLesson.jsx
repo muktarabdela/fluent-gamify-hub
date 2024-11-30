@@ -1,68 +1,110 @@
-import React from 'react';
-import { BookOpen, ListChecks, MessageSquareQuote } from 'lucide-react';
+import React, { useState } from 'react';
+import { BookOpen, Book, Bookmark, MessageSquareQuote, ChevronDown, ChevronUp } from 'lucide-react';
 
 const QuickLesson = ({ quickLesson }) => {
-    console.log('QuickLesson component received quickLesson:', quickLesson);
+    const [expandedSections, setExpandedSections] = useState({
+        grammar: false,
+        vocabulary: false,
+        phrases: false,
+    });
+
     if (!quickLesson) return null;
 
-    const keyPoints = Array.isArray(quickLesson.key_points) 
-        ? quickLesson.key_points 
-        : [];
-    
-    const exampleSentences = Array.isArray(quickLesson.example_sentences) 
-        ? quickLesson.example_sentences 
-        : [];
+    const grammarFocus = quickLesson.grammar_focus ? JSON.parse(JSON.stringify(quickLesson.grammar_focus)) : null;
+    const vocabularyWords = Array.isArray(quickLesson.vocabulary_words) ? quickLesson.vocabulary_words : [];
+    const vocabularyPhrases = Array.isArray(quickLesson.vocabulary_phrases) ? quickLesson.vocabulary_phrases : [];
+
+    const toggleSection = (section) => {
+        setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+    };
+
+    const SectionHeader = ({ icon: Icon, title, section }) => (
+        <div
+            className="flex items-center justify-between cursor-pointer p-4 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-colors duration-200"
+            onClick={() => toggleSection(section)}
+        >
+            <div className="flex items-center space-x-3">
+                <Icon size={20} className="text-indigo-600" />
+                <h3 className="font-semibold text-gray-800">{title}</h3>
+            </div>
+            {expandedSections[section] ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+        </div>
+    );
 
     return (
-        <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
-            {/* Header */}
-            <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center">
-                    <BookOpen size={24} className="text-primary" />
+        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl shadow-lg p-6 max-w-3xl mx-auto">
+            <div className="flex items-center space-x-4 mb-6">
+                <div className="bg-indigo-600 rounded-full p-3">
+                    <BookOpen size={24} className="text-white" />
                 </div>
                 <div>
-                    <h2 className="font-semibold text-gray-900">{quickLesson.title}</h2>
-                    <p className="text-sm text-gray-500">Quick Introduction</p>
+                    <h2 className="text-2xl font-bold text-gray-800">{quickLesson.title}</h2>
+                    <p className="text-sm text-gray-600">Quick Introduction</p>
                 </div>
             </div>
 
-            {/* Main Content */}
-            <div className="prose prose-sm max-w-none">
-                <p className="text-gray-600 mb-6">{quickLesson.content}</p>
+            <div className="prose prose-indigo mb-6">
+                <p className="text-gray-700">{quickLesson.introduction}</p>
+            </div>
 
-                {/* Key Points */}
-                {keyPoints.length > 0 && (
-                    <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                        <h3 className="text-sm font-semibold flex items-center gap-2 text-gray-900 mb-3">
-                            <ListChecks size={16} className="text-primary" />
-                            Key Points
-                        </h3>
-                        <ul className="space-y-2">
-                            {keyPoints.map((point, index) => (
-                                <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
-                                    <span className="text-primary mt-1">•</span>
-                                    {point}
-                                </li>
-                            ))}
-                        </ul>
+            <div className="space-y-4">
+                {grammarFocus && (
+                    <div>
+                        <SectionHeader icon={Book} title={`Grammar Focus: ${grammarFocus.topic}`} section="grammar" />
+                        {expandedSections.grammar && (
+                            <div className="mt-2 space-y-2">
+                                {grammarFocus.examples?.map((example, index) => (
+                                    <div key={index} className="bg-white p-3 rounded-lg shadow-sm">
+                                        <span className="text-indigo-600 font-medium mr-2">{index + 1}.</span>
+                                        {example}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
 
-                {/* Example Sentences */}
-                {exampleSentences.length > 0 && (
-                    <div className="bg-primary/5 rounded-lg p-4">
-                        <h3 className="text-sm font-semibold flex items-center gap-2 text-gray-900 mb-3">
-                            <MessageSquareQuote size={16} className="text-primary" />
-                            Example Sentences
-                        </h3>
-                        <ul className="space-y-2">
-                            {exampleSentences.map((sentence, index) => (
-                                <li key={index} className="text-sm text-gray-600 italic flex items-start gap-2">
-                                    <span className="text-primary mt-1">•</span>
-                                    "{sentence}"
-                                </li>
-                            ))}
-                        </ul>
+                {vocabularyWords.length > 0 && (
+                    <div>
+                        <SectionHeader icon={Bookmark} title="Vocabulary" section="vocabulary" />
+                        {expandedSections.vocabulary && (
+                            <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                                {vocabularyWords.map((word, index) => (
+                                    <div key={index} className="bg-white p-3 rounded-lg shadow-sm">
+                                        {typeof word === 'object' ? (
+                                            <>
+                                                <span className="font-semibold text-indigo-600">{word.word}</span>
+                                                {word.definition && <span className="text-gray-600 ml-2">- {word.definition}</span>}
+                                            </>
+                                        ) : (
+                                            <span className="font-medium text-gray-800">{word}</span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {vocabularyPhrases.length > 0 && (
+                    <div>
+                        <SectionHeader icon={MessageSquareQuote} title="Common Phrases" section="phrases" />
+                        {expandedSections.phrases && (
+                            <div className="mt-2 space-y-2">
+                                {vocabularyPhrases.map((phrase, index) => (
+                                    <div key={index} className="bg-white p-3 rounded-lg shadow-sm">
+                                        {typeof phrase === 'object' ? (
+                                            <>
+                                                <span className="font-medium text-indigo-600">"{phrase.phrase}"</span>
+                                                {phrase.description && <span className="text-gray-600 ml-2">- {phrase.description}</span>}
+                                            </>
+                                        ) : (
+                                            <span className="font-medium text-gray-800">"{phrase}"</span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
@@ -70,4 +112,4 @@ const QuickLesson = ({ quickLesson }) => {
     );
 };
 
-export default QuickLesson; 
+export default QuickLesson;
