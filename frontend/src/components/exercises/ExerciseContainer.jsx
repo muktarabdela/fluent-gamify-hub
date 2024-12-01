@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SentenceBuildingExercise from './SentenceBuildingExercise';
 import MultipleChoiceExercise from './MultipleChoiceExercise';
 import ShadowingExercise from './ShadowingExercise';
 import FillBlankExercise from './FillBlankExercise';
 import { Progress } from "@/components/ui/progress";
-import { getUserById, updateUserProgress } from '@/api/userService';
+import { getUserById, updateUserProgress, updateUserStreak, getUserStreak } from '@/api/userService';
+import { getLessonById, updateLessonStatus } from '@/api/lessonService';
 import LessonCompletionDialog from '../dialogs/LessonCompletionDialog';
-import { getLessonById } from '@/api/lessonService';
 
 const ExerciseContainer = ({ exercises, userId, lessonId, onComplete }) => {
     const navigate = useNavigate();
@@ -15,42 +15,69 @@ const ExerciseContainer = ({ exercises, userId, lessonId, onComplete }) => {
     const [completedExercises, setCompletedExercises] = useState(new Set());
     const [showCompletionDialog, setShowCompletionDialog] = useState(false);
     const [completionData, setCompletionData] = useState(null);
+    const [exerciseScores, setExerciseScores] = useState(new Map());
+    const [startTime] = useState(Date.now());
+    const [streakData, setStreakData] = useState(null);
 
     const currentExercise = exercises[currentExerciseIndex];
     const progress = (completedExercises.size / exercises.length) * 100;
 
+    // Calculate overall score from all completed exercises
+    const calculateOverallScore = () => {
+        let totalScore = 0;
+        let completedCount = 0;
+        exerciseScores.forEach(score => {
+            totalScore += score;
+            completedCount++;
+        });
+        return completedCount > 0 ? Math.round(totalScore / completedCount) : 0;
+    };
+
+    // Calculate total time spent on exercises
+    const calculateTotalTime = () => {
+        return Math.floor((Date.now() - startTime) / 1000);
+    };
+
     const handleExerciseSubmit = async (answer) => {
-        // Mark the current exercise as completed immediately
         const newCompletedExercises = new Set([...completedExercises, currentExercise.exercise_id]);
         setCompletedExercises(newCompletedExercises);
 
-        // Check if all exercises are completed
-        if (newCompletedExercises.size === exercises.length) {
-            try {
-                // Update progress
-                await updateUserProgress(userId, {
-                    lesson_id: lessonId,
-                    status: 'completed',
-                    score: 100
-                });
+        setExerciseScores(prev => new Map(prev.set(currentExercise.exercise_id, answer.score || 100)));
 
-                // Get next lesson info and user data
-                const [nextLessonData, userData] = await Promise.all([
-                    getLessonById(parseInt(lessonId) + 1).catch(() => null),
-                    getUserById(userId)
+        try {
+            if (newCompletedExercises.size === exercises.length) {
+                // Get current streak data before update
+                const currentStreakData = await getUserStreak(userId);
+                setStreakData(currentStreakData);
+
+                // Update lesson status and user progress
+                const [lessonStatusResponse, streakResponse] = await Promise.all([
+                    updateLessonStatus(lessonId, 'completed', userId),
+                    updateUserStreak(userId),
+                    updateUserProgress(userId, {
+                        lesson_id: lessonId,
+                        status: 'completed',
+                        score: calculateOverallScore(),
+                        completion_date: new Date().toISOString(),
+                        time_spent_seconds: calculateTotalTime()
+                    })
                 ]);
+
+                // Get updated streak data after the update
+                const updatedStreakData = await getUserStreak(userId);
 
                 setCompletionData({
                     likeCoins: 10,
-                    nextLesson: nextLessonData,
-                    currentStreak: userData.current_streak || 0
+                    nextLesson: lessonStatusResponse.find(status => status.lesson_id !== parseInt(lessonId)),
+                    currentStreak: updatedStreakData.current_streak,
+                    isNewStreak: updatedStreakData.current_streak > (currentStreakData?.current_streak || 0)
                 });
 
                 setShowCompletionDialog(true);
                 onComplete();
-            } catch (error) {
-                console.error('Error updating lesson progress:', error);
             }
+        } catch (error) {
+            console.error('Error updating progress:', error);
         }
 
         return {
@@ -64,7 +91,6 @@ const ExerciseContainer = ({ exercises, userId, lessonId, onComplete }) => {
             setCurrentExerciseIndex(prev => prev + 1);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
-            // If this was the last exercise, call onComplete
             onComplete();
         }
     };
@@ -116,6 +142,7 @@ const ExerciseContainer = ({ exercises, userId, lessonId, onComplete }) => {
                 likeCoins={completionData?.likeCoins}
                 nextLesson={completionData?.nextLesson}
                 currentStreak={completionData?.currentStreak}
+                isNewStreak={completionData?.isNewStreak}
             />
         </div>
     );

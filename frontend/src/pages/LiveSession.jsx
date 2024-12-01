@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { createNewSession } from "@/api/botService";
 import { getAvailableGroup } from "@/api/telegramGroupService";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function LiveSession() {
     const telegramUser = getTelegramUser();
@@ -43,6 +44,7 @@ export default function LiveSession() {
     const [isJoinDialogOpen, setIsJoinDialogOpen] = useState(false);
     const [selectedSession, setSelectedSession] = useState(null);
     const [joinStatus, setJoinStatus] = useState({ loading: false, error: null, inviteLink: null });
+    const { toast } = useToast();
 
     // Fetch sessions when tab changes or status filter changes
     useEffect(() => {
@@ -53,6 +55,7 @@ export default function LiveSession() {
                 const userId = telegramUser.id;
                 const data = await getSessionsByType('free_talk', status, userId);
                 setSessions(data);
+                console.log(data)
                 setError(null);
             } catch (err) {
                 console.error('Error fetching sessions:', err);
@@ -141,6 +144,22 @@ export default function LiveSession() {
 
     const getSessionButton = (session, handleJoinSession, joinStatus) => {
         console.log(session)
+        if (session.user_status === 'completed') {
+            return (
+                <Button
+                    className="w-full mt-4 bg-green-500 hover:bg-green-600 text-white"
+                    variant="default"
+                    onClick={() => toast({
+                        title: "Session Completed",
+                        description: "You have already completed this session.",
+                        duration: 3000
+                    })}
+                >
+                    Completed
+                </Button>
+            );
+        }
+
         if (session.status === 'Ongoing') {
             return (
                 <Button
@@ -182,20 +201,72 @@ export default function LiveSession() {
         setJoinStatus({ loading: true, error: null, inviteLink: null });
 
         try {
-            const availableGroup = await getAvailableGroup();
+            // Optimistically update UI
+            const updatedSessions = sessions.map(s =>
+                s.session_id === session.session_id
+                    ? { ...s, status: 'Creating...' }
+                    : s
+            );
+            setSessions(updatedSessions);
+
+            // Parallel API calls
+            const [availableGroup, joinSessionResponse] = await Promise.all([
+                getAvailableGroup(),
+                joinSession(session.session_id, telegramUser.id)
+            ]);
+
             if (!availableGroup) {
                 throw new Error('No available groups found');
             }
-            setGroupId(availableGroup.telegram_chat_id);
-            // Now proceed with session creation
-            handleJoinSession(session, availableGroup.telegram_chat_id);
-        } catch (error) {
-            console.error('Error checking available groups:', error);
+
+            // Create new session
+            const data = await createNewSession({
+                topic: session.topic,
+                sessionId: session.session_id,
+                group_id: availableGroup.telegram_chat_id
+            });
+
+            // Parallel updates
+            await Promise.all([
+                updateSessionStatus(session.session_id, 'Ongoing', data.inviteLink),
+                updateSessionTelegramChat(session.session_id, availableGroup.telegram_chat_id),
+                completeUserSession(session.session_id, telegramUser.id)
+            ]);
+
             setJoinStatus({
                 loading: false,
-                error: 'No available groups found. Please try again later.',
-                inviteLink: null
+                error: null,
+                inviteLink: data.inviteLink,
             });
+
+            // Final UI update
+            const finalUpdatedSessions = sessions.map(s =>
+                s.session_id === session.session_id
+                    ? {
+                        ...s,
+                        status: 'Ongoing',
+                        inviteLink: data.inviteLink,
+                        user_status: 'completed'
+                    }
+                    : s
+            );
+            setSessions(finalUpdatedSessions);
+
+        } catch (error) {
+            console.error('Error creating session:', error);
+            setJoinStatus({
+                loading: false,
+                error: error.message || 'Failed to create session. Please try again.',
+                inviteLink: null,
+            });
+
+            // Revert optimistic update
+            const revertedSessions = sessions.map(s =>
+                s.session_id === session.session_id
+                    ? { ...s, status: 'Scheduled' }
+                    : s
+            );
+            setSessions(revertedSessions);
         }
     };
 
@@ -352,10 +423,14 @@ export default function LiveSession() {
                                             </p>
                                             <p className="flex justify-between">
                                                 <span className="text-gray-600">Status:</span>
-                                                <span className={`font-medium ${session.status === "Ongoing" ? "text-green-600" :
+                                                <span className={`font-medium ${
+                                                    session.user_status === 'completed' ? "text-green-600" :
+                                                    session.status === "Ongoing" ? "text-green-600" :
                                                     session.status === "Scheduled" ? "text-blue-600" :
                                                         "text-gray-600"
-                                                    }`}>{session.status}</span>
+                                                }`}>
+                                                    {session.user_status === 'completed' ? 'Completed' : session.status}
+                                                </span>
                                             </p>
                                         </div>
                                         {getSessionButton(session, handleJoinSession, joinStatus)}

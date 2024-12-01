@@ -19,7 +19,7 @@ const userController = {
 
         try {
             const pool = getPool();
-            
+
             // Check if user exists
             const [existingUser] = await pool.query(
                 'SELECT * FROM Users WHERE user_id = ?',
@@ -151,7 +151,7 @@ const userController = {
                 return res.status(404).json({ message: 'User not found' });
             }
 
-            res.json({ 
+            res.json({
                 message: 'User preferences updated successfully',
                 preferences: {
                     country,
@@ -218,7 +218,7 @@ const userController = {
 
         try {
             const pool = getPool();
-            
+
             // Update progress
             await pool.query(
                 `INSERT INTO UserProgress 
@@ -231,14 +231,7 @@ const userController = {
                 [user_id, lesson_id, status, score]
             );
 
-            // If lesson is completed
-            if (status === 'completed') {
-                // Update streak
-                await updateStreak(user_id, pool);
-                
-                // Unlock next lesson
-                await unlockNextLesson(user_id, lesson_id, pool);
-            }
+
 
             // Get updated progress
             const [progress] = await pool.query(
@@ -263,15 +256,8 @@ const userController = {
             );
 
             if (streak.length === 0) {
-                // Initialize streak if it doesn't exist
-                await pool.query(
-                    'INSERT INTO UserStreaks (user_id) VALUES (?)',
-                    [req.params.id]
-                );
-                return res.json({ 
-                    current_streak: 0, 
-                    longest_streak: 0,
-                    last_activity_date: null 
+                return res.status(404).json({
+                    message: 'Streak not found for this user'
                 });
             }
 
@@ -287,10 +273,22 @@ const userController = {
         try {
             const pool = getPool();
             const userId = req.params.id;
-            
-            // Update the streak
+            console.log("userId from updateUserStreak", userId)
+            // Check if streak was already updated today based on updated_at
+            const [currentStreak] = await pool.query(
+                'SELECT * FROM UserStreaks WHERE user_id = ? AND DATE(updated_at) = CURDATE()',
+                [userId]
+            );
+
+            if (currentStreak.length > 0) {
+                // Already updated today, just return current streak
+                res.json(currentStreak[0]);
+                return;
+            }
+
+            // Update the streak since it hasn't been updated today
             await updateStreak(userId, pool);
-            
+
             // Get and return the updated streak
             const [streak] = await pool.query(
                 'SELECT * FROM UserStreaks WHERE user_id = ?',
@@ -312,21 +310,14 @@ const userController = {
 // Helper function to update streak
 const updateStreak = async (userId, pool) => {
     const today = new Date().toISOString().split('T')[0];
-    
+
     const [currentStreak] = await pool.query(
         'SELECT * FROM UserStreaks WHERE user_id = ?',
         [userId]
     );
 
     if (currentStreak.length === 0) {
-        // Initialize streak
-        await pool.query(
-            `INSERT INTO UserStreaks 
-                (user_id, current_streak, longest_streak, last_activity_date) 
-            VALUES (?, 1, 1, ?)`,
-            [userId, today]
-        );
-        return;
+        return; // Don't initialize if streak doesn't exist
     }
 
     const streak = currentStreak[0];
@@ -335,7 +326,7 @@ const updateStreak = async (userId, pool) => {
     yesterday.setDate(yesterday.getDate() - 1);
 
     let newCurrentStreak = streak.current_streak;
-    
+
     if (lastDate.toISOString().split('T')[0] === yesterday.toISOString().split('T')[0]) {
         // Consecutive day
         newCurrentStreak += 1;
@@ -373,7 +364,7 @@ const initializeUserProgress = async (userId, pool) => {
             const status = index === 0 ? 'started' : 'locked';
             return [userId, lesson.lesson_id, status, 0];
         });
-        
+
         // Batch insert all progress records
         await pool.query(
             `INSERT INTO UserProgress 

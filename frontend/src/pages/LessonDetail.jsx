@@ -62,16 +62,16 @@ const LessonDetail = () => {
 
     useEffect(() => {
         const fetchLessonData = async () => {
-            if (!lessonId) return;
+            if (!lessonId || !telegramUser?.id) return;
 
             try {
                 console.log('Fetching lesson data...');
                 setLoading(true);
 
                 const [lessonData, dialoguesData, exercisesData, quickLessonData] = await Promise.all([
-                    getLessonById(lessonId),
+                    getLessonById(lessonId, telegramUser.id),
                     getDialoguesByLesson(lessonId),
-                    getExercisesByLesson(lessonId, telegramUser?.id),
+                    getExercisesByLesson(lessonId, telegramUser.id),
                     getQuickLessonByLessonId(lessonId)
                 ]);
 
@@ -88,7 +88,7 @@ const LessonDetail = () => {
         };
 
         fetchLessonData();
-    }, [lessonId]);
+    }, [lessonId, telegramUser?.id]);
 
     const handleContinue = () => {
         if (!showDialogues) {
@@ -116,16 +116,18 @@ const LessonDetail = () => {
     };
 
     const handleExerciseComplete = async () => {
+        if (!telegramUser?.id) return;
+        
         try {
-            // Mark lesson as completed
-            await updateUserProgress(telegramUser?.id, {
+            // Mark lesson as completed with user ID
+            await updateUserProgress(telegramUser.id, {
                 lesson_id: lessonId,
                 status: 'completed',
                 score: 100
             });
 
-            // Award LIKE coins (10 per lesson completion)
-            await updateUserPreferences(telegramUser?.id, {
+            // Award LIKE coins
+            await updateUserPreferences(telegramUser.id, {
                 like_coins_increment: 10
             });
 

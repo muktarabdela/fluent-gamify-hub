@@ -39,7 +39,8 @@ const initializeTables = async (promisePool) => {
             { name: 'LiveSessions', query: tableQueries.createLiveSessionsTable },
             { name: 'TelegramGroups', query: tableQueries.createTelegramGroupsTable },
             { name: 'QuickLessons', query: tableQueries.createQuickLessonsTable },
-            { name: "LiveSessionParticipants", query: tableQueries.createLiveSessionParticipantsTable }
+            { name: "LiveSessionParticipants", query: tableQueries.createLiveSessionParticipantsTable },
+            { name: "LessonStatus", query: tableQueries.createLessonStatusTable }
         ];
 
         for (const table of tables) {

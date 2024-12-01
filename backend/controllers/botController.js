@@ -7,81 +7,69 @@ const BOT_API_URL = process.env.BOT_API_URL || 'http://localhost:3001';
 const botController = {
     // Create new session
     createNewSession: async (req, res) => {
-        try {
-            const { topic, group_id } = req.body;
-            console.log("telegram_chat_id", group_id);
+        const { topic, group_id } = req.body;
+        const pool = getPool();
+        const connection = await pool.getConnection();
 
-            const pool = getPool();
-            const connection = await pool.getConnection();
+        try {
             await connection.beginTransaction();
 
-            try {
-                // First check if the group exists in TelegramGroups
-                const [existingGroup] = await connection.query(
+            // Parallel database operations
+            const [existingGroupQuery, groupStatusUpdate] = await Promise.all([
+                connection.query(
                     'SELECT group_id FROM TelegramGroups WHERE telegram_chat_id = ?',
                     [group_id.toString()]
+                ),
+                connection.query(
+                    `UPDATE TelegramGroups 
+                    SET status = 'in_use',
+                        last_used_at = CURRENT_TIMESTAMP,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE telegram_chat_id = ?`,
+                    [group_id.toString()]
+                )
+            ]);
+
+            let groupId;
+            if (existingGroupQuery[0].length === 0) {
+                const [newGroup] = await connection.query(
+                    'INSERT INTO TelegramGroups (telegram_chat_id, status) VALUES (?, "in_use")',
+                    [group_id.toString()]
                 );
-
-                let groupId;
-                if (existingGroup.length === 0) {
-                    // Create new TelegramGroup if it doesn't exist
-                    const [newGroup] = await connection.query(
-                        'INSERT INTO TelegramGroups (telegram_chat_id, status) VALUES (?, "in_use")',
-                        [group_id.toString()]
-                    );
-                    groupId = newGroup.insertId;
-                } else {
-                    groupId = existingGroup[0].group_id;
-                    // Update existing group status to in_use
-                    await connection.query(
-                        `UPDATE TelegramGroups 
-                        SET status = 'in_use',
-                            last_used_at = CURRENT_TIMESTAMP,
-                            updated_at = CURRENT_TIMESTAMP
-                        WHERE group_id = ?`,
-                        [groupId]
-                    );
-                }
-
-                // Create bot session and get invite link
-                const response = await axios.post(`${BOT_API_URL}/newsession`, {
-                    topic,
-                    group_id
-                }, {
-                    timeout: 15000
-                });
-
-                await connection.commit();
-
-                res.json({
-                    success: true,
-                    inviteLink: response.data.inviteLink,
-                    notificationSent: response.data.notificationSent,
-                    groupId
-                });
-            } catch (error) {
-                await connection.rollback();
-                throw error;
-            } finally {
-                connection.release();
+                groupId = newGroup.insertId;
+            } else {
+                groupId = existingGroupQuery[0][0].group_id;
             }
-        } catch (error) {
-            console.error('Error creating session:', error);
-            const errorMessage = error.code === 'ECONNABORTED'
-                ? 'Request timed out. Please try again.'
-                : error.response?.data?.message || 'Failed to create session';
 
-            res.status(error.response?.status || 500).json({
-                success: false,
-                message: errorMessage,
+            // Create bot session
+            const response = await axios.post(`${BOT_API_URL}/newsession`, {
+                topic,
+                group_id
+            }, {
+                timeout: 30000
             });
+
+            await connection.commit();
+
+            res.json({
+                success: true,
+                inviteLink: response.data.inviteLink,
+                notificationSent: response.data.notificationSent,
+                groupId
+            });
+
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
         }
     },
 
     // End session
     endSession: async (req, res) => {
         try {
-            const { group_id } = req.body;
+            const { group_id, userId } = req.body;
 
             if (!group_id) {
                 return res.status(400).json({
@@ -107,6 +95,22 @@ const botController = {
 
                 const internalGroupId = telegramGroup[0].group_id;
 
+                // Get the session ID from LiveSessions
+                const [liveSession] = await connection.query(
+                    `SELECT session_id FROM LiveSessions 
+                    WHERE telegram_chat_id = ? 
+                    AND status != 'Ended' 
+                    ORDER BY created_at DESC 
+                    LIMIT 1`,
+                    [group_id.toString()]
+                );
+
+                if (liveSession.length === 0) {
+                    throw new Error('Active session not found');
+                }
+
+                const sessionId = liveSession[0].session_id;
+
                 // Update LiveSessions table
                 const [liveSessionResult] = await connection.query(
                     `UPDATE LiveSessions 
@@ -125,6 +129,16 @@ const botController = {
                         last_used_at = CURRENT_TIMESTAMP 
                     WHERE telegram_chat_id = ?`,
                     [group_id.toString()]
+                );
+
+                // Update participant status
+                const [participantResult] = await connection.query(
+                    `UPDATE LiveSessionParticipants 
+                    SET status = 'completed',
+                        completed_at = CURRENT_TIMESTAMP
+                    WHERE session_id = ? 
+                    AND user_id = ?`,
+                    [sessionId, userId]
                 );
 
                 await connection.commit();

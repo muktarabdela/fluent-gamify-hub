@@ -89,7 +89,7 @@ const exerciseController = {
                 [result.insertId]
             );
 
-            console.log('Created exercise:', newExercise[0]);
+            // console.log('Created exercise:', newExercise[0]);
             res.status(201).json(newExercise[0]);
         } catch (error) {
             console.error('Error creating exercise:', error);
@@ -159,7 +159,7 @@ const exerciseController = {
         try {
             const pool = getPool();
             const userId = req.query.userId;
-            console.log('Fetching exercises for lesson:', req.params.lessonId, 'and user:', userId);
+            // console.log('Fetching exercises for lesson:', req.params.lessonId, 'and user:', userId);
             
             const [exercises] = await pool.query(`
                 SELECT 
@@ -177,7 +177,7 @@ const exerciseController = {
                 ORDER BY e.order_number
             `, [userId, req.params.lessonId]);
             
-            console.log('Found exercises:', exercises);
+            // console.log('Found exercises:', exercises);
             res.json(exercises);
         } catch (error) {
             console.error('Error fetching exercises:', error);

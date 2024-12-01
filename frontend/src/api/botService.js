@@ -9,7 +9,7 @@ export const createNewSession = async ({ topic, lessonId = null, group_id, sessi
             group_id,
             sessionId
         }, {
-            timeout: 15000
+            timeout: 30000
         });
 
         if (!response.data.success) {

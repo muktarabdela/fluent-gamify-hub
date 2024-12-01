@@ -4,9 +4,10 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 import { Badge } from "@/components/ui/badge";
 import LessonActionButton from './StartLearningButton';
 import { getAllUnits } from '@/api/unitService';
-import { getLessonsByUnit } from '@/api/lessonService';
+import { getLessonsByUnitWithStatus } from '@/api/lessonService';
 import { Skeleton } from "@/components/ui/skeleton";
 import image from "../../public/fluent logo.png"
+import { getTelegramUser } from '@/utils/telegram';
 const practiceIcons = {
     "Shadowing": <Mic size={14} />,
     "Flashcards": <BookOpen size={14} />,
@@ -33,7 +34,7 @@ const parseJSON = (jsonData) => {
     return [];
 };
 
-function LessonCard({ lesson, isFirstIncomplete }) {
+function LessonCard({ lesson }) {
     const [imageError, setImageError] = useState(false);
 
     const getStatusStyles = (status) => {
@@ -43,9 +44,8 @@ function LessonCard({ lesson, isFirstIncomplete }) {
             case 'active':
                 return 'border-l-4 border-l-blue-500 bg-blue-50';
             case 'locked':
-                return 'border-l-4 border-l-gray-300 bg-gray-200 opacity-75';
             default:
-                return 'border-l-4 border-l-gray-300 bg-gray-200';
+                return 'border-l-4 border-l-gray-300 bg-gray-200 opacity-75';
         }
     };
 
@@ -79,6 +79,18 @@ function LessonCard({ lesson, isFirstIncomplete }) {
             .join('')
             .toUpperCase()
             .slice(0, 2);
+    };
+
+    // Add completion date display if available
+    const CompletionDate = () => {
+        if (lesson.status === 'completed' && lesson.completion_date) {
+            return (
+                <div className="text-xs text-green-600 mt-2">
+                    Completed on {new Date(lesson.completion_date).toLocaleDateString()}
+                </div>
+            );
+        }
+        return null;
     };
 
     return (
@@ -211,11 +223,15 @@ function LessonCard({ lesson, isFirstIncomplete }) {
                         </div>
                     )}
 
+                    {/* Add completion date */}
+                    <CompletionDate />
+
                     {/* Action Button */}
                     <div className="pt-2">
                         <LessonActionButton
-                            status={lesson.status || 'locked'}
+                            status={lesson.status}
                             lessonId={lesson.lesson_id}
+                            unlockDate={lesson.unlock_date}
                         />
                     </div>
                 </div>
@@ -247,12 +263,14 @@ const LessonCardSkeleton = () => {
 };
 
 export default function MobileLessonDashboard() {
+    const telegramUser = getTelegramUser();
+
     const [units, setUnits] = useState([]);
     const [lessons, setLessons] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [visibleUnit, setVisibleUnit] = useState(null);
-    const userId = 2;
+    const userId = telegramUser?.id;
     const lessonRefs = useRef({});
     const unitDividerRefs = useRef({});
 
@@ -277,7 +295,7 @@ export default function MobileLessonDashboard() {
     const fetchLessonsForUnit = async (unitId) => {
         try {
             setLoading(true);
-            const lessonsData = await getLessonsByUnit(unitId, userId);
+            const lessonsData = await getLessonsByUnitWithStatus(unitId, userId);
             setLessons(prev => [...prev, ...lessonsData]);
             setLoading(false);
         } catch (err) {
@@ -368,7 +386,7 @@ export default function MobileLessonDashboard() {
                         <Accordion type="single" collapsible className="space-y-4">
                             {lessonsByUnit[unit.unit_id]?.map((lesson, index, unitLessons) => (
                                 <div key={lesson.lesson_id}>
-                                    <LessonCard 
+                                    <LessonCard
                                         lesson={lesson}
                                         isFirstIncomplete={lesson.status === 'active'}
                                     />

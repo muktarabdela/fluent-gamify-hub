@@ -1,5 +1,79 @@
 const { getPool } = require('../config/db');
 
+// Move the helper function before the controller object
+const unlockNextLesson = async (lessonId, userId, pool) => {
+    try {
+        // Get current lesson's unit and order
+        const [currentLesson] = await pool.query(
+            'SELECT unit_id, order_number FROM Lessons WHERE lesson_id = ?',
+            [lessonId]
+        );
+
+        if (currentLesson.length === 0) return null;
+
+        // Get next lesson in the same unit
+        const [nextLesson] = await pool.query(
+            `SELECT lesson_id FROM Lessons 
+             WHERE unit_id = ? AND order_number > ?
+             ORDER BY order_number ASC LIMIT 1`,
+            [currentLesson[0].unit_id, currentLesson[0].order_number]
+        );
+
+        if (nextLesson.length > 0) {
+            // Update next lesson's status to active
+            await pool.query(
+                `UPDATE LessonStatus 
+                 SET status = 'active',
+                 unlock_date = CURRENT_TIMESTAMP
+                 WHERE lesson_id = ? AND user_id = ?`,
+                [nextLesson[0].lesson_id, userId]
+            );
+
+            return nextLesson[0].lesson_id;
+        }
+
+        return null;
+    } catch (error) {
+        console.error('Error unlocking next lesson:', error);
+        throw error;
+    }
+};
+
+// Helper function to initialize lesson statuses
+const initializeLessonStatuses = async (unitId, userId, pool) => {
+    try {
+        // Get all lessons in the unit that don't have a status
+        const [lessonsWithoutStatus] = await pool.query(`
+            SELECT l.lesson_id, l.unit_id, l.order_number
+            FROM Lessons l
+            LEFT JOIN LessonStatus ls ON l.lesson_id = ls.lesson_id AND ls.user_id = ?
+            WHERE l.unit_id = ? AND ls.lesson_id IS NULL
+            ORDER BY l.order_number
+        `, [userId, unitId]);
+
+        if (lessonsWithoutStatus.length === 0) return;
+
+        // Create initial status records
+        const values = lessonsWithoutStatus.map((lesson, index) => {
+            // First lesson is 'active', rest are 'locked'
+            const status = index === 0 ? 'active' : 'locked';
+            return [lesson.lesson_id, lesson.unit_id, userId, status];
+        });
+
+        await pool.query(`
+            INSERT INTO LessonStatus 
+                (lesson_id, unit_id, user_id, status)
+            VALUES ?`,
+            [values]
+        );
+
+        console.log(`Initialized ${values.length} lesson statuses for unit ${unitId}`);
+    } catch (error) {
+        console.error('Error initializing lesson statuses:', error);
+        throw error;
+    }
+};
+
 const lessonController = {
     // Get all lessons for a specific unit
     getLessonsByUnit: async (req, res) => {
@@ -44,72 +118,36 @@ const lessonController = {
 
     // Create new lesson
     createLesson: async (req, res) => {
-        // console.log('Received request to create lesson:', req.body);
-        const {
-            unit_id,
-            title,
-            description,
-            order_number,
-            grammar_focus,
-            vocabulary_words,
-            vocabulary_phrases,
-            status,
-            live_session_title,
-            live_session_duration,
-            live_session_max_participants
-        } = req.body;
-
-        // Validate required fields
-        if (!unit_id || !title || !order_number) {
-            console.log('Missing required fields');
-            return res.status(400).json({
-                message: 'unit_id, title, and order_number are required'
-            });
-        }
-
         try {
             const pool = getPool();
-            
-            // Verify that the unit exists
-            const [unit] = await pool.query(
-                'SELECT * FROM Units WHERE unit_id = ?',
-                [unit_id]
-            );
-
-            if (unit.length === 0) {
-                return res.status(404).json({ message: 'Unit not found' });
-            }
+            const { unit_id, ...lessonData } = req.body;
 
             // Create the lesson
             const [result] = await pool.query(
-                `INSERT INTO Lessons (
-                    unit_id, title, description, order_number, 
-                    grammar_focus, vocabulary_words, vocabulary_phrases,
-                    status, live_session_title, live_session_duration, 
-                    live_session_max_participants
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    unit_id, title, description, order_number,
-                    JSON.stringify(grammar_focus), vocabulary_words, vocabulary_phrases,
-                    status || 'locked', live_session_title, live_session_duration,
-                    live_session_max_participants
-                ]
+                'INSERT INTO Lessons SET ?',
+                { ...lessonData, unit_id }
             );
 
-            // Fetch the created lesson
-            const [newLesson] = await pool.query(
-                'SELECT * FROM Lessons WHERE lesson_id = ?',
-                [result.insertId]
-            );
+            // Initialize lesson status
+            await pool.query(`
+                INSERT INTO LessonStatus (lesson_id, unit_id, status)
+                SELECT ?, ?, 
+                    CASE 
+                        WHEN NOT EXISTS (
+                            SELECT 1 FROM Lessons 
+                            WHERE unit_id = ? AND order_number < ?
+                        ) THEN 'active'
+                        ELSE 'locked'
+                    END
+            `, [result.insertId, unit_id, unit_id, lessonData.order_number]);
 
-            // console.log('Created lesson:', newLesson[0]);
-            res.status(201).json(newLesson[0]);
+            res.status(201).json({
+                message: 'Lesson created successfully',
+                lesson_id: result.insertId
+            });
         } catch (error) {
             console.error('Error creating lesson:', error);
-            res.status(500).json({
-                message: 'Failed to create lesson',
-                error: error.message
-            });
+            res.status(500).json({ message: error.message });
         }
     },
 
@@ -159,52 +197,76 @@ const lessonController = {
     getLessonsByUnitWithStatus: async (req, res) => {
         const { unitId } = req.params;
         const { userId } = req.query;
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID is required' });
+        }
+
+        try {
+            const pool = getPool();
+            // Initialize lesson statuses if needed
+            await initializeLessonStatuses(unitId, userId, pool);
+
+            // Get lessons with user-specific status
+            const [lessons] = await pool.query(
+                `SELECT 
+                    l.*,
+                    COALESCE(ls.status, 'locked') as status,
+                    ls.unlock_date,
+                    ls.completion_date
+                FROM Lessons l
+                LEFT JOIN LessonStatus ls ON l.lesson_id = ls.lesson_id AND ls.user_id = ?
+                WHERE l.unit_id = ?
+                ORDER BY l.order_number ASC`,
+                [userId, unitId]
+            );
+
+            res.json(lessons);
+        } catch (error) {
+            console.error('Error fetching lessons with status:', error);
+            res.status(500).json({ error: 'Failed to fetch lessons' });
+        }
+    },
+
+    // Update lesson status
+    updateLessonStatus: async (req, res) => {
+        const { lessonId } = req.params;
+        const { status, userId } = req.body;
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID is required' });
+        }
 
         try {
             const pool = getPool();
 
-            // Get all lessons for the unit
-            const [lessons] = await pool.query(
-                'SELECT * FROM Lessons WHERE unit_id = ? ORDER BY order_number ASC',
-                [unitId]
+            await pool.query(
+                `UPDATE LessonStatus 
+                 SET status = ?,
+                 completion_date = CASE 
+                    WHEN ? = 'completed' THEN CURRENT_TIMESTAMP 
+                    ELSE completion_date 
+                 END
+                 WHERE lesson_id = ? AND user_id = ?`,
+                [status, status, lessonId, userId]
             );
 
-            // Get user progress for these lessons
-            const [userProgress] = await pool.query(
-                'SELECT lesson_id, status FROM UserProgress WHERE user_id = ? AND lesson_id IN (?)',
-                [userId, lessons.map(lesson => lesson.lesson_id)]
-            );
+            if (status === 'completed') {
+                const nextLessonId = await unlockNextLesson(lessonId, userId, pool);
 
-            // Create a map of lesson progress
-            const progressMap = userProgress.reduce((acc, progress) => {
-                acc[progress.lesson_id] = progress.status;
-                return acc;
-            }, {});
+                const [lessonStatuses] = await pool.query(
+                    `SELECT l.lesson_id, l.title, ls.status 
+                     FROM Lessons l 
+                     LEFT JOIN LessonStatus ls ON l.lesson_id = ls.lesson_id AND ls.user_id = ?
+                     WHERE l.lesson_id IN (?, ?)`,
+                    [userId, lessonId, nextLessonId]
+                );
 
-            // Determine lesson status based on progress and prerequisites
-            const lessonsWithStatus = lessons.map((lesson, index) => {
-                let status = progressMap[lesson.lesson_id] || 'locked';
-                
-                // If it's the first lesson and no progress, mark as active
-                if (index === 0 && !progressMap[lesson.lesson_id]) {
-                    status = 'active';
-                }
-                // If previous lesson is completed, mark this as active
-                else if (index > 0 && progressMap[lessons[index - 1].lesson_id] === 'completed' 
-                         && !progressMap[lesson.lesson_id]) {
-                    status = 'active';
-                }
+                return res.json(lessonStatuses);
+            }
 
-                return {
-                    ...lesson,
-                    status
-                };
-            });
-
-            res.json(lessonsWithStatus);
+            res.json({ message: 'Lesson status updated successfully' });
         } catch (error) {
-            console.error('Error fetching lessons with status:', error);
-            res.status(500).json({ error: 'Failed to fetch lessons' });
+            console.error('Error updating lesson status:', error);
+            res.status(500).json({ message: error.message });
         }
     }
 };

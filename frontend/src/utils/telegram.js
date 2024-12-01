@@ -2,22 +2,22 @@ import { createOrUpdateUser } from '../api/userService';
 
 export const getTelegramUser = () => {
     // Hardcoded user data for development
-    const mockTelegramUser = {
-        id: 12345678,  // Mock Telegram user ID
-        first_name: "John",
-        last_name: "Doe",
-        username: "johndoe",
-        language_code: "en",
-        auth_date: Math.floor(Date.now() / 1000)  // Current timestamp in seconds
-    };
     // const mockTelegramUser = {
-    //     id: 87654321,  // Mock Telegram user ID
-    //     first_name: "muktar",
-    //     last_name: "abdela",
-    //     username: "muktar",
+    //     id: 12345678,  // Mock Telegram user ID
+    //     first_name: "John",
+    //     last_name: "Doe",
+    //     username: "johndoe",
     //     language_code: "en",
     //     auth_date: Math.floor(Date.now() / 1000)  // Current timestamp in seconds
     // };
+    const mockTelegramUser = {
+        id: 87654321,  // Mock Telegram user ID
+        first_name: "muktar",
+        last_name: "abdela",
+        username: "muktar",
+        language_code: "en",
+        auth_date: Math.floor(Date.now() / 1000)  // Current timestamp in seconds
+    };
 
     // For development, always return the mock data
     return mockTelegramUser;

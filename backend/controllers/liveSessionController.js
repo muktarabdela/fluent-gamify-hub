@@ -222,43 +222,54 @@ const liveSessionController = {
 
         try {
             const pool = getPool();
+            const connection = await pool.getConnection();
 
-            // Check if session exists and has space
-            const [session] = await pool.query(
-                'SELECT * FROM LiveSessions WHERE session_id = ?',
-                [sessionId]
-            );
+            try {
+                // Check if session exists and has space
+                const [session] = await connection.query(
+                    'SELECT * FROM LiveSessions WHERE session_id = ?',
+                    [sessionId]
+                );
 
-            if (session.length === 0) {
-                return res.status(404).json({ message: 'Session not found' });
+                if (session.length === 0) {
+                    throw new Error('Session not found');
+                }
+
+                if (session[0].current_participants >= session[0].max_participants) {
+                    throw new Error('Session is full');
+                }
+
+                // Start transaction
+                await connection.beginTransaction();
+
+                // Add participant
+                await connection.query(
+                    'INSERT INTO LiveSessionParticipants (session_id, user_id) VALUES (?, ?)',
+                    [sessionId, userId]
+                );
+
+                // Update current participants count
+                await connection.query(
+                    'UPDATE LiveSessions SET current_participants = current_participants + 1 WHERE session_id = ?',
+                    [sessionId]
+                );
+
+                await connection.commit();
+
+                res.json({ message: 'Successfully joined session' });
+
+            } catch (error) {
+                await connection.rollback();
+                throw error;
+            } finally {
+                connection.release();
             }
 
-            if (session[0].current_participants >= session[0].max_participants) {
-                return res.status(400).json({ message: 'Session is full' });
-            }
-
-            // Start transaction
-            await pool.query('START TRANSACTION');
-
-            // Add participant
-            await pool.query(
-                'INSERT INTO LiveSessionParticipants (session_id, user_id) VALUES (?, ?)',
-                [sessionId, userId]
-            );
-
-            // Update current participants count
-            await pool.query(
-                'UPDATE LiveSessions SET current_participants = current_participants + 1 WHERE session_id = ?',
-                [sessionId]
-            );
-
-            await pool.query('COMMIT');
-
-            res.json({ message: 'Successfully joined session' });
         } catch (error) {
-            await pool.query('ROLLBACK');
             console.error('Error joining session:', error);
-            res.status(500).json({ message: error.message });
+            res.status(error.message === 'Session not found' ? 404 :
+                error.message === 'Session is full' ? 400 : 500)
+                .json({ message: error.message });
         }
     },
 
@@ -385,7 +396,7 @@ const liveSessionController = {
                 // Update participant status
                 const [updateResult] = await connection.query(
                     `UPDATE LiveSessionParticipants 
-                     SET status = 'completed',
+                     SET status = 'joined',
                          completed_at = CURRENT_TIMESTAMP
                      WHERE session_id = ? AND user_id = ?`,
                     [sessionId, userId]

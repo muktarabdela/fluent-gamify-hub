@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Lock, CheckCircle, BookOpen, MessageCircle, Mic, Video, Headphones } from 'lucide-react';
+import { Play, Lock, CheckCircle, BookOpen, MessageCircle, Mic, Video, Headphones, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
     Dialog,
@@ -28,7 +28,7 @@ const exerciseTypeLabels = {
     'listening': 'Listening Practice'
 };
 
-export default function LessonActionButton({ status, lessonId, onClick }) {
+export default function LessonActionButton({ status, lessonId, unlockDate }) {
     const telegramUser = getTelegramUser();
     const navigate = useNavigate();
     const [lesson, setLesson] = useState(null);
@@ -65,55 +65,46 @@ export default function LessonActionButton({ status, lessonId, onClick }) {
         return acc;
     }, {});
 
-    const buttonConfig = {
-        completed: {
-            text: 'Review Lesson',
-            icon: CheckCircle,
-            className: 'bg-green-500 hover:bg-green-600'
-        },
-        active: {
-            text: 'Start Learning',
-            icon: Play,
-            className: 'bg-blue-500 hover:bg-blue-600'
-        },
-        locked: {
-            text: 'Locked Lesson',
-            icon: Lock,
-            className: 'bg-gray-500 hover:bg-gray-600 cursor-not-allowed'
+    const getButtonProps = () => {
+        switch (status) {
+            case 'completed':
+                return {
+                    text: 'Review Lesson',
+                    className: 'bg-green-500 hover:bg-green-600',
+                    icon: <CheckCircle className="w-4 h-4" />,
+                    disabled: false
+                };
+            case 'active':
+                return {
+                    text: 'Start Learning',
+                    className: 'bg-primary hover:bg-primary/90',
+                    icon: <ChevronRight className="w-4 h-4" />,
+                    disabled: false
+                };
+            case 'locked':
+            default:
+                return {
+                    text: 'Locked',
+                    className: 'bg-gray-400 cursor-not-allowed',
+                    icon: <Lock className="w-4 h-4" />,
+                    disabled: true
+                };
         }
     };
 
-    const { text, icon: Icon, className } = buttonConfig[status];
-
-    const handleStartLesson = () => {
-        console.log('Navigating to lesson:', lessonId);
-        if (!lessonId) {
-            console.error('No lesson ID provided to button');
-            return;
-        }
-        navigate(`/lesson/${lessonId}`);
-    };
-
-    if (status === 'locked') {
-        return (
-            <button
-                className={`w-full ${buttonConfig.locked.className} text-white font-semibold py-2 px-4 rounded-md flex items-center justify-center transition-colors duration-300`}
-                disabled
-            >
-                <Lock size={16} className="mr-2" />
-                {buttonConfig.locked.text}
-            </button>
-        );
-    }
+    const { text, className, icon, disabled } = getButtonProps();
 
     return (
         <Dialog>
             <DialogTrigger asChild>
                 <button
-                    className={`w-full ${className} text-white font-semibold py-2 px-4 rounded-md flex items-center justify-center transition-colors duration-300`}
+                    onClick={() => !disabled && navigate(`/lesson/${lessonId}`)}
+                    disabled={disabled}
+                    className={`w-full ${className} text-white font-semibold py-3 px-6 rounded-xl 
+                        flex items-center justify-center gap-2 transition-all`}
                 >
-                    <Icon size={16} className="mr-2" />
                     {text}
+                    {icon}
                 </button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
@@ -183,10 +174,13 @@ export default function LessonActionButton({ status, lessonId, onClick }) {
                         {/* Start Button */}
                         <div className="flex justify-end">
                             <button
-                                onClick={handleStartLesson}
-                                className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-md transition-colors"
+                                onClick={() => !disabled && navigate(`/lesson/${lessonId}`)}
+                                disabled={disabled}
+                                className={`w-full ${className} text-white font-semibold py-3 px-6 rounded-xl 
+                                    flex items-center justify-center gap-2 transition-all`}
                             >
-                                Start Now
+                                {text}
+                                {icon}
                             </button>
                         </div>
                     </div>

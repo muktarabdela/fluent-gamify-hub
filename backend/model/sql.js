@@ -86,12 +86,20 @@ const tableQueries = {
             user_id BIGINT NOT NULL,  -- For Telegram user ID
             lesson_id INT NOT NULL,
             exercise_id INT,
-            status ENUM('started', 'completed') NOT NULL,
+            status ENUM('not_started', 'in_progress', 'completed') NOT NULL DEFAULT 'not_started',
             score INT DEFAULT 0,
+            attempts INT DEFAULT 0,
+            last_attempt_date TIMESTAMP,
+            completion_date TIMESTAMP,
+            time_spent_seconds INT DEFAULT 0,
+            mistakes_made JSON,  -- Store array of mistake details
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             FOREIGN KEY (lesson_id) REFERENCES Lessons(lesson_id),
-            FOREIGN KEY (exercise_id) REFERENCES Exercises(exercise_id)
+            FOREIGN KEY (exercise_id) REFERENCES Exercises(exercise_id),
+            FOREIGN KEY (user_id) REFERENCES Users(user_id),
+            INDEX idx_user_lesson (user_id, lesson_id),  -- Composite index for faster queries
+            INDEX idx_status (status)  -- Index for status-based queries
         )
     `,
 
@@ -169,6 +177,26 @@ const tableQueries = {
             FOREIGN KEY (session_id) REFERENCES LiveSessions(session_id),
             FOREIGN KEY (user_id) REFERENCES Users(user_id),
             UNIQUE KEY unique_session_user (session_id, user_id)
+        )
+    `,
+
+    createLessonStatusTable: `
+        CREATE TABLE IF NOT EXISTS LessonStatus (
+            status_id INT AUTO_INCREMENT PRIMARY KEY,
+            lesson_id INT NOT NULL,
+            unit_id INT NOT NULL,
+            user_id BIGINT NOT NULL,
+            status ENUM('locked', 'active', 'completed') DEFAULT 'locked',
+            unlock_date TIMESTAMP NULL,
+            completion_date TIMESTAMP NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (lesson_id) REFERENCES Lessons(lesson_id),
+            FOREIGN KEY (unit_id) REFERENCES Units(unit_id),
+            FOREIGN KEY (user_id) REFERENCES Users(user_id),
+            INDEX idx_lesson_status (lesson_id, status),
+            INDEX idx_unit_status (unit_id, status),
+            UNIQUE KEY unique_lesson_user (lesson_id, user_id)
         )
     `
 };
