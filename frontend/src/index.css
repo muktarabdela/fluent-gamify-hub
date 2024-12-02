@@ -52,4 +52,23 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #e2e8f0 #f8fafc;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #f8fafc;
+    border-radius: 20px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #e2e8f0;
+    border-radius: 20px;
+  }
 }

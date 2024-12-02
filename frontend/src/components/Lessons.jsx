@@ -203,7 +203,7 @@ function LessonCard({ lesson }) {
                     )}
 
                     {/* Live Session Card */}
-                    {lesson.live_session_title && (
+                    {/* {lesson.live_session_title && (
                         <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200/50 shadow-sm">
                             <h3 className="text-sm font-semibold text-amber-900 mb-3 flex items-center gap-2">
                                 <Users className="w-4 h-4 text-amber-600" />
@@ -221,7 +221,7 @@ function LessonCard({ lesson }) {
                                 </span>
                             </div>
                         </div>
-                    )}
+                    )} */}
 
                     {/* Add completion date */}
                     <CompletionDate />
@@ -356,45 +356,55 @@ export default function MobileLessonDashboard() {
     return (
         <div className="bg-gr50">
             <div className="container mx-auto px-4">
-                {units.map((unit) => (
-                    <div key={unit.unit_id} className="mb-8">
-                        {/* Unit Divider - Make it sticky */}
-                        <div className="sticky top-[4.5rem] z-10 mb-4">
-                            <section className="py-4 bg-white/95 backdrop-blur-md shadow-md px-6 max-w-md mx-auto rounded-xl">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <h2 className="text-xs font-semibold tracking-wider text-gray-500">
-                                            UNIT {unit?.order_number} · {unit?.total_lessons || 0} LESSONS
-                                        </h2>
-                                        <h3 className="mt-1.5 text-lg font-bold text-gray-900">{unit?.title}</h3>
-                                    </div>
-                                    <div className="flex items-center bg-green-100 px-2.5 py-1 rounded-full">
-                                        <span className="text-sm font-medium text-green-700">
-                                            {Math.round(unit?.progress_percentage || 0)}%
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="relative mt-3 bg-gray-200 h-2 rounded-full overflow-hidden">
-                                    <div
-                                        className="absolute top-0 left-0 bg-gradient-to-r from-primary to-primary/80 h-full rounded-full transition-all duration-300"
-                                        style={{ width: `${unit?.progress_percentage || 0}%` }}
-                                    ></div>
-                                </div>
-                            </section>
-                        </div>
-
-                        <Accordion type="single" collapsible className="space-y-4">
-                            {lessonsByUnit[unit.unit_id]?.map((lesson, index, unitLessons) => (
-                                <div key={lesson.lesson_id}>
-                                    <LessonCard
-                                        lesson={lesson}
-                                        isFirstIncomplete={lesson.status === 'active'}
-                                    />
-                                </div>
-                            ))}
-                        </Accordion>
+                {loading ? (
+                    // Render skeletons while loading
+                    <div className="space-y-4">
+                        <LessonCardSkeleton />
+                        <LessonCardSkeleton />
+                        <LessonCardSkeleton />
                     </div>
-                ))}
+                ) : (
+                    // Render units and lessons when not loading
+                    units.map((unit) => (
+                        <div key={unit.unit_id} className="mb-8">
+                            {/* Unit Divider - Make it sticky */}
+                            <div className="sticky top-[4.5rem] z-10 mb-4">
+                                <section className="py-4 bg-white/95 backdrop-blur-md shadow-md px-6 max-w-md mx-auto rounded-xl">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h2 className="text-xs font-semibold tracking-wider text-gray-500">
+                                                UNIT {unit?.order_number} · {unit?.total_lessons || 0} LESSONS
+                                            </h2>
+                                            <h3 className="mt-1.5 text-lg font-bold text-gray-900">{unit?.title}</h3>
+                                        </div>
+                                        <div className="flex items-center bg-green-100 px-2.5 py-1 rounded-full">
+                                            <span className="text-sm font-medium text-green-700">
+                                                {Math.round(unit?.progress_percentage || 0)}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="relative mt-3 bg-gray-200 h-2 rounded-full overflow-hidden">
+                                        <div
+                                            className="absolute top-0 left-0 bg-gradient-to-r from-primary to-primary/80 h-full rounded-full transition-all duration-300"
+                                            style={{ width: `${unit?.progress_percentage || 0}%` }}
+                                        ></div>
+                                    </div>
+                                </section>
+                            </div>
+
+                            <Accordion type="single" collapsible className="space-y-4">
+                                {lessonsByUnit[unit.unit_id]?.map((lesson, index, unitLessons) => (
+                                    <div key={lesson.lesson_id}>
+                                        <LessonCard
+                                            lesson={lesson}
+                                            isFirstIncomplete={lesson.status === 'active'}
+                                        />
+                                    </div>
+                                ))}
+                            </Accordion>
+                        </div>
+                    ))
+                )}
             </div>
         </div>
     );

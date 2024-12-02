@@ -10,89 +10,78 @@ import {
     ScrollText,
     Gamepad2,
 } from "lucide-react";
-
-const practiceCategories = [
-    {
-        title: "Vocabulary Practice",
-        description: "Improve your word power",
-        icon: BookOpen,
-        color: "text-blue-500",
-        exercises: [
-            { name: "Flashcards", description: "Learn new words with spaced repetition" }
-            // { name: "Word Association", description: "Connect related words and concepts" },
-            // { name: "Picture Dictionary", description: "Learn words through images" },
-            // { name: "Word Games", description: "Fun games to expand vocabulary" }
-        ]
-    },
-    {
-        title: "Pronunciation Training",
-        description: "Perfect your accent and speech",
-        icon: Mic,
-        color: "text-red-500",
-        exercises: [
-            { name: "Word Pronunciation", description: "Practice individual word sounds" },
-            { name: "Sentence and Phrase Shadowing", description: "Repeat sentences in real-time with native speakers" },
-            // { name: "Tongue Twisters", description: "Improve pronunciation accuracy" },
-            // { name: "Speech Recognition", description: "Get instant pronunciation feedback" },
-            // { name: "Minimal Pairs", description: "Practice similar-sounding words" }
-        ]
-    },
-    {
-        title: "Listening Skills",
-        description: "Enhance your comprehension",
-        icon: Headphones,
-        color: "text-purple-500",
-        exercises: [
-            { name: "Audio Stories", description: "Listen to native conversations" },
-            { name: "Dictation Practice", description: "Write what you hear" },
-            // { name: "Song Lyrics", description: "Learn through music" },
-            // { name: "News Broadcasts", description: "Practice with real-world content" }
-        ]
-    },
-    {
-        title: "Grammar Exercises",
-        description: "Master language structure",
-        icon: ScrollText,
-        color: "text-green-500",
-        exercises: [
-            { name: "Sentence Building", description: "Create correct sentences" },
-            { name: "Error Correction", description: "Find and fix mistakes" },
-            { name: "Tense Practice", description: "Master verb tenses" },
-            { name: "Grammar Quizzes", description: "Test your knowledge" }
-        ]
-    },
-    // {
-    //     title: "Speaking Practice",
-    //     description: "Build conversation skills",
-    //     icon: MessageSquare,
-    //     color: "text-yellow-500",
-    //     exercises: [
-    //         { name: "AI Conversations", description: "Chat with AI language partners" },
-    //         { name: "Role-play Scenarios", description: "Practice real-life situations" },
-    //         { name: "Speech Recording", description: "Record and analyze your speech" },
-    //         { name: "Debate Topics", description: "Practice expressing opinions" },
-    //         { name: "Live Sessions", description: "Practice with other learners in real-time" },
-    //         { name: "Voice Chat", description: "Join voice chat rooms to practice speaking" },
-    //         { name: "Language Exchange", description: "Find language partners to practice with" }
-    //     ]
-    // },
-    // {
-    //     title: "Interactive Games",
-    //     description: "Learn while having fun",
-    //     icon: Gamepad2,
-    //     color: "text-orange-500",
-    //     exercises: [
-    //         { name: "Word Puzzles", description: "Solve language-based puzzles" },
-    //         { name: "Memory Games", description: "Test your recall abilities" },
-    //         { name: "Language Quests", description: "Complete learning missions" },
-    //         { name: "Multiplayer Challenges", description: "Compete with others" }
-    //     ]
-    // }
-];
+import { getPracticeTopics, getFilteredExercises, getCategories, getExerciseById } from '@/api/practiceService';
+import PracticeContainer from '@/components/practice/PracticeContainer';
 
 const Practice = () => {
-    const [selectedCategory, setSelectedCategory] = useState(practiceCategories[0]);
+    const [categories, setCategories] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [exercises, setExercises] = useState([]);
+    const [topics, setTopics] = useState([]);
+    const [selectedTopicId, setSelectedTopicId] = useState(null);
+    const [loading, setLoading] = useState(false);
     const scrollContainerRef = useRef(null);
+    const [selectedExercise, setSelectedExercise] = useState(null);
+
+    const handleStartExercise = async (exercise) => {
+        try {
+            const exerciseDetails = await getExerciseById(exercise.id);
+            setSelectedExercise(exerciseDetails);
+        } catch (error) {
+            console.error('Error fetching exercise details:', error);
+        }
+    };
+
+    useEffect(() => {
+        const loadTopicsAndCategories = async () => {
+            try {
+                const topicsData = await getPracticeTopics();
+                const categoriesData = await getCategories();
+                console.log("categoriesData", categoriesData);
+                console.log("topicsData", topicsData);
+
+                setTopics(topicsData);
+                setCategories(categoriesData);
+
+                // Set the first category as selected
+                if (categoriesData.length > 0) {
+                    setSelectedCategory(categoriesData[0]);
+                }
+
+                // Optionally set the first topic as selected
+                if (topicsData.length > 0) {
+                    setSelectedTopicId(topicsData[0].id);
+                }
+            } catch (error) {
+                console.error('Error loading topics and categories:', error);
+            }
+        };
+
+        loadTopicsAndCategories();
+    }, []);
+
+    useEffect(() => {
+        const loadExercises = async () => {
+            if (!selectedTopicId || !selectedCategory) return;
+
+            try {
+                setLoading(true);
+                const exercises = await getFilteredExercises(
+                    selectedCategory.id,
+                    
+                    selectedTopicId
+                );
+                console.log("detail exercises from practice page", exercises)
+                setExercises(exercises);
+            } catch (error) {
+                console.error('Error loading exercises:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadExercises();
+    }, [selectedCategory,  selectedTopicId]);
 
     const handleCategoryClick = (category, index) => {
         setSelectedCategory(category);
@@ -114,6 +103,67 @@ const Practice = () => {
         }
     };
 
+    const LevelSelector = () => (
+        <div className="mb-6">
+            <h3 className="text-sm font-medium text-gray-100 mb-2">Select Level</h3>
+            <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 rounded-lg">
+                {['beginner', 'intermediate', 'advanced'].map((l) => (
+                    <Button
+                        key={l}
+                        variant={level === l ? 'default' : 'ghost'}
+                        onClick={() => setLevel(l)}
+                        className={cn(
+                            "w-full capitalize text-sm py-2",
+                            level === l ? "bg-white shadow-sm" : "",
+                            level === l ? "text-primary" : "text-gray-600"
+                        )}
+                    >
+                        {l}
+                    </Button>
+                ))}
+            </div>
+        </div>
+    );
+
+    const TopicSelector = () => (
+        <div className="mb-6">
+            <h3 className="text-sm font-medium text-gray-100 mb-2">Topics</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-32 overflow-y-auto custom-scrollbar p-1">
+                {topics.map((topic) => (
+                    <Button
+                        key={topic.id}
+                        variant={selectedTopicId === topic.id ? 'default' : 'outline'}
+                        onClick={() => setSelectedTopicId(topic.id)}
+                        className={cn(
+                            "w-full justify-start text-sm py-2 px-3",
+                            selectedTopicId === topic.id ? "bg-primary text-white" : "bg-white ",
+                        )}
+                    >
+                        {topic.name}
+                    </Button>
+                ))}
+            </div>
+        </div>
+    );
+
+    // If an exercise is selected, show the practice container
+    if (selectedExercise) {
+        return (
+            <div className="min-h-screen">
+                <div className="max-w-4xl mx-auto p-4">
+                    <Button
+                        variant="ghost"
+                        className="mb-4"
+                        onClick={() => setSelectedExercise(null)}
+                    >
+                        ← Back to exercises
+                    </Button>
+                    <PracticeContainer exercise={selectedExercise} />
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className=" min-h-screen ">
             <div className="max-w-md mx-auto space-y-4">
@@ -125,7 +175,7 @@ const Practice = () => {
                             ref={scrollContainerRef}
                             className="flex overflow-x-auto no-scrollbar gap-2"
                         >
-                            {practiceCategories.map((category, index) => (
+                            {categories.map((category, index) => (
                                 <Button
                                     key={index}
                                     variant={selectedCategory === category ? "default" : "ghost"}
@@ -135,8 +185,7 @@ const Practice = () => {
                                     )}
                                     onClick={() => handleCategoryClick(category, index)}
                                 >
-                                    <category.icon className="h-3.5 w-3.5" />
-                                    <span>{category.title}</span>
+                                    <span>{category.name}</span>
                                 </Button>
                             ))}
                         </div>
@@ -145,59 +194,63 @@ const Practice = () => {
 
                 {/* Main Content */}
                 <div className="px-4 pb-20">
+                    {/* <LevelSelector /> */}
+                    <TopicSelector />
+
                     {/* Category Header */}
-                    <div className="my-4">
-                        <div className="flex items-center gap-2 text-gray-100">
-                            <selectedCategory.icon className={`h-6 w-6 ${selectedCategory.color}`} />
-                            <div>
-                                <h1 className="text-lg font-bold">{selectedCategory.title}</h1>
-                                <p className="text-sm text-gray-300">{selectedCategory.description}</p>
+                    {selectedCategory && (
+                        <div className="my-4">
+                            <div className="flex items-center gap-2 text-gray-100">
+                                <div>
+                                    <h1 className="text-lg font-bold">{selectedCategory.name}</h1>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
-                    {/* Exercises List */}
-                    <div className="space-y-3">
-                        {selectedCategory.exercises.map((exercise, idx) => (
-                            <Card
-                                key={idx}
-                                className="group active:scale-98 transition-transform"
-                            >
-                                <div className="p-4">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <h3 className="text-base font-semibold text-gray-900">
-                                            {exercise.name}
-                                        </h3>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-8 px-3 text-white bg-primary"
-                                        >
-                                            Start
-                                        </Button>
+                    {/* Dynamic Exercises List */}
+                    {loading ? (
+                        <div className="flex justify-center items-center py-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {exercises.map((exercise) => (
+                                <Card
+                                    key={exercise.id}
+                                    className="group hover:shadow-md transition-all duration-200 border-l-4 border-l-primary"
+                                >
+                                    <div className="p-4">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <h3 className="text-lg font-medium text-gray-900">
+                                                {typeof exercise.content === 'object' ? exercise.content.word : exercise.title}
+                                            </h3>
+                                            <Button
+                                                variant="default"
+                                                size="sm"
+                                                className="h-8 px-4 rounded-full hover:scale-105 transition-transform"
+                                                onClick={() => handleStartExercise(exercise)}
+                                            >
+                                                Start
+                                            </Button>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                            <span className="inline-flex items-center gap-1">
+                                                <ScrollText className="w-4 h-4" />
+                                                {exercise.type_name}
+                                            </span>
+                                            <span className="text-gray-300">•</span>
+                                            <span>{exercise.topic_name}</span>
+                                        </div>
                                     </div>
-                                    <p className="text-sm text-gray-600">{exercise.description}</p>
-                                </div>
-                                <div className="h-0.5 w-full bg-gradient-to-r from-primary/20 to-primary/10" />
-                            </Card>
-                        ))}
-                    </div>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
-
         </div>
     );
 };
-
-// Add this CSS to your global styles
-const globalStyles = `
-    .no-scrollbar::-webkit-scrollbar {
-        display: none;
-    }
-    .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-    }
-`;
 
 export default Practice; 

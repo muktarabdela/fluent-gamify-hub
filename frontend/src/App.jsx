@@ -9,7 +9,7 @@ import Navigation from "@/components/Navigation";
 import LessonDetail from "./pages/LessonDetail";
 import TelegramAuth from '@/auth/TelegramAuth';
 import { useEffect, useState } from 'react';
-import { getTelegramUser } from "./utils/telegram";
+import { getTelegramUser, validateTelegramWebApp } from "./utils/telegram";
 import { getUserById } from "./api/userService";
 
 const queryClient = new QueryClient();
@@ -68,63 +68,77 @@ const AppLayout = ({ children }) => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <BrowserRouter>
-        <Routes>
-          {/* Onboarding route */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Onboarding />
-              </ProtectedRoute>
-            }
-          />
+const App = () => {
+  useEffect(() => {
+    try {
+      // Validate Telegram WebApp on mount
+      if (process.env.NODE_ENV !== 'development') {
+        validateTelegramWebApp();
+      }
+    } catch (error) {
+      console.error('Telegram WebApp validation failed:', error);
+      // Handle validation failure (e.g., show error message)
+    }
+  }, []);
 
-          {/* Detail Lesson Route */}
-          <Route
-            path="/lesson/:lessonId"
-            element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <LessonDetail />
-                </AppLayout>
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Other routes */}
-          {navItems.map(({ to, page }) => (
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <BrowserRouter>
+          <Routes>
+            {/* Onboarding route */}
             <Route
-              key={to}
-              path={to}
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Onboarding />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Detail Lesson Route */}
+            <Route
+              path="/lesson/:lessonId"
               element={
                 <ProtectedRoute>
                   <AppLayout>
-                    {page}
+                    <LessonDetail />
                   </AppLayout>
                 </ProtectedRoute>
               }
             />
-          ))}
 
-          {/* Catch all route */}
-          <Route
-            path="*"
-            element={
-              <Navigate
-                to={localStorage.getItem("userPreferences") ? "/dashboard" : "/"}
-                replace
+            {/* Other routes */}
+            {navItems.map(({ to, page }) => (
+              <Route
+                key={to}
+                path={to}
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      {page}
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
               />
-            }
-          />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+            ))}
+
+            {/* Catch all route */}
+            <Route
+              path="*"
+              element={
+                <Navigate
+                  to={localStorage.getItem("userPreferences") ? "/dashboard" : "/"}
+                  replace
+                />
+              }
+            />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

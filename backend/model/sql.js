@@ -198,7 +198,132 @@ const tableQueries = {
             INDEX idx_unit_status (unit_id, status),
             UNIQUE KEY unique_lesson_user (lesson_id, user_id)
         )
-    `
+    `,
+
+    createTopicsTable: `
+        CREATE TABLE IF NOT EXISTS Topics (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    `,
+
+    createCategoriesTable: `
+        CREATE TABLE IF NOT EXISTS Categories (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )
+    `,
+    createExerciseTypesTable: `
+        CREATE TABLE IF NOT EXISTS ExerciseTypes (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            category_id INT NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (category_id) REFERENCES Categories(id)
+        )
+    `,
+
+    createPracticeExercisesTable: `
+        CREATE TABLE IF NOT EXISTS PracticeExercises (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            type_id INT NOT NULL,
+            topic_id INT NOT NULL,
+            topic VARCHAR(100) NOT NULL,
+            content JSON NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (type_id) REFERENCES ExerciseTypes(id)
+        )
+    `,
+    // ###################################################
+    //     createPracticeTopicsTable: `
+    //         CREATE TABLE IF NOT EXISTS PracticeTopics (
+    //             topic_id INT AUTO_INCREMENT PRIMARY KEY,
+    //             title VARCHAR(255) NOT NULL,
+    //             description TEXT,
+    //             category ENUM('vocabulary', 'pronunciation', 'listening', 'grammar') NOT NULL,
+    //             level ENUM('beginner', 'intermediate', 'advanced') NOT NULL,
+    //             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    //         )
+    //     `,
+    //     createPracticeVocabularyExercisesTable: `
+    //         CREATE TABLE IF NOT EXISTS PracticeVocabularyExercises (
+    //             exercise_id INT AUTO_INCREMENT PRIMARY KEY,
+    //             topic_id INT NOT NULL,
+    //             type ENUM('flashcard', 'word_association', 'picture_dictionary') NOT NULL,
+    //             word VARCHAR(255) NOT NULL,
+    //             image_url VARCHAR(255),
+    //             definition TEXT NOT NULL,
+    //             examples JSON,  -- Array of example sentences
+    //             audio_url VARCHAR(255),
+    //             translation VARCHAR(255),
+    //             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    //             FOREIGN KEY (topic_id) REFERENCES PracticeTopics(topic_id)
+    //         )
+    //     `,
+
+    //     createPracticePronunciationExercisesTable: `
+    //         CREATE TABLE IF NOT EXISTS PracticePronunciationExercises (
+    //             exercise_id INT AUTO_INCREMENT PRIMARY KEY,
+    //             topic_id INT NOT NULL,
+    //             type ENUM('word_pronunciation', 'shadowing', 'tongue_twisters') NOT NULL,
+    //             content TEXT NOT NULL,
+    //             phonetic_spelling VARCHAR(255),
+    //             audio_url VARCHAR(255) NOT NULL,
+    //             translation TEXT,
+    //             hints TEXT,
+    //             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    //             FOREIGN KEY (topic_id) REFERENCES PracticeTopics(topic_id)
+    //         )
+    //     `,
+    //     createPracticeListeningExercisesTable: `
+    //         CREATE TABLE IF NOT EXISTS PracticeListeningExercises (
+    //             exercise_id INT AUTO_INCREMENT PRIMARY KEY,
+    //             topic_id INT NOT NULL,
+    //             type ENUM('video_story', 'dictation', 'audio_story') NOT NULL,
+    //             title VARCHAR(255) NOT NULL,
+    //             media_url VARCHAR(255) NOT NULL,  -- Can be video_url or audio_url
+    //             transcript TEXT,
+    //             caption TEXT,
+    //             questions JSON,  -- For comprehension questions
+    //             duration_seconds INT,
+    //             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    //             FOREIGN KEY (topic_id) REFERENCES PracticeTopics(topic_id)
+    //         )
+    //     `,
+    //     createPracticeGrammarExercisesTable: `
+    //         CREATE TABLE IF NOT EXISTS PracticeGrammarExercises (
+    //             exercise_id INT AUTO_INCREMENT PRIMARY KEY,
+    //             topic_id INT NOT NULL,
+    //             type ENUM('sentence_building', 'quiz', 'error_correction') NOT NULL,
+    //             question TEXT NOT NULL,
+    //             correct_answer TEXT NOT NULL,
+    //             shuffled_words JSON,  -- For sentence building
+    //             options JSON,         -- For multiple choice
+    //             explanation TEXT,
+    //             hints TEXT,
+    //             grammar_point VARCHAR(255),
+    //             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    //             FOREIGN KEY (topic_id) REFERENCES PracticeTopics(topic_id)
+    //         )
+    //     `,
+    //     createUserPracticeProgressTable: `
+    //         CREATE TABLE IF NOT EXISTS UserPracticeProgress (
+    //             progress_id INT AUTO_INCREMENT PRIMARY KEY,
+    //             user_id BIGINT NOT NULL,
+    //             exercise_type ENUM('vocabulary', 'pronunciation', 'listening', 'grammar') NOT NULL,
+    //             exercise_id INT NOT NULL,
+    //             score INT DEFAULT 0,
+    //             mistakes JSON,
+    //             completed_at TIMESTAMP,
+    //             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    //             FOREIGN KEY (user_id) REFERENCES Users(user_id)
+    //         )
+    //   `
 };
 
 module.exports = {

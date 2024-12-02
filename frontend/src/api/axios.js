@@ -2,42 +2,38 @@
 
 import axios from "axios";
 const instance = axios.create({
-	baseURL: "http://localhost:5000/api/",
-	timeout: 5000,
+	baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+	timeout: 10000,
 	headers: {
 		"Content-Type": "application/json",
 	},
 });
 
-// // Add request interceptor
-// instance.interceptors.request.use(
-// 	(config) => {
-// 		console.log('🚀 API Request:', {
-// 			method: config.method,
-// 			url: config.url,
-// 			data: config.data
-// 		});
-// 		return config;
-// 	},
-// 	(error) => {
-// 		console.error('❌ Request Error:', error);
-// 		return Promise.reject(error);
-// 	}
-// );
+// Request interceptor
+instance.interceptors.request.use(
+	(config) => {
+		const token = localStorage.getItem('token');
+		if (token) {
+			config.headers.Authorization = `Bearer ${token}`;
+		}
+		return config;
+	},
+	(error) => {
+		return Promise.reject(error);
+	}
+);
 
-// // Add response interceptor
-// instance.interceptors.response.use(
-// 	(response) => {
-// 		console.log('✅ API Response:', {
-// 			status: response.status,
-// 			data: response.data
-// 		});
-// 		return response;
-// 	},
-// 	(error) => {
-// 		console.error('❌ Response Error:', error.response || error);
-// 		return Promise.reject(error);
-// 	}
-// );
+// Response interceptor
+instance.interceptors.response.use(
+	(response) => response,
+	async (error) => {
+		if (error.response?.status === 401) {
+			// Handle token expiration
+			localStorage.removeItem('token');
+			window.location.href = '/';
+		}
+		return Promise.reject(error);
+	}
+);
 
 export default instance;
