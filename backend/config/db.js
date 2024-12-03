@@ -4,16 +4,9 @@ const { tableQueries } = require('../model/sql');
 let pool = null;
 
 const createPool = () => {
-    console.log('Attempting to connect with:', {
+    const config = {
         host: process.env.MYSQLHOST,
-        port: process.env.MYSQLPORT,
-        user: process.env.MYSQLUSER,
-        database: process.env.MYSQLDATABASE
-    });
-
-    return mysql.createPool({
-        host: process.env.MYSQLHOST || 'localhost',
-        port: parseInt(process.env.MYSQLPORT) || 3306,
+        port: parseInt(process.env.MYSQLPORT),
         user: process.env.MYSQLUSER,
         password: process.env.MYSQLPASSWORD,
         database: process.env.MYSQLDATABASE,
@@ -23,7 +16,16 @@ const createPool = () => {
         waitForConnections: true,
         connectionLimit: 10,
         queueLimit: 0
-    }).promise();
+    };
+
+    console.log('MySQL Config:', {
+        host: config.host,
+        port: config.port,
+        user: config.user,
+        database: config.database
+    });
+
+    return mysql.createPool(config).promise();
 };
 
 const initializeTables = async (promisePool) => {
