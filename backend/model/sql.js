@@ -157,7 +157,7 @@ const tableQueries = {
 
     createTelegramGroupsTable: `
         CREATE TABLE IF NOT EXISTS TelegramGroups (
-            group_id INT AUTO_INCREMENT PRIMARY KEY,
+            group_id BIGINT NOT NULL PRIMARY KEY,
             telegram_chat_id BIGINT NOT NULL,
             status ENUM('available', 'in_use', 'archived') DEFAULT 'available',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
