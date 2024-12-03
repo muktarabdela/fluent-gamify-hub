@@ -144,6 +144,9 @@ export default function LiveSession() {
 
     const getSessionButton = (session, handleJoinSession, joinStatus) => {
         console.log(session)
+        // Check if session is full
+        const isFull = session.current_participants >= session.max_participants;
+
         if (session.user_status === 'completed') {
             return (
                 <Button
@@ -184,13 +187,26 @@ export default function LiveSession() {
             );
         }
 
+        // Add full session check
+        if (isFull) {
+            return (
+                <Button
+                    className="w-full mt-4"
+                    variant="outline"
+                    disabled
+                >
+                    Session Full ({session.current_participants}/{session.max_participants})
+                </Button>
+            );
+        }
+
         return (
             <Button
                 className="w-full mt-4"
                 variant="default"
                 onClick={() => handleInitialClick(session)}
             >
-                Create Session
+                Create Session 
             </Button>
         );
     };

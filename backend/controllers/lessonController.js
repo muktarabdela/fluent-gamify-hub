@@ -76,6 +76,27 @@ const initializeLessonStatuses = async (unitId, userId, pool) => {
 
 const lessonController = {
     // Get all lessons for a specific unit
+    getAllLessons: async (req, res) => {
+        try {
+            const pool = getPool();
+            const { unitId } = req.query;
+            let query = 'SELECT * FROM Lessons';
+            let params = [];
+
+            if (unitId) {
+                query += ' WHERE unit_id = ?';
+                params.push(unitId);
+            }
+
+            query += ' ORDER BY unit_id, order_number';
+
+            const [lessons] = await pool.query(query, params);
+            res.json(lessons);
+        } catch (error) {
+            console.error('Error fetching all lessons:', error);
+            res.status(500).json({ message: error.message });
+        }
+    },
     getLessonsByUnit: async (req, res) => {
         try {
             const pool = getPool();

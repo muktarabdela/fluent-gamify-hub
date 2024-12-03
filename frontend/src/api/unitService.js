@@ -1,52 +1,26 @@
 import instance from "./axios";
-export const getAllUnits = async (userId) => {
-  try {
-    const response = await instance.get('/units', {
-      params: { userId }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching units:', error);
-    throw error;
-  }
+
+export const getAllUnits = async () => {
+  const response = await instance.get('/units');
+  return response.data;
 };
 
-export const getUnitById = async (unitId) => {
-  try {
-    const response = await instance.get(`/units/${unitId}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching unit:', error);
-    throw error;
-  }
+export const getUnitById = async (id) => {
+  const response = await instance.get(`/units/${id}`);
+  return response.data;
 };
 
 export const createUnit = async (unitData) => {
-  try {
-    const response = await instance.post('/units', unitData);
-    return response.data;
-  } catch (error) {
-    console.error('Error creating unit:', error);
-    throw error;
-  }
+  const response = await instance.post('/units', unitData);
+  return response.data;
 };
 
-export const updateUnit = async (unitId, unitData) => {
-  try {
-    const response = await instance.put(`/units/${unitId}`, unitData);
-    return response.data;
-  } catch (error) {
-    console.error('Error updating unit:', error);
-    throw error;
-  }
+export const updateUnit = async (id, unitData) => {
+  const response = await instance.put(`/units/${id}`, unitData);
+  return response.data;
 };
 
-export const deleteUnit = async (unitId) => {
-  try {
-    const response = await instance.delete(`/units/${unitId}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error deleting unit:', error);
-    throw error;
-  }
+export const deleteUnit = async (id) => {
+  const response = await instance.delete(`/units/${id}`);
+  return response.data;
 }; 

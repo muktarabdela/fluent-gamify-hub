@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { ChevronLeft, ChevronRight, RotateCw } from 'lucide-react'
 
 const Flashcards = ({ exercise }) => {
+  console.log(exercise)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isFlipped, setIsFlipped] = useState(false)
 
@@ -40,14 +41,14 @@ const Flashcards = ({ exercise }) => {
             <div className="bg-white rounded-2xl shadow-xl p-8 flex flex-col items-center justify-center h-full border-2 border-indigo-100 hover:border-indigo-300 transition-colors">
               <div className="relative w-56 h-56 mb-6">
                 <img
-                  src={currentCard.image_url}
-                  alt={currentCard.word}
+                  src={currentCard?.image_url}
+                  alt={currentCard?.word}
                   className="w-full h-full object-cover rounded-xl shadow-lg transform transition-transform hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-xl" />
               </div>
               <h3 className="text-4xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
-                {currentCard.word}
+                {currentCard?.word}
               </h3>
               <p className="text-gray-500 mt-4">Click to flip</p>
             </div>
@@ -59,12 +60,12 @@ const Flashcards = ({ exercise }) => {
               <h4 className="text-2xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
                 Definition
               </h4>
-              <p className="text-gray-700 text-lg mb-6 leading-relaxed">{currentCard.definition}</p>
+              <p className="text-gray-700 text-lg mb-6 leading-relaxed">{currentCard?.definition}</p>
               <h4 className="text-2xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
                 Examples
               </h4>
               <ul className="space-y-3 text-gray-700">
-                {currentCard.examples.map((example, index) => (
+                {currentCard?.examples?.map((example, index) => (
                   <li key={index} className="flex items-start">
                     <span className="mr-2 text-indigo-500">•</span>
                     <span className="text-lg">{example}</span>

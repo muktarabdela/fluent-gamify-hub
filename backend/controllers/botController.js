@@ -46,7 +46,7 @@ const botController = {
                 topic,
                 group_id
             }, {
-                timeout: 30000
+                timeout: 40000
             });
 
             await connection.commit();
@@ -95,13 +95,22 @@ const botController = {
 
                 const internalGroupId = telegramGroup[0].group_id;
 
-                // Get the session ID from LiveSessions
+                // Get the session ID from LiveSessions and update current_participants
                 const [liveSession] = await connection.query(
                     `SELECT session_id FROM LiveSessions 
                     WHERE telegram_chat_id = ? 
                     AND status != 'Ended' 
                     ORDER BY created_at DESC 
                     LIMIT 1`,
+                    [group_id.toString()]
+                );
+
+                // Set current_participants to 0
+                await connection.query(
+                    `UPDATE LiveSessions 
+                    SET current_participants = 0
+                    WHERE telegram_chat_id = ? 
+                    AND status != 'Ended'`,
                     [group_id.toString()]
                 );
 

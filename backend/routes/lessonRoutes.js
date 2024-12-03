@@ -7,8 +7,10 @@ const {
     updateLesson,
     deleteLesson,
     getLessonsByUnitWithStatus,
-    updateLessonStatus
+    updateLessonStatus,
+    getAllLessons
 } = require('../controllers/lessonController');
+router.get('/', getAllLessons);
 
 router.get('/unit/:unitId', getLessonsByUnitWithStatus);
 router.get('/:id', getLessonById);

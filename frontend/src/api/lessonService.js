@@ -1,5 +1,17 @@
 import instance from "./axios";
 
+export const getAllLessons = async (unitId) => {
+  try {
+    const response = await instance.get('/lessons', {
+      params: { unitId }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching all lessons:', error);
+    throw error;
+  }
+};
+
 export const getLessonsByUnitWithStatus = async (unitId, userId) => {
   console.log("unitId", unitId, "userId", userId);
   try {

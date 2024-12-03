@@ -13,9 +13,26 @@ const practiceExerciseController = {
     getCategories: async (req, res) => {
         try {
             const pool = getPool();
-            const [categories] = await pool.query('SELECT * FROM Categories');
+            const [categories] = await pool.query(`
+                SELECT 
+                    c.*,
+                    COALESCE(JSON_ARRAYAGG(
+                        CASE WHEN et.id IS NOT NULL
+                        THEN JSON_OBJECT(
+                            'id', et.id,
+                            'name', et.name,
+                            'category_id', et.category_id
+                        )
+                        ELSE NULL END
+                    ), '[]') as exerciseTypes
+                FROM Categories c
+                LEFT JOIN ExerciseTypes et ON c.id = et.category_id
+                GROUP BY c.id
+            `);
+
             res.json(categories);
         } catch (error) {
+            console.error('Error fetching categories:', error);
             res.status(500).json({ message: error.message });
         }
     },
@@ -39,9 +56,9 @@ const practiceExerciseController = {
             }
 
             const [result] = await pool.query(
-                `INSERT INTO PracticeExercises (type_id,  topic_id, content)
+                `INSERT INTO PracticeExercises (type_id, topic_id, content)
                 VALUES (?, ?, ?, ?)`,
-                [typeId,  topicId, JSON.stringify(content)]
+                [typeId, topicId, JSON.stringify(content)]
             );
 
             res.status(201).json({
@@ -58,7 +75,7 @@ const practiceExerciseController = {
             const pool = getPool();
             const { categoryId, topicId } = req.query;
             console.log(categoryId, topicId)
-            if (!categoryId  || !topicId) {
+            if (!categoryId || !topicId) {
                 return res.status(400).json({
                     message: 'categoryId, and topicId are required query parameters'
                 });

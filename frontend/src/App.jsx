@@ -11,6 +11,15 @@ import TelegramAuth from '@/auth/TelegramAuth';
 import { useEffect, useState } from 'react';
 import { getTelegramUser, validateTelegramWebApp } from "./utils/telegram";
 import { getUserById } from "./api/userService";
+import AdminDashboard from './pages/admin/Dashboard';
+import AdminUnits from './pages/admin/Units';
+import AdminLessons from './pages/admin/Lessons';
+import AdminQuickLessons from './pages/admin/QuickLessons';
+import AdminExercises from './pages/admin/Exercises';
+import AdminPractice from './pages/admin/Practice';
+import AdminUsers from './pages/admin/Users';
+import AdminTelegramGroups from './pages/admin/TelegramGroups';
+import AdminLiveSessions from './pages/admin/LiveSessions';
 
 const queryClient = new QueryClient();
 
@@ -134,6 +143,17 @@ const App = () => {
                 />
               }
             />
+
+            <Route path="/admin" element={<AdminDashboard />}>
+              <Route path="units" element={<AdminUnits />} />
+              <Route path="lessons" element={<AdminLessons />} />
+              <Route path="quick-lessons" element={<AdminQuickLessons />} />
+              <Route path="exercises" element={<AdminExercises />} />
+              <Route path="practice" element={<AdminPractice />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="telegram-groups" element={<AdminTelegramGroups />} />
+              <Route path="live-sessions" element={<AdminLiveSessions />} />
+            </Route>
           </Routes>
         </BrowserRouter>
       </TooltipProvider>

@@ -68,7 +68,7 @@ const Practice = () => {
                 setLoading(true);
                 const exercises = await getFilteredExercises(
                     selectedCategory.id,
-                    
+
                     selectedTopicId
                 );
                 console.log("detail exercises from practice page", exercises)
@@ -81,7 +81,7 @@ const Practice = () => {
         };
 
         loadExercises();
-    }, [selectedCategory,  selectedTopicId]);
+    }, [selectedCategory, selectedTopicId]);
 
     const handleCategoryClick = (category, index) => {
         setSelectedCategory(category);
@@ -223,7 +223,7 @@ const Practice = () => {
                                     <div className="p-4">
                                         <div className="flex items-center justify-between mb-2">
                                             <h3 className="text-lg font-medium text-gray-900">
-                                                {typeof exercise.content === 'object' ? exercise.content.word : exercise.title}
+                                                {exercise.topic}
                                             </h3>
                                             <Button
                                                 variant="default"

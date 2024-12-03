@@ -24,7 +24,7 @@ router.put('/:id', updateSession);
 router.delete('/:id', deleteSession);
 router.post('/:id/join', joinSession);
 router.post('/:id/leave', leaveSession);
-router.patch('/:id/status', async (req, res) => {
+router.put('/:id/status', async (req, res) => {
     try {
         const { id } = req.params;
         const { status, inviteLink } = req.body;
@@ -41,7 +41,7 @@ router.patch('/:id/status', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
-router.patch('/:sessionId/telegram-chat', updateTelegramChatId);
+router.put('/:sessionId/telegram-chat', updateTelegramChatId);
 router.post('/:sessionId/complete', completeUserSession);
 
 module.exports = router; 

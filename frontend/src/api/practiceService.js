@@ -1,6 +1,15 @@
 import instance from './axios';
 
 // Topic Management
+export const createExercise = async (exerciseData) => {
+    const response = await instance.post('/practice/exercises', {
+        typeId: exerciseData.typeId,
+        topicId: exerciseData.topicId,
+        content: exerciseData.content
+    });
+    return response.data;
+};
+
 export const getPracticeTopics = async () => {
     const response = await instance.get('/practice/topics');
     return response.data;
@@ -10,8 +19,8 @@ export const getCategories = async () => {
     return response.data;
 };
 
-export const getFilteredExercises = async (categoryId,  topicId) => {
-    console.log(categoryId,  topicId)
+export const getFilteredExercises = async (categoryId, topicId) => {
+    console.log(categoryId, topicId)
     const params = {
         categoryId,
         topicId

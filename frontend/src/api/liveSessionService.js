@@ -112,7 +112,7 @@ export const leaveSession = async (sessionId, userId) => {
 // Update session status
 export const updateSessionStatus = async (sessionId, status, inviteLink = null) => {
     try {
-        const response = await instance.patch(`/live-sessions/${sessionId}/status`, { status, inviteLink });
+        const response = await instance.put(`/live-sessions/${sessionId}/status`, { status, inviteLink });
         return response.data;
     } catch (error) {
         console.error('Error updating session status:', error);
@@ -123,7 +123,7 @@ export const updateSessionStatus = async (sessionId, status, inviteLink = null) 
 // Add new method to update telegram chat ID
 export const updateSessionTelegramChat = async (sessionId, telegram_chat_id) => {
     try {
-        const response = await instance.patch(
+        const response = await instance.put(
             `/live-sessions/${sessionId}/telegram-chat`,
             { telegram_chat_id }
         );
