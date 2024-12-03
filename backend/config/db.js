@@ -3,21 +3,29 @@ const { tableQueries } = require('../model/sql');
 
 let pool = null;
 
-// Create connection pool using Railway's MySQL credentials
 const createPool = () => {
-    return mysql.createPool({
+    console.log('Attempting to connect with:', {
         host: process.env.MYSQLHOST,
+        port: process.env.MYSQLPORT,
+        user: process.env.MYSQLUSER,
+        database: process.env.MYSQLDATABASE
+    });
+
+    return mysql.createPool({
+        host: process.env.MYSQLHOST || 'localhost',
+        port: parseInt(process.env.MYSQLPORT) || 3306,
         user: process.env.MYSQLUSER,
         password: process.env.MYSQLPASSWORD,
         database: process.env.MYSQLDATABASE,
-        port: process.env.MYSQLPORT,
+        ssl: {
+            rejectUnauthorized: false
+        },
         waitForConnections: true,
         connectionLimit: 10,
         queueLimit: 0
     }).promise();
 };
 
-// Initialize all tables
 const initializeTables = async (promisePool) => {
     try {
         const tables = [
@@ -54,7 +62,6 @@ const initializeTables = async (promisePool) => {
     }
 };
 
-// Connect to database and initialize tables
 const connectDB = async () => {
     try {
         // Create pool with Railway's MySQL credentials
@@ -63,16 +70,25 @@ const connectDB = async () => {
         // Test connection
         const connection = await pool.getConnection();
         console.log('MySQL Database Connected Successfully');
+        
+        // Log successful connection details
+        const [rows] = await connection.query('SELECT DATABASE() as db');
+        console.log('Connected to database:', rows[0].db);
+        
         connection.release();
 
         // Initialize tables
         await initializeTables(pool);
-        console.log('All tables initialized successfully');
-
         return pool;
     } catch (error) {
         console.error('Error connecting to the database:', error.message);
-        throw error; // Let the application handle the error
+        console.error('Connection details:', {
+            host: process.env.MYSQLHOST,
+            port: process.env.MYSQLPORT,
+            user: process.env.MYSQLUSER,
+            database: process.env.MYSQLDATABASE
+        });
+        throw error;
     }
 };
 
