@@ -78,17 +78,17 @@ const AppLayout = ({ children }) => {
 };
 
 const App = () => {
-  useEffect(() => {
-    try {
-      // Validate Telegram WebApp on mount
-      if (import.meta.env.VITE_API_URL.NODE_ENV !== 'development') {
-        validateTelegramWebApp();
-      }
-    } catch (error) {
-      console.error('Telegram WebApp validation failed:', error);
-      // Handle validation failure (e.g., show error message)
-    }
-  }, []);
+  // useEffect(() => {
+  //   try {
+  //     // Validate Telegram WebApp on mount
+  //     if (import.meta.env.VITE_API_URL.NODE_ENV !== 'development') {
+  //       validateTelegramWebApp();
+  //     }
+  //   } catch (error) {
+  //     console.error('Telegram WebApp validation failed:', error);
+  //     // Handle validation failure (e.g., show error message)
+  //   }
+  // }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

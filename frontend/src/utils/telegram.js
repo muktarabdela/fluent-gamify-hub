@@ -27,15 +27,15 @@ export const getTelegramUser = () => {
     
     // For development only
     // Modified to work in any environment
-    return {
-        id: 87654321,
-        first_name: "muktar",
-        last_name: "abdela",
-        username: "muktar",
-        language_code: "en",
-        auth_date: Math.floor(Date.now() / 1000),
-        hash: 'development_hash'
-    };
+    // return {
+    //     id: 87654321,
+    //     first_name: "muktar",
+    //     last_name: "abdela",
+    //     username: "muktar",
+    //     language_code: "en",
+    //     auth_date: Math.floor(Date.now() / 1000),
+    //     hash: 'development_hash'
+    // };
 };
 
 export const handleTelegramResponse = async (response) => {
