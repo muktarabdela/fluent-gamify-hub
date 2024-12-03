@@ -13,10 +13,11 @@ const initialConnection = mysql.createConnection({
 // Create connection pool (will be used after database is created)
 const createPool = () => {
     return mysql.createPool({
-        host: process.env.DB_HOST || 'localhost',
-        user: process.env.DB_USER || 'root',
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME || 'fluenthub',
+        host: process.env.MYSQLHOST,
+        user: process.env.MYSQLUSER,
+        password: process.env.MYSQLPASSWORD,
+        database: process.env.MYSQLDATABASE,
+        port: process.env.MYSQLPORT,
         waitForConnections: true,
         connectionLimit: 10,
         queueLimit: 0
