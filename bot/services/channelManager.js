@@ -2,7 +2,9 @@ const axios = require('axios');
 const config = require('../config');
 const fs = require('fs');
 const FormData = require('form-data');
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:5000/api';
+const BACKEND_URL = process.env.NODE_ENV === 'development'
+    ? 'http://localhost:5000/api'
+    : 'https://fluent-gamify-hub-production.up.railway.app/api';
 const webAppUrl = 'https://fluent-gamify-hub.vercel.app'; // Replace with your Mini App URL
 class GroupManager {
     constructor() {

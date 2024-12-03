@@ -6,8 +6,32 @@ dotenv.config();
 // Replace with your bot's token from BotFather
 const token = process.env.BOT_TOKEN;
 
-// Create an instance of the bot
-const bot = new TelegramBot(token, { polling: true });
+// Create an instance of the bot with additional options
+const bot = new TelegramBot(token, { 
+    polling: {
+        autoStart: false,  // Don't start polling automatically
+        params: {
+            timeout: 10    // Reduce polling timeout
+        }
+    }
+});
+
+// Start bot polling in a controlled manner
+let botStarted = false;
+
+const startBot = async () => {
+    if (!botStarted) {
+        try {
+            await bot.startPolling();
+            botStarted = true;
+            console.log('Telegram bot started successfully');
+        } catch (error) {
+            console.error('Failed to start Telegram bot:', error);
+        }
+    }
+};
+
+startBot();
 
 const channelLink = 'https://t.me/fluent_hub';
 const webAppUrl = 'https://fluent-gamify-hub.vercel.app'; // Replace with your Mini App URL

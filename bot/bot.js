@@ -9,7 +9,7 @@ app.use(express.json());
 // Add localhost URL support
 const baseUrl = process.env.NODE_ENV === 'development'
     ? `http://localhost:${process.env.PORT || 3000}/bot${config.BOT_TOKEN}`
-    : `https://api.telegram.org/bot${config.BOT_TOKEN}`;
+    : `https://fluent-gamify-hub-production.up.railway.app/api/bot${config.BOT_TOKEN}`;
 
 let offset = 0;
 
