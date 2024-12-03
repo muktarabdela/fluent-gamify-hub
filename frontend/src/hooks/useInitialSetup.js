@@ -13,15 +13,21 @@ export const useInitialSetup = () => {
             try {
                 setLoading(true);
                 const telegramUser = getTelegramUser();
+                
+                if (telegramUser) {
+                    toast.info(`Telegram User Found: ${telegramUser.id}`);
+                }
 
                 if (!telegramUser?.id) {
-                    toast.error("No user data available");
+                    toast.error("No Telegram user ID available");
+                    setLoading(false);
                     return;
                 }
 
                 // First, try to get existing user
                 try {
                     const existingUser = await getUserById(telegramUser.id);
+                    toast.success("Existing user found");
                     setUser(existingUser);
 
                     // If user exists but hasn't completed onboarding, show welcome screens
@@ -31,16 +37,19 @@ export const useInitialSetup = () => {
                 } catch (error) {
                     // If user doesn't exist, create new user
                     if (error.response?.status === 404) {
+                        toast.info("Creating new user...");
                         const newUser = await handleTelegramResponse(telegramUser);
                         setUser(newUser);
                         setShowWelcome(true); // Show welcome screens for new users
+                        toast.success("New user created");
                     } else {
+                        toast.error(`Error: ${error.message}`);
                         throw error;
                     }
                 }
             } catch (error) {
                 console.error('Error in initial setup:', error);
-                toast.error("Failed to initialize user");
+                toast.error(`Failed to initialize user: ${error.message}`);
             } finally {
                 setLoading(false);
             }
