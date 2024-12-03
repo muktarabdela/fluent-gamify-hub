@@ -78,16 +78,11 @@ const AppLayout = ({ children }) => {
 };
 
 const App = () => {
-  const [telegramUser, setTelegramUser] = useState(null);
-
   useEffect(() => {
     try {
       // Validate Telegram WebApp on mount
-      validateTelegramWebApp();
 
-      // Get Telegram user data
-      const user = getTelegramUser();
-      setTelegramUser(user);
+      validateTelegramWebApp();
 
     } catch (error) {
       console.error('Telegram WebApp validation failed:', error);
@@ -100,21 +95,6 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <BrowserRouter>
-          <div>
-            {/* Display user data for debugging */}
-            {telegramUser ? (
-              <div>
-                <h3>User Data:</h3>
-                <p>ID: {telegramUser.id}</p>
-                <p>First Name: {telegramUser.first_name}</p>
-                <p>Last Name: {telegramUser.last_name}</p>
-                <p>Username: {telegramUser.username}</p>
-                <p>Language Code: {telegramUser.language_code}</p>
-              </div>
-            ) : (
-              <p>No user data available</p>
-            )}
-          </div>
           <Routes>
             {/* Onboarding route */}
             <Route
@@ -125,6 +105,7 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+
             {/* Detail Lesson Route */}
             <Route
               path="/lesson/:lessonId"
@@ -136,6 +117,7 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+
             {/* Other routes */}
             {navItems.map(({ to, page }) => (
               <Route
@@ -150,6 +132,7 @@ const App = () => {
                 }
               />
             ))}
+
             {/* Catch all route */}
             <Route
               path="*"
@@ -160,6 +143,7 @@ const App = () => {
                 />
               }
             />
+
             <Route path="/admin" element={<AdminDashboard />}>
               <Route path="units" element={<AdminUnits />} />
               <Route path="lessons" element={<AdminLessons />} />
