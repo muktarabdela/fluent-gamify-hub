@@ -14,7 +14,7 @@ const app = express();
 
 // Move CORS before other middleware
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:8080', 'https://fluent-gamify-hub-production.up.railway.app'],
+    origin: ['http://localhost:5173', 'http://localhost:8080', 'https://fluent-gamify-hub-production.up.railway.app', 'https://fluent-gamify-hub.vercel.app'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
