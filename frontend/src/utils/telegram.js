@@ -5,10 +5,10 @@ export const getTelegramUser = () => {
         const webApp = window.Telegram.WebApp;
         
         // Comment out Telegram validation for browser testing
-        // if (!webApp.initData) {
-        //     console.error('Not running in Telegram WebApp');
-        //     return null;
-        // }
+        if (!webApp.initData) {
+            console.error('Not running in Telegram WebApp');
+            return null;
+        }
 
         const user = webApp.initDataUnsafe?.user;
         if (user) {
