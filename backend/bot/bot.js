@@ -63,3 +63,59 @@ Start your language journey today! 🚀`;
         bot.sendMessage(chatId, "An error occurred. Please try again later.");
     }
 });
+
+let isPolling = false;
+
+async function startBot() {
+    if (isPolling) {
+        console.log('Bot is already polling. Skipping...');
+        return;
+    }
+
+    try {
+        isPolling = true;
+        console.log('Bot started...');
+        console.log(`Environment: ${process.env.NODE_ENV || 'production'}`);
+        console.log(`Bot Server URL: ${baseUrl}`);
+
+        // Start Express server
+        const PORT = process.env.BOT_PORT || 3001;
+        app.listen(PORT, () => {
+            console.log(`Bot API running on port: ${PORT}`);
+        });
+
+        // Start bot polling with error handling
+        while (isPolling) {
+            try {
+                await getUpdates();
+            } catch (error) {
+                console.error('Polling Error:', error);
+                // Wait before retrying
+                await new Promise(resolve => setTimeout(resolve, 5000));
+            }
+        }
+    } catch (error) {
+        console.error('Bot startup error:', error);
+        isPolling = false;
+    }
+}
+
+// Handle shutdown gracefully
+process.on('SIGINT', () => {
+    isPolling = false;
+    console.log('Bot stopped');
+    process.exit();
+});
+
+process.on('SIGTERM', () => {
+    isPolling = false;
+    console.log('Bot stopped');
+    process.exit();
+});
+
+// Only start if this is the main module
+if (require.main === module) {
+    startBot();
+}
+
+module.exports = { startBot };
