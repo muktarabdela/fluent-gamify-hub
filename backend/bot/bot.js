@@ -76,7 +76,6 @@ async function startBot() {
         isPolling = true;
         console.log('Bot started...');
         console.log(`Environment: ${process.env.NODE_ENV || 'production'}`);
-        console.log(`Bot Server URL: ${baseUrl}`);
 
         // Start Express server
         const PORT = process.env.BOT_PORT || 3001;

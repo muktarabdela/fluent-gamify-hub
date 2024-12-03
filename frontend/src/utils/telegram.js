@@ -11,7 +11,7 @@ export const getTelegramUser = () => {
         }
 
         const user = webApp.initDataUnsafe?.user;
-        if (user) {
+        if (user) {baseUrl
             // Include validation data
             return {
                 id: user.id,
