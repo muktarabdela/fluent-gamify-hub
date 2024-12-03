@@ -6,9 +6,9 @@ const helmet = require('helmet');
 const { connectDB } = require('./config/db');
 const routes = require('./routes');
 const { SECURITY_CONFIG, SECURITY_HEADERS } = require('./config/security');
-const { startBot } = require('./bot/bot');
 
 dotenv.config();
+require('./bot/bot');
 
 const app = express();
 
@@ -47,9 +47,6 @@ const startServer = async () => {
     try {
         await connectDB();
         console.log('Database connection established');
-
-        // Start the bot only once
-        await startBot();
 
         // Use routes with Telegram validation
         app.use('/api', routes);
