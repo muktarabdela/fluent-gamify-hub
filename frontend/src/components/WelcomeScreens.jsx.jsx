@@ -41,7 +41,7 @@ const WelcomeScreens = ({ onComplete }) => {
     return (
         <Card className="w-full max-w-md p-6 animate-fade-in">
             <div className="space-y-6 text-center">
-                <img src={screen.image} alt={screen.title} className="mx-auto w-32 h-32" />
+                {/* <img src={screen.image} alt={screen.title} className="mx-auto w-32 h-32" /> */}
                 <h2 className="text-2xl font-bold text-primary">{screen.title}</h2>
                 <p className="text-gray-600">{screen.description}</p>
                 <div className="flex justify-between items-center">

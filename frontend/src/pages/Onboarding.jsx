@@ -6,21 +6,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import WelcomeScreens from "@/components/WelcomeScreens.jsx";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Briefcase, Plane, Film, Users, Palette, Heart, ShoppingBag, Utensils, Home } from "lucide-react";
 import { updateUserPreferences } from "@/api/userService";
 import { getTelegramUser } from "@/utils/telegram";
 import { useInitialSetup } from '@/hooks/useInitialSetup';
 
 const interests = [
-  { id: "business", label: "Business", icon: "office" },
-  { id: "travel", label: "Travel", icon: "travel" },
-  { id: "entertainment", label: "Entertainment", icon: "city" },
-  { id: "socializing", label: "Socializing", icon: "socializing" },
-  { id: "culture", label: "Culture", icon: "culture" },
-  { id: "dating", label: "Dating", icon: "dating" },
-  { id: "shopping", label: "Shopping", icon: "shopping" },
-  { id: "food", label: "Food", icon: "food" },
-  { id: "family", label: "Family", icon: "family" },
+  { id: "business", label: "Business & Career", icon: Briefcase },
+  { id: "travel", label: "Travel & Adventure", icon: Plane },
+  { id: "entertainment", label: "Arts & Entertainment", icon: Film },
+  { id: "socializing", label: "Social Activities", icon: Users },
+  { id: "culture", label: "Culture & Learning", icon: Palette },
+  { id: "dating", label: "Dating & Relationships", icon: Heart },
+  { id: "shopping", label: "Shopping & Lifestyle", icon: ShoppingBag },
+  { id: "food", label: "Food & Dining", icon: Utensils },
+  { id: "family", label: "Family & Home", icon: Home },
 ];
 
 const Onboarding = () => {
@@ -165,21 +165,27 @@ const Onboarding = () => {
               </p>
             </div>
             <div className="grid grid-cols-3 gap-4 mb-6">
-              {interests.map((interest) => (
-                <div
-                  key={interest.id}
-                  className={`bg-neutral-200 rounded-md p-4 flex flex-col items-center gap-2 cursor-pointer relative ${formData.interests.includes(interest.id) ? 'ring-2 ring-green-500 border border-green-500' : ''
+              {interests.map((interest) => {
+                const IconComponent = interest.icon;
+                return (
+                  <div
+                    key={interest.id}
+                    className={`bg-white/50 backdrop-blur-sm rounded-lg p-4 flex flex-col items-center gap-2 cursor-pointer transition-all hover:bg-white/60 ${
+                      formData.interests.includes(interest.id)
+                        ? 'ring-2 ring-primary border border-primary bg-primary/10'
+                        : 'border border-neutral-200'
                     }`}
-                  onClick={() => handleInterestToggle(interest.id)}
-                >
-                  <img
-                    src={`https://tools-api.webcrumbs.org/image-placeholder/48/48/${interest.icon}/1`}
-                    alt={interest.label}
-                    className="w-full h-full object-contain"
-                  />
-                  <span className="text-sm text-neutral-700">{interest.label}</span>
-                </div>
-              ))}
+                    onClick={() => handleInterestToggle(interest.id)}
+                  >
+                    <IconComponent className={`w-6 h-6 ${
+                      formData.interests.includes(interest.id)
+                        ? 'text-primary'
+                        : 'text-neutral-600'
+                    }`} />
+                    <span className="text-sm text-neutral-700 text-center font-medium">{interest.label}</span>
+                  </div>
+                );
+              })}
             </div>
             <Button
               onClick={handleSubmit}
