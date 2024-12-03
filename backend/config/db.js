@@ -30,22 +30,28 @@ const createPool = () => {
 
 const initializeTables = async (promisePool) => {
     try {
+        // Reorder tables based on dependencies
         const tables = [
+            // Independent tables first
             { name: 'Units', query: tableQueries.createUnitsTable },
-            { name: 'Lessons', query: tableQueries.createLessonsTable },
-            { name: 'Dialogues', query: tableQueries.createDialoguesTable },
-            { name: 'Exercises', query: tableQueries.createExercisesTable },
-            { name: 'Users', query: tableQueries.createUsersTable },
-            { name: 'UserProgress', query: tableQueries.createUserProgressTable },
-            { name: 'UserStreaks', query: tableQueries.createStreaksTable },
-            { name: 'LiveSessions', query: tableQueries.createLiveSessionsTable },
-            { name: 'TelegramGroups', query: tableQueries.createTelegramGroupsTable },
-            { name: 'QuickLessons', query: tableQueries.createQuickLessonsTable },
-            { name: "LiveSessionParticipants", query: tableQueries.createLiveSessionParticipantsTable },
-            { name: "LessonStatus", query: tableQueries.createLessonStatusTable },
             { name: 'Topics', query: tableQueries.createTopicsTable },
             { name: 'Categories', query: tableQueries.createCategoriesTable },
+            { name: 'TelegramGroups', query: tableQueries.createTelegramGroupsTable },
+            { name: 'Users', query: tableQueries.createUsersTable },
+            
+            // Tables with single dependencies
+            { name: 'Lessons', query: tableQueries.createLessonsTable },
             { name: 'ExerciseTypes', query: tableQueries.createExerciseTypesTable },
+            { name: 'UserStreaks', query: tableQueries.createStreaksTable },
+            
+            // Tables with multiple dependencies
+            { name: 'Dialogues', query: tableQueries.createDialoguesTable },
+            { name: 'Exercises', query: tableQueries.createExercisesTable },
+            { name: 'QuickLessons', query: tableQueries.createQuickLessonsTable },
+            { name: 'UserProgress', query: tableQueries.createUserProgressTable },
+            { name: 'LiveSessions', query: tableQueries.createLiveSessionsTable },
+            { name: 'LiveSessionParticipants', query: tableQueries.createLiveSessionParticipantsTable },
+            { name: 'LessonStatus', query: tableQueries.createLessonStatusTable },
             { name: 'PracticeExercises', query: tableQueries.createPracticeExercisesTable }
         ];
 
@@ -55,7 +61,11 @@ const initializeTables = async (promisePool) => {
                 console.log(`${table.name} table initialized successfully`);
             } catch (error) {
                 console.error(`Error creating ${table.name} table:`, error.message);
-                // Continue with other tables even if one fails
+                // If it's a critical table, throw the error
+                if (['Users', 'Units', 'TelegramGroups'].includes(table.name)) {
+                    throw error;
+                }
+                // Otherwise continue with other tables
             }
         }
     } catch (error) {
