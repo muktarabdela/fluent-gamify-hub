@@ -30,7 +30,15 @@ const createPool = () => {
 
 const initializeTables = async (promisePool) => {
     try {
-        // Reorder tables based on dependencies
+        // First drop and recreate problematic tables
+        try {
+            await promisePool.query(tableQueries.dropTables);
+            console.log('Dropped existing tables successfully');
+        } catch (error) {
+            console.log('No tables to drop or error dropping tables:', error.message);
+        }
+
+        // Then create tables in correct order
         const tables = [
             // Independent tables first
             { name: 'Units', query: tableQueries.createUnitsTable },
@@ -61,11 +69,7 @@ const initializeTables = async (promisePool) => {
                 console.log(`${table.name} table initialized successfully`);
             } catch (error) {
                 console.error(`Error creating ${table.name} table:`, error.message);
-                // If it's a critical table, throw the error
-                if (['Users', 'Units', 'TelegramGroups'].includes(table.name)) {
-                    throw error;
-                }
-                // Otherwise continue with other tables
+                throw error;
             }
         }
     } catch (error) {
