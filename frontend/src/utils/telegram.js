@@ -3,16 +3,15 @@ import { createOrUpdateUser } from '../api/userService';
 export const getTelegramUser = () => {
     if (window.Telegram?.WebApp) {
         const webApp = window.Telegram.WebApp;
-        
-        // Comment out Telegram validation for browser testing
+
         if (!webApp.initData) {
             console.error('Not running in Telegram WebApp');
             return null;
         }
 
         const user = webApp.initDataUnsafe?.user;
-        if (user) {baseUrl
-            // Include validation data
+        console.log(user);
+        if (user) {
             return {
                 id: user.id,
                 first_name: user.first_name,
@@ -24,9 +23,9 @@ export const getTelegramUser = () => {
             };
         }
     }
-    
+
     // For development only
-    // Modified to work in any environment
+    // Uncomment the following lines for testing in a non-Telegram environment
     // return {
     //     id: 87654321,
     //     first_name: "muktar",
@@ -55,7 +54,7 @@ export const validateTelegramWebApp = () => {
     }
 
     const webApp = window.Telegram.WebApp;
-    
+
     // Verify platform
     if (!webApp.platform) {
         throw new Error('Invalid platform');
