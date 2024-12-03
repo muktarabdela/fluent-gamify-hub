@@ -13,41 +13,34 @@ export const useInitialSetup = () => {
             try {
                 setLoading(true);
                 const telegramUser = getTelegramUser();
-                
-                if (telegramUser) {
-                    toast.info(`Telegram User Found: ${telegramUser.id}`);
-                }
 
                 if (!telegramUser?.id) {
-                    toast.error("No Telegram user ID available");
-                    setLoading(false);
+                    toast.error("No user data available");
                     return;
                 }
 
+                // First, try to get existing user
                 try {
                     const existingUser = await getUserById(telegramUser.id);
-                    toast.success("Existing user found");
                     setUser(existingUser);
 
+                    // If user exists but hasn't completed onboarding, show welcome screens
                     if (!existingUser.onboarding_completed) {
                         setShowWelcome(true);
                     }
                 } catch (error) {
+                    // If user doesn't exist, create new user
                     if (error.response?.status === 404) {
-                        toast.info("Creating new user...");
                         const newUser = await handleTelegramResponse(telegramUser);
                         setUser(newUser);
-                        setShowWelcome(true);
-                        toast.success("New user created");
+                        setShowWelcome(true); // Show welcome screens for new users
                     } else {
-                        console.error('Error fetching user:', error);
-                        toast.error(`Error fetching user: ${error.message}`);
                         throw error;
                     }
                 }
             } catch (error) {
                 console.error('Error in initial setup:', error);
-                toast.error(`Failed to initialize user: ${error.message}`);
+                toast.error("Failed to initialize user");
             } finally {
                 setLoading(false);
             }
