@@ -10,6 +10,12 @@ const telegramGroupRoutes = require('./telegramGroupRoutes');
 const botRoutes = require('./botRoutes');
 const quickLessonRoutes = require('./quickLessonRoutes');
 const practiceExerciseRoutes = require('./practiceExerciseRoutes');
+
+// Add a route for the root URL
+router.get('/', (req, res) => {
+    res.send('Welcome to Fluent Gamify Hub API');
+});
+
 router.use('/units', unitRoutes);
 router.use('/lessons', lessonRoutes);
 router.use('/dialogues', dialogueRoutes);
