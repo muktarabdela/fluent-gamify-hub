@@ -74,32 +74,45 @@ const initializeTables = async (promisePool) => {
     }
 };
 
+const dropAllTables = async (pool) => {
+    try {
+        // Disable foreign key checks temporarily
+        await pool.query('SET FOREIGN_KEY_CHECKS = 0');
+
+        // Get all table names
+        const [tables] = await pool.query('SHOW TABLES');
+        
+        // Drop each table
+        for (const tableRow of tables) {
+            const tableName = tableRow[Object.keys(tableRow)[0]];
+            await pool.query(`DROP TABLE IF EXISTS ${tableName}`);
+            console.log(`Dropped table: ${tableName}`);
+        }
+
+        // Re-enable foreign key checks
+        await pool.query('SET FOREIGN_KEY_CHECKS = 1');
+        
+        console.log('All tables dropped successfully');
+    } catch (error) {
+        console.error('Error dropping tables:', error);
+        throw error;
+    }
+};
+
 const connectDB = async () => {
     try {
-        // Create pool with Railway's MySQL credentials
         pool = createPool();
-
-        // Test connection
         const connection = await pool.getConnection();
         console.log('MySQL Database Connected Successfully');
         
-        // Log successful connection details
-        const [rows] = await connection.query('SELECT DATABASE() as db');
-        console.log('Connected to database:', rows[0].db);
+        // Drop all tables first (be careful with this!)
+        await dropAllTables(pool);
         
-        connection.release();
-
-        // Initialize tables
+        // Then initialize tables
         await initializeTables(pool);
         return pool;
     } catch (error) {
-        console.error('Error connecting to the database:', error.message);
-        console.error('Connection details:', {
-            host: process.env.MYSQLHOST,
-            port: process.env.MYSQLPORT,
-            user: process.env.MYSQLUSER,
-            database: process.env.MYSQLDATABASE
-        });
+        console.error('Error:', error);
         throw error;
     }
 };
