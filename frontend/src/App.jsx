@@ -81,7 +81,7 @@ const App = () => {
   useEffect(() => {
     try {
       // Validate Telegram WebApp on mount
-      if (process.env.NODE_ENV !== 'development') {
+      if (import.meta.env.VITE_API_URL.NODE_ENV !== 'development') {
         validateTelegramWebApp();
       }
     } catch (error) {
