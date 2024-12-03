@@ -3,14 +3,7 @@ const { tableQueries } = require('../model/sql');
 
 let pool = null;
 
-// First, create a connection without database selection
-const initialConnection = mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD
-});
-
-// Create connection pool (will be used after database is created)
+// Create connection pool using Railway's MySQL credentials
 const createPool = () => {
     return mysql.createPool({
         host: process.env.MYSQLHOST,
@@ -24,18 +17,16 @@ const createPool = () => {
     }).promise();
 };
 
-// Initialize all tables - Commented out by default
+// Initialize all tables
 const initializeTables = async (promisePool) => {
     try {
-        // Create tables in the correct order due to foreign key constraints
         const tables = [
-            // Uncomment these lines to create tables
             { name: 'Units', query: tableQueries.createUnitsTable },
             { name: 'Lessons', query: tableQueries.createLessonsTable },
             { name: 'Dialogues', query: tableQueries.createDialoguesTable },
             { name: 'Exercises', query: tableQueries.createExercisesTable },
-            { name: 'UserProgress', query: tableQueries.createUserProgressTable },
             { name: 'Users', query: tableQueries.createUsersTable },
+            { name: 'UserProgress', query: tableQueries.createUserProgressTable },
             { name: 'UserStreaks', query: tableQueries.createStreaksTable },
             { name: 'LiveSessions', query: tableQueries.createLiveSessionsTable },
             { name: 'TelegramGroups', query: tableQueries.createTelegramGroupsTable },
@@ -49,35 +40,24 @@ const initializeTables = async (promisePool) => {
         ];
 
         for (const table of tables) {
-            await promisePool.query(table.query);
-            console.log(`${table.name} table initialized successfully`);
+            try {
+                await promisePool.query(table.query);
+                console.log(`${table.name} table initialized successfully`);
+            } catch (error) {
+                console.error(`Error creating ${table.name} table:`, error.message);
+                // Continue with other tables even if one fails
+            }
         }
-
     } catch (error) {
         console.error('Error initializing tables:', error.message);
         throw error;
     }
 };
 
-// Test connection and initialize database and tables
+// Connect to database and initialize tables
 const connectDB = async () => {
     try {
-        // Create database if it doesn't exist
-        await new Promise((resolve, reject) => {
-            initialConnection.query(
-                `CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME || 'fluenthub'}`,
-                (err) => {
-                    if (err) reject(err);
-                    console.log('Database created or already exists');
-                    resolve();
-                }
-            );
-        });
-
-        // Close initial connection
-        initialConnection.end();
-
-        // Create pool with database selected
+        // Create pool with Railway's MySQL credentials
         pool = createPool();
 
         // Test connection
@@ -85,16 +65,14 @@ const connectDB = async () => {
         console.log('MySQL Database Connected Successfully');
         connection.release();
 
-        // Initialize tables (commented out by default)
-        // Uncomment the next line to create tables
-        // await initializeTables(pool);
-        // console.log('All tables initialized successfully');
+        // Initialize tables
+        await initializeTables(pool);
+        console.log('All tables initialized successfully');
 
         return pool;
-
     } catch (error) {
         console.error('Error connecting to the database:', error.message);
-        process.exit(1);
+        throw error; // Let the application handle the error
     }
 };
 
