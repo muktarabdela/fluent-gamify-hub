@@ -24,26 +24,24 @@ export const useInitialSetup = () => {
                     return;
                 }
 
-                // First, try to get existing user
                 try {
                     const existingUser = await getUserById(telegramUser.id);
                     toast.success("Existing user found");
                     setUser(existingUser);
 
-                    // If user exists but hasn't completed onboarding, show welcome screens
                     if (!existingUser.onboarding_completed) {
                         setShowWelcome(true);
                     }
                 } catch (error) {
-                    // If user doesn't exist, create new user
                     if (error.response?.status === 404) {
                         toast.info("Creating new user...");
                         const newUser = await handleTelegramResponse(telegramUser);
                         setUser(newUser);
-                        setShowWelcome(true); // Show welcome screens for new users
+                        setShowWelcome(true);
                         toast.success("New user created");
                     } else {
-                        toast.error(`Error: ${error.message}`);
+                        console.error('Error fetching user:', error);
+                        toast.error(`Error fetching user: ${error.message}`);
                         throw error;
                     }
                 }
