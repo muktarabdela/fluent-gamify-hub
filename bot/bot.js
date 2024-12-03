@@ -7,15 +7,17 @@ const app = express();
 app.use(express.json());
 
 // Add localhost URL support
-const baseUrl = process.env.NODE_ENV === 'production'
-    ? `https://fluent-gamify-hub-production.up.railway.app/api/bot${config.BOT_TOKEN}`
-    : `https://api.telegram.org/bot${config.BOT_TOKEN}`;
+const baseUrl = process.env.NODE_ENV === 'development'
+    ? `http://localhost:${process.env.PORT || 3000}`
+    : 'https://api.telegram.org';
+
+const botPath = `/bot${config.BOT_TOKEN}`;
 
 let offset = 0;
 
 async function getUpdates() {
     try {
-        const response = await axios.get(`${baseUrl}/getUpdates`, {
+        const response = await axios.get(`${baseUrl}${botPath}/getUpdates`, {
             params: {
                 offset: offset,
                 timeout: 30
@@ -28,7 +30,7 @@ async function getUpdates() {
             offset = update.update_id + 1;
 
             // Handle voice chat updates
-            if (update.message?.video_chat_started ||
+            if (update.message?.video_chat_started || 
                 update.message?.voice_chat_started ||
                 update.message?.video_chat_ended ||
                 update.message?.voice_chat_ended) {
@@ -67,7 +69,7 @@ async function getUpdates() {
                 // Handle /remove command
                 if (message.text.startsWith('/remove')) {
                     const userToRemove = message.text.split(' ').slice(1).join(' ').trim();
-
+                    
                     if (!userToRemove) {
                         await sendMessage(message.chat.id,
                             'Please specify the user to remove: /remove <username or name>'
@@ -81,7 +83,7 @@ async function getUpdates() {
                             userToRemove,
                             message.from.id
                         );
-
+                        
                         await sendMessage(message.chat.id, result.message);
                     } catch (error) {
                         await sendMessage(message.chat.id,
@@ -114,7 +116,7 @@ async function getUpdates() {
 
 async function sendMessage(chatId, text) {
     try {
-        await axios.post(`${baseUrl}/sendMessage`, {
+        await axios.post(`${baseUrl}${botPath}/sendMessage`, {
             chat_id: chatId,
             text: text,
             parse_mode: 'HTML'
@@ -172,7 +174,7 @@ app.post('/newsession', async (req, res) => {
 async function startBot() {
     console.log('Bot started...');
     console.log(`Environment: ${process.env.NODE_ENV || 'production'}`);
-    console.log(`Server URL: ${baseUrl}`);
+    console.log(`Server URL: ${baseUrl}${botPath}`);
 
     // Start Express server
     const PORT = process.env.BOT_PORT || 3001; // Use different port than main backend
