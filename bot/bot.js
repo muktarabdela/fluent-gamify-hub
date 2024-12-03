@@ -7,9 +7,9 @@ const app = express();
 app.use(express.json());
 
 // Add localhost URL support
-const baseUrl = process.env.NODE_ENV === 'development'
-    ? `http://localhost:${process.env.PORT || 3000}/bot${config.BOT_TOKEN}`
-    : `https://fluent-gamify-hub-production.up.railway.app/api/bot${config.BOT_TOKEN}`;
+const baseUrl = process.env.NODE_ENV === 'production'
+    ? `https://fluent-gamify-hub-production.up.railway.app/api/bot${config.BOT_TOKEN}`
+    : `https://api.telegram.org/bot${config.BOT_TOKEN}`;
 
 let offset = 0;
 
@@ -28,7 +28,7 @@ async function getUpdates() {
             offset = update.update_id + 1;
 
             // Handle voice chat updates
-            if (update.message?.video_chat_started || 
+            if (update.message?.video_chat_started ||
                 update.message?.voice_chat_started ||
                 update.message?.video_chat_ended ||
                 update.message?.voice_chat_ended) {
@@ -67,7 +67,7 @@ async function getUpdates() {
                 // Handle /remove command
                 if (message.text.startsWith('/remove')) {
                     const userToRemove = message.text.split(' ').slice(1).join(' ').trim();
-                    
+
                     if (!userToRemove) {
                         await sendMessage(message.chat.id,
                             'Please specify the user to remove: /remove <username or name>'
@@ -81,7 +81,7 @@ async function getUpdates() {
                             userToRemove,
                             message.from.id
                         );
-                        
+
                         await sendMessage(message.chat.id, result.message);
                     } catch (error) {
                         await sendMessage(message.chat.id,
