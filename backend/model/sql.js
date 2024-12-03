@@ -133,39 +133,36 @@ const tableQueries = {
     `,
 
     createLiveSessionsTable: `
-        CREATE TABLE IF NOT EXISTS LiveSessions (
-            session_id INT AUTO_INCREMENT PRIMARY KEY,
-            session_type ENUM('lesson', 'free_talk') NOT NULL,
-            lesson_id INT,
-            topic VARCHAR(255) NOT NULL,
-            level ENUM('Beginner', 'Intermediate', 'Advanced') NOT NULL,
-            start_time DATETIME NOT NULL,
-            inviteLink VARCHAR(255) DEFAULT NULL,
-            duration VARCHAR(50) NOT NULL,
-            max_participants INT NOT NULL DEFAULT 4,
-            current_participants INT DEFAULT 0,
-            status ENUM('Scheduled', 'Ongoing', 'Cancelled') DEFAULT 'Scheduled',
-            host_user_id BIGINT,
-            telegram_chat_id BIGINT,
+    CREATE TABLE IF NOT EXISTS LiveSessions (
+        session_id INT AUTO_INCREMENT PRIMARY KEY,
+        session_type ENUM('lesson', 'free_talk') NOT NULL,
+        lesson_id INT,  -- NULL for free_talk sessions
+        topic VARCHAR(255) NOT NULL,
+        level ENUM('Beginner', 'Intermediate', 'Advanced') NOT NULL,
+        start_time DATETIME NOT NULL,
+        inviteLink VARCHAR(255) DEFAULT NULL,
+        duration VARCHAR(50) NOT NULL,
+        max_participants INT NOT NULL DEFAULT 4,
+        current_participants INT DEFAULT 0,
+        status ENUM('Scheduled', 'Ongoing', 'Cancelled') DEFAULT 'Scheduled',
+        host_user_id BIGINT,
+            telegram_chat_id BIGINT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             FOREIGN KEY (lesson_id) REFERENCES Lessons(lesson_id),
             FOREIGN KEY (host_user_id) REFERENCES Users(user_id),
-            FOREIGN KEY (telegram_chat_id) REFERENCES TelegramGroups(telegram_chat_id)
+            FOREIGN KEY (telegram_chat_id) REFERENCES TelegramGroups(group_id)
         )
     `,
 
     createTelegramGroupsTable: `
         CREATE TABLE IF NOT EXISTS TelegramGroups (
-            id INT AUTO_INCREMENT,
+            group_id INT AUTO_INCREMENT PRIMARY KEY,
             telegram_chat_id BIGINT NOT NULL,
-            group_name VARCHAR(255),
             status ENUM('available', 'in_use', 'archived') DEFAULT 'available',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            last_used_at TIMESTAMP NULL,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            UNIQUE KEY unique_telegram_chat_id (telegram_chat_id)
+            last_used_at TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )
     `,
 
