@@ -146,7 +146,7 @@ const tableQueries = {
             current_participants INT DEFAULT 0,
             status ENUM('Scheduled', 'Ongoing', 'Cancelled') DEFAULT 'Scheduled',
             host_user_id BIGINT,
-            telegram_chat_id BIGINT NOT NULL,
+            telegram_chat_id BIGINT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             FOREIGN KEY (lesson_id) REFERENCES Lessons(lesson_id),
@@ -158,10 +158,12 @@ const tableQueries = {
     createTelegramGroupsTable: `
         CREATE TABLE IF NOT EXISTS TelegramGroups (
             telegram_chat_id BIGINT PRIMARY KEY,
+            group_name VARCHAR(255),
             status ENUM('available', 'in_use', 'archived') DEFAULT 'available',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            last_used_at TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            last_used_at TIMESTAMP NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY idx_telegram_chat_id (telegram_chat_id)
         )
     `,
 
