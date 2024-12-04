@@ -27,7 +27,7 @@ Start your language journey today! 🚀`;
                     [
                         {
                             text: '🎓 Start Learning',
-                            url: webAppUrl
+                            web_app: { url: webAppUrl }
                         }
                     ],
                     [
