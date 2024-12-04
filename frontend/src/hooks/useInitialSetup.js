@@ -13,7 +13,7 @@ export const useInitialSetup = () => {
             try {
                 setLoading(true);
                 const telegramUser = getTelegramUser();
-                
+                console.log("telegramUser", telegramUser);
                 if (telegramUser) {
                     toast.info(`Telegram User Found: ${telegramUser.id}`);
                 }
@@ -27,6 +27,13 @@ export const useInitialSetup = () => {
                 // First, try to get existing user
                 try {
                     const existingUser = await getUserById(telegramUser.id);
+                    console.log("existingUser", existingUser);
+                    if (!existingUser) {
+                        toast.error("User data not found");
+                        setLoading(false);
+                        return;
+                    }
+
                     toast.success("Existing user found");
                     setUser(existingUser);
 

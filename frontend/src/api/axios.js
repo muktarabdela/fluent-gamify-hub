@@ -2,7 +2,7 @@
 
 import axios from "axios";
 const instance = axios.create({
-	baseURL: import.meta.env.VITE_API_URL || 'https://fluent-gamify-hub-production.up.railway.app/api',
+	baseURL: import.meta.env.REACT_APP_API_URL || 'http://localhost:5000/api',
 	timeout: 40000,
 	headers: {
 		"Content-Type": "application/json",
@@ -37,3 +37,7 @@ instance.interceptors.response.use(
 );
 
 export default instance;
+
+
+// https://fluent-gamify-hub-production.up.railway.app/api
+//http://localhost:5000/api'

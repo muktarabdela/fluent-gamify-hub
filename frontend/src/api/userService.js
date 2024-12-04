@@ -11,6 +11,7 @@ export const createOrUpdateUser = async (userData) => {
 };
 
 export const getUserById = async (userId) => {
+  
   try {
     const response = await instance.get(`/users/${userId}`);
     return response.data;

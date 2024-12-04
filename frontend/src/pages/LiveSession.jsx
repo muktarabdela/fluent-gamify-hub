@@ -143,7 +143,7 @@ export default function LiveSession() {
     );
 
     const getSessionButton = (session, handleJoinSession, joinStatus) => {
-        console.log(session)
+        // console.log(session)
         // Check if session is full
         const isFull = session.current_participants >= session.max_participants;
 
@@ -206,7 +206,7 @@ export default function LiveSession() {
                 variant="default"
                 onClick={() => handleInitialClick(session)}
             >
-                Create Session 
+                Create Session
             </Button>
         );
     };
@@ -262,7 +262,7 @@ export default function LiveSession() {
                         ...s,
                         status: 'Ongoing',
                         inviteLink: data.inviteLink,
-                        user_status: 'completed'
+                        user_status: ''
                     }
                     : s
             );
@@ -287,6 +287,7 @@ export default function LiveSession() {
     };
 
     const handleJoinSession = async (session, groupId) => {
+        console.log("session is handle join session ", session)
         try {
             // Create new session with the obtained groupId
             const data = await createNewSession({
@@ -439,12 +440,11 @@ export default function LiveSession() {
                                             </p>
                                             <p className="flex justify-between">
                                                 <span className="text-gray-600">Status:</span>
-                                                <span className={`font-medium ${
-                                                    session.user_status === 'completed' ? "text-green-600" :
-                                                    session.status === "Ongoing" ? "text-green-600" :
-                                                    session.status === "Scheduled" ? "text-blue-600" :
-                                                        "text-gray-600"
-                                                }`}>
+                                                <span className={`font-medium ${session.user_status === 'completed' ? "text-green-600" :
+                                                        session.status === "Ongoing" ? "text-green-600" :
+                                                            session.status === "Scheduled" ? "text-blue-600" :
+                                                                "text-gray-600"
+                                                    }`}>
                                                     {session.user_status === 'completed' ? 'Completed' : session.status}
                                                 </span>
                                             </p>

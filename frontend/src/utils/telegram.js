@@ -4,13 +4,13 @@ export const getTelegramUser = () => {
     if (window.Telegram?.WebApp) {
         const webApp = window.Telegram.WebApp;
 
-        if (!webApp.initData) {
-            console.error('Not running in Telegram WebApp');
-            return null;
-        }
+        // if (!webApp.initData) {
+        //     console.error('Not running in Telegram WebApp');
+        //     return null;
+        // }
 
         const user = webApp.initDataUnsafe?.user;
-        console.log(user);
+        // console.log(user);
         if (user) {
             return {
                 id: user.id,
@@ -26,15 +26,15 @@ export const getTelegramUser = () => {
 
     // For development only
     // Uncomment the following lines for testing in a non-Telegram environment
-    // return {
-    //     id: 87654321,
-    //     first_name: "muktar",
-    //     last_name: "abdela",
-    //     username: "muktar",
-    //     language_code: "en",
-    //     auth_date: Math.floor(Date.now() / 1000),
-    //     hash: 'development_hash'
-    // };
+    return {
+        id: 87654321,
+        first_name: "muktar",
+        last_name: "abdela",
+        username: "muktar",
+        language_code: "en",
+        auth_date: Math.floor(Date.now() / 1000),
+        hash: 'development_hash'
+    };
 };
 
 export const handleTelegramResponse = async (response) => {

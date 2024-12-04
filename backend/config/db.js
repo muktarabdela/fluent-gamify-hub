@@ -38,12 +38,12 @@ const initializeTables = async (promisePool) => {
             { name: 'Categories', query: tableQueries.createCategoriesTable },
             { name: 'TelegramGroups', query: tableQueries.createTelegramGroupsTable },
             { name: 'Users', query: tableQueries.createUsersTable },
-            
+
             // Tables with single dependencies
             { name: 'Lessons', query: tableQueries.createLessonsTable },
             { name: 'ExerciseTypes', query: tableQueries.createExerciseTypesTable },
             { name: 'UserStreaks', query: tableQueries.createStreaksTable },
-            
+
             // Tables with multiple dependencies
             { name: 'Dialogues', query: tableQueries.createDialoguesTable },
             { name: 'Exercises', query: tableQueries.createExercisesTable },
@@ -74,42 +74,42 @@ const initializeTables = async (promisePool) => {
     }
 };
 
-const dropAllTables = async (pool) => {
-    try {
-        // Disable foreign key checks temporarily
-        await pool.query('SET FOREIGN_KEY_CHECKS = 0');
+// const dropAllTables = async (pool) => {
+//     try {
+//         // Disable foreign key checks temporarily
+//         await pool.query('SET FOREIGN_KEY_CHECKS = 0');
 
-        // Get all table names
-        const [tables] = await pool.query('SHOW TABLES');
-        
-        // Drop each table
-        for (const tableRow of tables) {
-            const tableName = tableRow[Object.keys(tableRow)[0]];
-            await pool.query(`DROP TABLE IF EXISTS ${tableName}`);
-            console.log(`Dropped table: ${tableName}`);
-        }
+//         // Get all table names
+//         const [tables] = await pool.query('SHOW TABLES');
 
-        // Re-enable foreign key checks
-        await pool.query('SET FOREIGN_KEY_CHECKS = 1');
-        
-        console.log('All tables dropped successfully');
-    } catch (error) {
-        console.error('Error dropping tables:', error);
-        throw error;
-    }
-};
+//         // Drop each table
+//         for (const tableRow of tables) {
+//             const tableName = tableRow[Object.keys(tableRow)[0]];
+//             await pool.query(`DROP TABLE IF EXISTS ${tableName}`);
+//             console.log(`Dropped table: ${tableName}`);
+//         }
+
+//         // Re-enable foreign key checks
+//         await pool.query('SET FOREIGN_KEY_CHECKS = 1');
+
+//         console.log('All tables dropped successfully');
+//     } catch (error) {
+//         console.error('Error dropping tables:', error);
+//         throw error;
+//     }
+// };
 
 const connectDB = async () => {
     try {
         pool = createPool();
         const connection = await pool.getConnection();
         console.log('MySQL Database Connected Successfully');
-        
-        // Drop all tables first (be careful with this!)
-        await dropAllTables(pool);
-        
+
+        // // Drop all tables first (be careful with this!)
+        // await dropAllTables(pool);
+
         // Then initialize tables
-        await initializeTables(pool);
+        // await initializeTables(pool);
         return pool;
     } catch (error) {
         console.error('Error:', error);

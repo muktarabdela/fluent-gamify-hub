@@ -27,14 +27,15 @@ const queryClient = new QueryClient();
 const ProtectedRoute = ({ children }) => {
   const telegramUser = getTelegramUser();
   const [userPreferences, setUserPreferences] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserPreferences = async () => {
       if (telegramUser?.id) {
         try {
           const userData = await getUserById(telegramUser.id);
+          setUserPreferences(userData);
           if (userData.onboarding_completed) {
-            setUserPreferences(userData);
             localStorage.setItem("userPreferences", JSON.stringify({
               country: userData.country,
               interests: userData.interests
@@ -42,12 +43,18 @@ const ProtectedRoute = ({ children }) => {
           }
         } catch (error) {
           console.error('Error fetching user preferences:', error);
+        } finally {
+          setIsLoading(false);
         }
       }
     };
 
     fetchUserPreferences();
   }, [telegramUser]);
+
+  if (isLoading) {
+    return null;
+  }
 
   // If trying to access onboarding page but already completed
   if (window.location.pathname === "/" && userPreferences?.onboarding_completed) {

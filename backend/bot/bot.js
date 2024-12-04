@@ -1,28 +1,24 @@
-const TelegramBot = require('node-telegram-bot-api');
+const { Telegraf } = require('telegraf');
 const dotenv = require('dotenv');
+const { sendWelcomeMessage } = require('./messages/WelcomeMessage');
+const GroupManager = require('./GroupManager');
 
 dotenv.config();
 
 // Replace with your bot's token from BotFather
-const token = process.env.BOT_TOKEN;
+const token = "7300307978:AAGpaTDnqd4laQQ3xb3CWEjIwuAU-PbyJI8";
+// Create bot instance using Telegraf
+const bot = new Telegraf(token);
 
-// Create an instance of the bot with additional options
-const bot = new TelegramBot(token, { 
-    polling: {
-        autoStart: false,  // Don't start polling automatically
-        params: {
-            timeout: 10    // Reduce polling timeout
-        }
-    }
-});
+// Initialize GroupManager
+const groupManager = new GroupManager(bot);
 
-// Start bot polling in a controlled manner
+// Start bot in a controlled manner
 let botStarted = false;
-
 const startBot = async () => {
     if (!botStarted) {
         try {
-            await bot.startPolling();
+            await bot.launch();
             botStarted = true;
             console.log('Telegram bot started successfully');
         } catch (error) {
@@ -30,60 +26,67 @@ const startBot = async () => {
         }
     }
 };
-
 startBot();
 
-const channelLink = 'https://t.me/fluent_hub';
-const webAppUrl = 'https://fluent-gamify-hub.vercel.app'; // Replace with your Mini App URL
-const imageUrl = 'https://res.cloudinary.com/dczvebr3j/image/upload/v1727264037/hbampjrcszlxoohetngs.jpg';
-
-// When a user sends a message to the bot, the bot will respond
-bot.on('message', async (msg) => {
-    const chatId = msg.chat.id;
-
+// Handle /start command only
+bot.command('start', async (ctx) => {
     try {
-        const welcomeMessage = `Welcome to FluentHub! 🌟
-
-🎯 FluentHub - Your Smart Language Learning Companion:
-• AI-Powered Learning Path
-• Interactive Daily Challenges
-• Real-time Progress Analytics
-• Native Speaker Community
-• Gamified Learning Experience
-
-✨ Features:
-📚 Personalized lesson plans
-🎮 Interactive language games
-🏆 Achievement system
-👥 Community challenges
-📊 Detailed progress tracking
-
-Start your language journey today! 🚀`;
-
-        const options = {
-            caption: welcomeMessage,
-            reply_markup: {
-                inline_keyboard: [
-                    [
-                        {
-                            text: '🎓 Start Learning',
-                            web_app: { url: webAppUrl }
-                        }
-                    ],
-                    [
-                        {
-                            text: '📢 Join Community',
-                            url: channelLink
-                        }
-                    ]
-                ]
-            }
-        };
-
-        // Send image and buttons
-        await bot.sendPhoto(chatId, imageUrl, options);
+        // Only send welcome message for private chats (not groups)
+        if (ctx.chat.type === 'private') {
+            await sendWelcomeMessage(ctx.telegram, ctx.chat.id);
+        }
     } catch (error) {
-        console.error('Error sending message:', error);
-        bot.sendMessage(chatId, "An error occurred. Please try again later.");
+        console.error('Error sending welcome message:', error);
+        ctx.reply("An error occurred. Please try again later.");
     }
 });
+
+// Handle new members joining the group
+bot.on('new_chat_members', async (ctx) => {
+    try {
+        const groupId = ctx.chat.id;
+        const newMembers = ctx.message.new_chat_members;
+        
+        // Handle new members (promote them to admin if needed)
+        await groupManager.handleNewMembers(groupId, newMembers);
+        
+        // Monitor group members after new members join
+        await groupManager.monitorGroupMembers(groupId);
+    } catch (error) {
+        console.error('Error handling new chat members:', error);
+    }
+});
+
+// Handle members leaving the group
+bot.on('left_chat_member', async (ctx) => {
+    try {
+        const groupId = ctx.chat.id;
+        
+        // Monitor group members after someone leaves
+        await groupManager.monitorGroupMembers(groupId);
+    } catch (error) {
+        console.error('Error handling left chat member:', error);
+    }
+});
+
+// Handle /remove command for moderators
+bot.command('remove', async (ctx) => {
+    try {
+        const groupId = ctx.chat.id;
+        const targetUser = ctx.message.text.split(' ')[1];
+        const removedBy = ctx.from.id;
+
+        if (!targetUser) {
+            return ctx.reply('Please specify a user to remove. Example: /remove @username');
+        }
+
+        const result = await groupManager.removeUser(groupId, targetUser, removedBy);
+        ctx.reply(result.message);
+    } catch (error) {
+        console.error('Error removing user:', error);
+        ctx.reply(`Failed to remove user: ${error.message}`);
+    }
+});
+
+// Export both bot and groupManager
+module.exports = { bot, groupManager };

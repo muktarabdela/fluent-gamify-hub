@@ -1,17 +1,19 @@
 const { getPool } = require('../config/db');
-const axios = require('axios');
-
-// Get bot API URL from environment
-const BOT_API_URL = process.env.BOT_API_URL || 'http://localhost:3001';
+const { bot, groupManager } = require('../bot/bot');
 
 const botController = {
-    // Create new session
     createNewSession: async (req, res) => {
         const { topic, group_id } = req.body;
         const pool = getPool();
         const connection = await pool.getConnection();
 
         try {
+            console.log('Creating new session with group_id:', group_id);
+
+            if (!group_id) {
+                throw new Error('group_id is required');
+            }
+
             await connection.beginTransaction();
 
             // Parallel database operations
@@ -41,26 +43,46 @@ const botController = {
                 groupId = existingGroupQuery[0][0].group_id;
             }
 
-            // Create bot session
-            const response = await axios.post(`${BOT_API_URL}/newsession`, {
-                topic,
-                group_id
-            }, {
-                timeout: 40000
-            });
+            // Create temporary session using GroupManager
+            const sessionResult = await groupManager.createTemporarySession(
+                topic,  // First parameter should be the topic
+                group_id.toString()  // Second parameter should be the group_id
+            );
+            console.log('Session created successfully:', sessionResult);
+            // Update LiveSessions table with the new session info
+            await connection.query(
+                `INSERT INTO LiveSessions (
+                    telegram_chat_id,
+                    status,
+                    inviteLink,
+                    current_participants
+                ) VALUES (?, 'Ongoing', ?, 1)`,
+                [group_id.toString(), sessionResult.inviteLink]
+            );
 
             await connection.commit();
 
             res.json({
                 success: true,
-                inviteLink: response.data.inviteLink,
-                notificationSent: response.data.notificationSent,
-                groupId
+                inviteLink: sessionResult.inviteLink,
+                notificationSent: true,
+                groupId: sessionResult.groupId
             });
 
         } catch (error) {
             await connection.rollback();
-            throw error;
+            console.error('Error creating session:', error);
+
+            // More specific error messages
+            let errorMessage = error.message;
+            if (error.message.includes('chat not found')) {
+                errorMessage = 'The specified group was not found. Please ensure the group exists and the bot is a member of it.';
+            }
+
+            res.status(500).json({
+                success: false,
+                message: errorMessage
+            });
         } finally {
             connection.release();
         }

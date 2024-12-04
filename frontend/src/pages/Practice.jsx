@@ -12,6 +12,13 @@ import {
 } from "lucide-react";
 import { getPracticeTopics, getFilteredExercises, getCategories, getExerciseById } from '@/api/practiceService';
 import PracticeContainer from '@/components/practice/PracticeContainer';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 
 const Practice = () => {
     const [categories, setCategories] = useState([]);
@@ -128,21 +135,25 @@ const Practice = () => {
     const TopicSelector = () => (
         <div className="mb-6">
             <h3 className="text-sm font-medium text-gray-100 mb-2">Topics</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-32 overflow-y-auto custom-scrollbar p-1">
-                {topics.map((topic) => (
-                    <Button
-                        key={topic.id}
-                        variant={selectedTopicId === topic.id ? 'default' : 'outline'}
-                        onClick={() => setSelectedTopicId(topic.id)}
-                        className={cn(
-                            "w-full justify-start text-sm py-2 px-3",
-                            selectedTopicId === topic.id ? "bg-primary text-white" : "bg-white ",
-                        )}
-                    >
-                        {topic.name}
-                    </Button>
-                ))}
-            </div>
+            <Select value={selectedTopicId} onValueChange={setSelectedTopicId}>
+                <SelectTrigger className="w-full bg-primary/60 border-0 focus:ring-1 focus:ring-primary/50">
+                    <SelectValue placeholder="Select a topic" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                    {topics.map((topic) => (
+                        <SelectItem
+                            key={topic.id}
+                            value={topic.id}
+                            className="cursor-pointer hover:bg-primary/10"
+                        >
+                            <div className="flex items-center gap-2 text-">
+                                <ScrollText className="w-4 h-4 text-" />
+                                <span>{topic.name}</span>
+                            </div>
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
         </div>
     );
 
