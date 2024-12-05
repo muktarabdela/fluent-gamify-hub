@@ -24,10 +24,6 @@ const tableQueries = {
             grammar_focus JSON,  -- Store array of grammar points
             vocabulary_words INT DEFAULT 0,
             vocabulary_phrases INT DEFAULT 0,
-            status ENUM('locked', 'active', 'completed') DEFAULT 'locked',
-            live_session_title VARCHAR(255),
-            live_session_duration VARCHAR(50),
-            live_session_max_participants INT DEFAULT 4,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (unit_id) REFERENCES Units(unit_id)
         )

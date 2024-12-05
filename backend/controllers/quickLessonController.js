@@ -8,26 +8,15 @@ const quickLessonController = {
                 'SELECT * FROM QuickLessons WHERE lesson_id = ?',
                 [req.params.lessonId]
             );
-            
+
             if (quickLesson.length === 0) {
                 return res.status(404).json({ message: 'Quick lesson not found' });
             }
 
-            // Safely parse JSON fields
-            try {
-                quickLesson[0].key_points = JSON.parse(quickLesson[0].key_points);
-            } catch (parseError) {
-                console.error('Error parsing key_points:', parseError);
-                quickLesson[0].key_points = [];
-            }
+            // Log the raw data for debugging
+            console.log('Raw quick lesson data:', quickLesson[0]);
 
-            try {
-                quickLesson[0].example_sentences = JSON.parse(quickLesson[0].example_sentences);
-            } catch (parseError) {
-                console.error('Error parsing example_sentences:', parseError);
-                quickLesson[0].example_sentences = [];
-            }
-            
+            // No need to parse JSON fields since they are already in JSON format
             res.json(quickLesson[0]);
         } catch (error) {
             console.error('Error fetching quick lesson:', error);
@@ -59,7 +48,7 @@ const quickLessonController = {
 
         try {
             const pool = getPool();
-            
+
             // Verify that the lesson exists
             const [lesson] = await pool.query(
                 'SELECT * FROM Lessons WHERE lesson_id = ?',
@@ -95,10 +84,6 @@ const quickLessonController = {
                 'SELECT * FROM QuickLessons WHERE quick_lesson_id = ?',
                 [result.insertId]
             );
-
-            // Parse JSON fields
-            newQuickLesson[0].key_points = JSON.parse(newQuickLesson[0].key_points);
-            newQuickLesson[0].example_sentences = JSON.parse(newQuickLesson[0].example_sentences);
 
             console.log('Created quick lesson:', newQuickLesson[0]);
             res.status(201).json(newQuickLesson[0]);

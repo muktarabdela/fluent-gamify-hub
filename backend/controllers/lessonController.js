@@ -141,13 +141,41 @@ const lessonController = {
     createLesson: async (req, res) => {
         try {
             const pool = getPool();
-            const { unit_id, ...lessonData } = req.body;
+            const {
+                title,
+                description,
+                order_number,
+                grammar_focus,
+                vocabulary_words,
+                vocabulary_phrases,
+                unit_id
+            } = req.body;
 
-            // Create the lesson
-            const [result] = await pool.query(
-                'INSERT INTO Lessons SET ?',
-                { ...lessonData, unit_id }
-            );
+            // Convert grammar_focus to JSON string if it's an array or object
+            const grammar_focus_json = JSON.stringify(grammar_focus);
+
+            const query = `
+                INSERT INTO Lessons SET
+                title = ?,
+                description = ?,
+                order_number = ?,
+                grammar_focus = ?, 
+                vocabulary_words = ?,
+                vocabulary_phrases = ?,
+                unit_id = ?
+            `;
+
+            const values = [
+                title,
+                description,
+                order_number,
+                grammar_focus_json,
+                vocabulary_words,
+                vocabulary_phrases,
+                unit_id
+            ];
+
+            const [result] = await pool.query(query, values);
 
             // Initialize lesson status
             await pool.query(`
@@ -160,7 +188,7 @@ const lessonController = {
                         ) THEN 'active'
                         ELSE 'locked'
                     END
-            `, [result.insertId, unit_id, unit_id, lessonData.order_number]);
+            `, [result.insertId, unit_id, unit_id, order_number]);
 
             res.status(201).json({
                 message: 'Lesson created successfully',
@@ -287,6 +315,88 @@ const lessonController = {
             res.json({ message: 'Lesson status updated successfully' });
         } catch (error) {
             console.error('Error updating lesson status:', error);
+            res.status(500).json({ message: error.message });
+        }
+    },
+
+    // Add this new method to lessonController
+    createMultipleLessons: async (req, res) => {
+        const pool = getPool();
+        const lessons = req.body; // This will be the array of lessons
+
+        try {
+            // Start a transaction
+            await pool.query('START TRANSACTION');
+
+            const createdLessons = [];
+            
+            for (const lesson of lessons) {
+                const {
+                    title,
+                    description,
+                    order_number,
+                    grammar_focus,
+                    vocabulary_words,
+                    vocabulary_phrases,
+                    unit_id
+                } = lesson;
+
+                // Convert grammar_focus to JSON string
+                const grammar_focus_json = JSON.stringify(grammar_focus);
+
+                const query = `
+                    INSERT INTO Lessons SET
+                    title = ?,
+                    description = ?,
+                    order_number = ?,
+                    grammar_focus = ?, 
+                    vocabulary_words = ?,
+                    vocabulary_phrases = ?,
+                    unit_id = ?
+                `;
+
+                const values = [
+                    title,
+                    description,
+                    order_number,
+                    grammar_focus_json,
+                    vocabulary_words,
+                    vocabulary_phrases,
+                    unit_id
+                ];
+
+                const [result] = await pool.query(query, values);
+                createdLessons.push({
+                    lesson_id: result.insertId,
+                    ...lesson
+                });
+
+                // Initialize lesson status
+                await pool.query(`
+                    INSERT INTO LessonStatus (lesson_id, unit_id, status)
+                    SELECT ?, ?, 
+                        CASE 
+                            WHEN NOT EXISTS (
+                                SELECT 1 FROM Lessons 
+                                WHERE unit_id = ? AND order_number < ?
+                            ) THEN 'active'
+                            ELSE 'locked'
+                        END
+                `, [result.insertId, unit_id, unit_id, order_number]);
+            }
+
+            // Commit the transaction
+            await pool.query('COMMIT');
+
+            res.status(201).json({
+                message: 'Lessons created successfully',
+                lessons: createdLessons
+            });
+
+        } catch (error) {
+            // Rollback in case of error
+            await pool.query('ROLLBACK');
+            console.error('Error creating multiple lessons:', error);
             res.status(500).json({ message: error.message });
         }
     }

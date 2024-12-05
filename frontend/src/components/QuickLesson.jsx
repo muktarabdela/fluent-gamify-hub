@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BookOpen, Book, Bookmark, MessageSquareQuote, ChevronDown, ChevronUp } from 'lucide-react';
 
 const QuickLesson = ({ quickLesson }) => {
+    console.log('Quick lesson data:', quickLesson);
     const [expandedSections, setExpandedSections] = useState({
         grammar: false,
         vocabulary: false,
@@ -10,9 +11,9 @@ const QuickLesson = ({ quickLesson }) => {
 
     if (!quickLesson) return null;
 
-    const grammarFocus = quickLesson.grammar_focus ? JSON.parse(JSON.stringify(quickLesson.grammar_focus)) : null;
-    const vocabularyWords = Array.isArray(quickLesson.vocabulary_words) ? quickLesson.vocabulary_words : [];
-    const vocabularyPhrases = Array.isArray(quickLesson.vocabulary_phrases) ? quickLesson.vocabulary_phrases : [];
+    const grammarFocus = quickLesson.grammar_focus || [];
+    const vocabularyWords = quickLesson.vocabulary_words || [];
+    const vocabularyPhrases = quickLesson.vocabulary_phrases || [];
 
     const toggleSection = (section) => {
         setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -48,15 +49,27 @@ const QuickLesson = ({ quickLesson }) => {
             </div>
 
             <div className="space-y-4">
-                {grammarFocus && (
+                {grammarFocus.length > 0 && (
                     <div>
-                        <SectionHeader icon={Book} title={`Grammar Focus: ${grammarFocus.topic}`} section="grammar" />
+                        <SectionHeader 
+                            icon={Book} 
+                            title="Grammar Focus" 
+                            section="grammar" 
+                        />
                         {expandedSections.grammar && (
-                            <div className="mt-2 space-y-2">
-                                {grammarFocus.examples?.map((example, index) => (
-                                    <div key={index} className="bg-white p-3 rounded-lg shadow-sm">
-                                        <span className="text-indigo-600 font-medium mr-2">{index + 1}.</span>
-                                        {example}
+                            <div className="mt-2 space-y-4">
+                                {grammarFocus.map((grammarPoint, index) => (
+                                    <div key={index} className="bg-white p-4 rounded-lg shadow-sm">
+                                        <h4 className="text-indigo-600 font-medium mb-2">
+                                            {grammarPoint.topic}
+                                        </h4>
+                                        <div className="space-y-2">
+                                            {grammarPoint.examples.map((example, exIndex) => (
+                                                <div key={exIndex} className="text-gray-700 pl-4">
+                                                    • {example}
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
