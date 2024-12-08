@@ -114,10 +114,12 @@ const liveSessionController = {
             start_time,
             duration,
             max_participants,
-            host_user_id
+            host_user_id,
+            description,
+            about,
         } = req.body;
 
-        if (!session_type || !topic || !level || !start_time || !duration) {
+        if (!session_type || !topic || !level || !start_time ) {
             return res.status(400).json({
                 message: 'Missing required fields'
             });
@@ -142,12 +144,12 @@ const liveSessionController = {
                 `INSERT INTO LiveSessions (
                     session_type, lesson_id, topic, level, 
                     start_time, duration, max_participants, 
-                    host_user_id, status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Scheduled')`,
+                    host_user_id, status, description, about
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Scheduled', ?, ?)`,
                 [
                     session_type, lesson_id, topic, level,
                     start_time, duration, max_participants,
-                    host_user_id
+                    host_user_id, description, about
                 ]
             );
 
@@ -178,9 +180,9 @@ const liveSessionController = {
             const pool = getPool();
             const [result] = await pool.query(
                 `UPDATE LiveSessions 
-                 SET topic = ?, level = ?, start_time = ?,
-                     duration = ?, max_participants = ?, status = ?
-                 WHERE session_id = ?`,
+                SET topic = ?, level = ?, start_time = ?,
+                duration = ?, max_participants = ?, status = ?
+                WHERE session_id = ?`,
                 [topic, level, start_time, duration, max_participants, status, req.params.id]
             );
 
@@ -242,11 +244,11 @@ const liveSessionController = {
                 // Start transaction
                 await connection.beginTransaction();
 
-                // Add participant
-                await connection.query(
-                    'INSERT INTO LiveSessionParticipants (session_id, user_id) VALUES (?, ?)',
-                    [sessionId, userId]
-                );
+                // // Add participant
+                // await connection.query(
+                //     'INSERT INTO LiveSessionParticipants (session_id, user_id) VALUES (?, ?)',
+                //     [sessionId, userId]
+                // );
 
                 // Update current participants count
                 await connection.query(
@@ -284,10 +286,10 @@ const liveSessionController = {
             await pool.query('START TRANSACTION');
 
             // Remove participant
-            const [result] = await pool.query(
-                'UPDATE LiveSessionParticipants SET status = "Left" WHERE session_id = ? AND user_id = ?',
-                [sessionId, userId]
-            );
+            // const [result] = await pool.query(
+            //     'UPDATE LiveSessionParticipants SET status = "Left" WHERE session_id = ? AND user_id = ?',
+            //     [sessionId, userId]
+            // );
 
             if (result.affectedRows > 0) {
                 // Update current participants count
@@ -313,7 +315,7 @@ const liveSessionController = {
             const pool = getPool();
             const [sessions] = await pool.query(`
                 SELECT ls.*, 
-                       l.title as lesson_title,
+l.title as lesson_title,
                        u.username as host_username,
                        u.first_name as host_first_name
                 FROM LiveSessions ls
@@ -394,17 +396,17 @@ const liveSessionController = {
                 await connection.beginTransaction();
 
                 // Update participant status
-                const [updateResult] = await connection.query(
-                    `UPDATE LiveSessionParticipants 
-                     SET status = 'joined',
-                         completed_at = CURRENT_TIMESTAMP
-                     WHERE session_id = ? AND user_id = ?`,
-                    [sessionId, userId]
-                );
+                // const [updateResult] = await connection.query(
+                //     `UPDATE LiveSessionParticipants 
+                //      SET status = 'joined',
+                //          completed_at = CURRENT_TIMESTAMP
+                //      WHERE session_id = ? AND user_id = ?`,
+                //     [sessionId, userId]
+                // );
 
-                if (updateResult.affectedRows === 0) {
-                    throw new Error('Participant record not found');
-                }
+                // if (updateResult.affectedRows === 0) {
+                //     throw new Error('Participant record not found');
+                // }
 
                 await connection.commit();
 

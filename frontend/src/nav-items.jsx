@@ -8,9 +8,9 @@ import SavedPage from "@/pages/SavedPage";
 
 export const navItems = [
   { to: "/dashboard", page: <Dashboard /> },
-  { to: "/practice", page: <Practice /> },
+  // { to: "/practice", page: <Practice /> },
   { to: "/live-session", page: <LiveSession /> },
-  { to: "/saved", page: <SavedPage /> },
+  // { to: "/saved", page: <SavedPage /> },
   { to: "/rewards", page: <RewardsPage /> },
   { to: "/profile", page: <Profile /> },
 ];

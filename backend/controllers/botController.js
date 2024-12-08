@@ -3,12 +3,12 @@ const { bot, groupManager } = require('../bot/bot');
 
 const botController = {
     createNewSession: async (req, res) => {
-        const { topic, group_id } = req.body;
+        const { topic, group_id, duration } = req.body;
         const pool = getPool();
         const connection = await pool.getConnection();
 
         try {
-            console.log('Creating new session with group_id:', group_id);
+            console.log('duration from bot controller:', duration);
 
             if (!group_id) {
                 throw new Error('group_id is required');
@@ -46,19 +46,20 @@ const botController = {
             // Create temporary session using GroupManager
             const sessionResult = await groupManager.createTemporarySession(
                 topic,  // First parameter should be the topic
-                group_id.toString()  // Second parameter should be the group_id
+                group_id.toString(), // Second parameter should be the group_id
+                duration
             );
             console.log('Session created successfully:', sessionResult);
             // Update LiveSessions table with the new session info
-            await connection.query(
-                `INSERT INTO LiveSessions (
-                    telegram_chat_id,
-                    status,
-                    inviteLink,
-                    current_participants
-                ) VALUES (?, 'Ongoing', ?, 1)`,
-                [group_id.toString(), sessionResult.inviteLink]
-            );
+            // await connection.query(
+            //     `INSERT INTO LiveSessions (
+            //         telegram_chat_id,
+            //         status,
+            //         inviteLink,
+            //         current_participants
+            //     ) VALUES (?, 'Ongoing', ?, 1)`,
+            //     [group_id.toString(), sessionResult.inviteLink]
+            // );
 
             await connection.commit();
 
@@ -163,14 +164,14 @@ const botController = {
                 );
 
                 // Update participant status
-                const [participantResult] = await connection.query(
-                    `UPDATE LiveSessionParticipants 
-                    SET status = 'completed',
-                        completed_at = CURRENT_TIMESTAMP
-                    WHERE session_id = ? 
-                    AND user_id = ?`,
-                    [sessionId, userId]
-                );
+                // const [participantResult] = await connection.query(
+                //     `UPDATE LiveSessionParticipants 
+                //     SET status = 'completed',
+                //         completed_at = CURRENT_TIMESTAMP
+                //     WHERE session_id = ? 
+                //     AND user_id = ?`,
+                //     [sessionId, userId]
+                // );
 
                 await connection.commit();
 

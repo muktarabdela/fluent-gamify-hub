@@ -147,28 +147,31 @@ export default function LiveSession() {
         // Check if session is full
         const isFull = session.current_participants >= session.max_participants;
 
-        if (session.user_status === 'completed') {
-            return (
-                <Button
-                    className="w-full mt-4 bg-green-500 hover:bg-green-600 text-white"
-                    variant="default"
-                    onClick={() => toast({
-                        title: "Session Completed",
-                        description: "You have already completed this session.",
-                        duration: 3000
-                    })}
-                >
-                    Completed
-                </Button>
-            );
-        }
+        // if (session.user_status === 'completed') {
+        //     return (
+        //         <Button
+        //             className="w-full mt-4 bg-green-500 hover:bg-green-600 text-white"
+        //             variant="default"
+        //             onClick={() => toast({
+        //                 title: "Session Completed",
+        //                 description: "You have already completed this session.",
+        //                 duration: 3000
+        //             })}
+        //         >
+        //             Completed
+        //         </Button>
+        //     );
+        // }
 
         if (session.status === 'Ongoing') {
             return (
                 <Button
                     className="w-full mt-4 bg-green-500"
                     variant="default"
-                    onClick={() => window.open(session.inviteLink, '_blank')}
+                    onClick={() => {
+                        window.open(session.inviteLink, '_blank');
+                        handleJoinSession(session);
+                    }}
                 >
                     Join Now
                 </Button>
@@ -239,14 +242,15 @@ export default function LiveSession() {
             const data = await createNewSession({
                 topic: session.topic,
                 sessionId: session.session_id,
-                group_id: availableGroup.telegram_chat_id
+                group_id: availableGroup.telegram_chat_id,
+                duration: session.duration
             });
 
             // Parallel updates
             await Promise.all([
+                completeUserSession(session.session_id, telegramUser.id),
                 updateSessionStatus(session.session_id, 'Ongoing', data.inviteLink),
                 updateSessionTelegramChat(session.session_id, availableGroup.telegram_chat_id),
-                completeUserSession(session.session_id, telegramUser.id)
             ]);
 
             setJoinStatus({
@@ -290,15 +294,15 @@ export default function LiveSession() {
         console.log("session is handle join session ", session)
         try {
             // Create new session with the obtained groupId
-            const data = await createNewSession({
-                topic: session.topic,
-                sessionId: session.session_id,
-                group_id: groupId
-            });
+            // const data = await createNewSession({
+            //     topic: session.topic,
+            //     sessionId: session.session_id,
+            //     group_id: groupId
+            // });
 
             // Update the session status to Ongoing
-            await updateSessionStatus(session.session_id, 'Ongoing', data.inviteLink);
-            await updateSessionTelegramChat(session.session_id, groupId);
+            // await updateSessionStatus(session.session_id, 'Ongoing', data.inviteLink);
+            // await updateSessionTelegramChat(session.session_id, groupId);
 
             // First join the session
             await joinSession(session.session_id, telegramUser.id);
@@ -430,22 +434,22 @@ export default function LiveSession() {
                                                 <span className="text-gray-600">Participants:</span>
                                                 <span>{session.current_participants}/{session.max_participants}</span>
                                             </p>
-                                            <p className="flex justify-between">
+                                            {/* <p className="flex justify-between">
                                                 <span className="text-gray-600">Start Time:</span>
                                                 <span>{new Date(session.start_time).toLocaleString()}</span>
-                                            </p>
+                                            </p> */}
                                             <p className="flex justify-between">
                                                 <span className="text-gray-600">Duration:</span>
-                                                <span>{session.duration}</span>
+                                                <span>{session.duration} minutes</span>
                                             </p>
                                             <p className="flex justify-between">
                                                 <span className="text-gray-600">Status:</span>
-                                                <span className={`font-medium ${session.user_status === 'completed' ? "text-green-600" :
-                                                        session.status === "Ongoing" ? "text-green-600" :
-                                                            session.status === "Scheduled" ? "text-blue-600" :
-                                                                "text-gray-600"
+                                                <span className={`font-medium ${session.status === 'completed' ? "text-green-600" :
+                                                    session.status === "Ongoing" ? "text-green-600" :
+                                                        session.status === "Scheduled" ? "text-blue-600" :
+                                                            "text-gray-600"
                                                     }`}>
-                                                    {session.user_status === 'completed' ? 'Completed' : session.status}
+                                                    {session.status}
                                                 </span>
                                             </p>
                                         </div>

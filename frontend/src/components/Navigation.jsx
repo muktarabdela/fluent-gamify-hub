@@ -9,8 +9,8 @@ const Navigation = () => {
   const navItems = [
     { icon: BookOpen, label: "Learn", path: "/dashboard" },
     { icon: Video, label: "Live", path: "/live-session" },
-    { icon: Activity, label: "Practice", path: "/practice" },
-    { icon: Bookmark, label: "Saved", path: "/saved" },
+    // { icon: Activity, label: "Practice", path: "/practice" },
+    // { icon: Bookmark, label: "Saved", path: "/saved" },
     { icon: Trophy, label: "Rewards", path: "/rewards" },
   ];
 

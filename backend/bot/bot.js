@@ -13,6 +13,8 @@ const bot = new Telegraf(token);
 // Initialize GroupManager
 const groupManager = new GroupManager(bot);
 
+// Clear active groups when needed
+// groupManager.clearActiveGroups();
 // Start bot in a controlled manner
 let botStarted = false;
 const startBot = async () => {
@@ -46,10 +48,10 @@ bot.on('new_chat_members', async (ctx) => {
     try {
         const groupId = ctx.chat.id;
         const newMembers = ctx.message.new_chat_members;
-        
+
         // Handle new members (promote them to admin if needed)
         await groupManager.handleNewMembers(groupId, newMembers);
-        
+
         // Monitor group members after new members join
         await groupManager.monitorGroupMembers(groupId);
     } catch (error) {
@@ -61,7 +63,7 @@ bot.on('new_chat_members', async (ctx) => {
 bot.on('left_chat_member', async (ctx) => {
     try {
         const groupId = ctx.chat.id;
-        
+
         // Monitor group members after someone leaves
         await groupManager.monitorGroupMembers(groupId);
     } catch (error) {

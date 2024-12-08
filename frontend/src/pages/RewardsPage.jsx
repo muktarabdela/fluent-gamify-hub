@@ -167,11 +167,33 @@ const RewardsPage = () => {
         <div className="max-w-[430px] mx-auto p-4 mb-20">
             <h1 className="text-2xl font-bold mb-6 text-gray-100 flex items-center gap-2">
                 <Award className="w-7 h-7 text-primary" />
-                Rewards Program
+                Leaderboard
             </h1>
-            <div className="bg-gray-800/50 rounded-lg p-8 text-center border border-gray-700">
-                <p className="text-2xl font-semibold text-gray-100 mb-2">Coming Soon</p>
-                <p className="text-gray-400">We're working on something exciting for you!</p>
+            <div className="bg-white/80 backdrop-blur-sm shadow-sm rounded-xl p-6 border border-primary/10">
+                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-gray-800">
+                    <Trophy className="w-5 h-5 text-primary" />
+                    Top Learners
+                </h2>
+                <div className="space-y-4">
+                    {leaderboard.map((user, index) => (
+                        <div
+                            key={user.user_id}
+                            className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-100"
+                        >
+                            <div className="flex items-center gap-3">
+                                <span className={`w-6 h-6 flex items-center justify-center rounded-full ${index < 3 ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'
+                                    } font-semibold text-sm`}>
+                                    {index + 1}
+                                </span>
+                                <span className="font-medium">{user.first_name}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Heart className="w-4 h-4 text-pink-500" />
+                                <span className="font-semibold text-pink-600">{user.like_coins}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );

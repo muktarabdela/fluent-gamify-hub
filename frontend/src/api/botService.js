@@ -1,13 +1,14 @@
 import instance from "./axios";
 
-export const createNewSession = async ({ topic, lessonId = null, group_id, sessionId }) => {
+export const createNewSession = async ({ topic, lessonId = null, group_id, sessionId, duration }) => {
     console.log("group id from bot servies", group_id)
     try {
         const response = await instance.post('/bot/newsession', {
             topic,
             lessonId,
             group_id,
-            sessionId
+            sessionId,
+            duration
         }, {
             timeout: 40000
         });

@@ -246,6 +246,69 @@ const exerciseController = {
             console.error('Error submitting exercise answer:', error);
             res.status(500).json({ message: error.message });
         }
+    },
+
+    // Create multiple exercises
+    createMultipleExercises: async (req, res) => {
+        const exercises = req.body;
+
+        // Validate that the body is an array
+        if (!Array.isArray(exercises) || exercises.length === 0) {
+            return res.status(400).json({ message: 'An array of exercises is required' });
+        }
+
+        try {
+            const pool = getPool();
+            const createdExercises = [];
+
+            for (const exercise of exercises) {
+                // Validate required fields for each exercise
+                const { lesson_id, type, question, correct_answer, order_number } = exercise;
+                if (!lesson_id || !type || !question || !correct_answer || !order_number) {
+                    return res.status(400).json({
+                        message: 'lesson_id, type, question, correct_answer, and order_number are required for each exercise'
+                    });
+                }
+
+                // Verify that the lesson exists
+                const [lesson] = await pool.query(
+                    'SELECT * FROM Lessons WHERE lesson_id = ?',
+                    [lesson_id]
+                );
+
+                if (lesson.length === 0) {
+                    return res.status(404).json({ message: `Lesson with id ${lesson_id} not found` });
+                }
+
+                // Create the exercise
+                const [result] = await pool.query(
+                    `INSERT INTO Exercises (
+                        lesson_id, type, question, correct_answer,
+                        options, audio_url, image_url, order_number
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                        lesson_id, type, question, correct_answer,
+                        JSON.stringify(exercise.options), exercise.audio_url, exercise.image_url, order_number
+                    ]
+                );
+
+                // Fetch the created exercise
+                const [newExercise] = await pool.query(
+                    'SELECT * FROM Exercises WHERE exercise_id = ?',
+                    [result.insertId]
+                );
+
+                createdExercises.push(newExercise[0]);
+            }
+
+            res.status(201).json(createdExercises);
+        } catch (error) {
+            console.error('Error creating multiple exercises:', error);
+            res.status(500).json({
+                message: 'Failed to create exercises',
+                error: error.message
+            });
+        }
     }
 };
 
