@@ -8,7 +8,7 @@ import Lessons from "@/components/Lessons";
 const Dashboard = () => {
   return (
     <>
-      <div className="bg-gr/20 p-4 pb-20">
+      <div className="bg-gr/20 py-2 pb-20">
         <div className="max-w-md mx-auto space-y-4">
           <div className="space-y-3">
             <Lessons />
