@@ -9,7 +9,7 @@ import {
     , Heart
 } from "lucide-react";
 
-import { getLessonStatusByUserId, getUserById, getUserProgress, getUserStreak } from "@/api/userService";
+import { getLessonStatusByUserId, getUserById, getUserStreak } from "@/api/userService";
 import { format } from "date-fns";
 import { getTelegramUser } from "@/utils/telegram";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,7 +33,7 @@ const Profile = () => {
                 }
                 const [userDetails, progress, streak, lesson] = await Promise.all([
                     getUserById(telegramUser.id),
-                    getUserProgress(telegramUser.id),
+                    // getUserProgress(telegramUser.id),
                     getUserStreak(telegramUser.id),
                     getLessonStatusByUserId(telegramUser.id)
                 ]);
@@ -44,7 +44,7 @@ const Profile = () => {
                 console.log("Fetched user lesson data:", lesson);
 
                 setUserData(userDetails);
-                setUserProgress(progress);
+                // setUserProgress(progress);
                 setUserStreak(streak);
                 setUserLesson(lesson)
             } catch (error) {
@@ -61,15 +61,15 @@ const Profile = () => {
         return <ProfileSkeleton />;
     }
 
-    const completedLessons = userProgress?.filter(p => p.status === 'completed')?.length || 0;
-    const totalPoints = userProgress?.reduce((sum, p) => sum + (p.score || 0), 0) || 0;
+    // const completedLessons = userProgress?.filter(p => p.status === 'completed')?.length || 0;
+    // const totalPoints = userProgress?.reduce((sum, p) => sum + (p.score || 0), 0) || 0;
     const totalLikes = userData?.like_coins
 
-    const averageScore = completedLessons > 0
-        ? Math.round(totalPoints / completedLessons)
-        : 0;
-    const level = Math.floor(totalPoints / 100) + 1;
-    const levelProgress = (totalPoints % 100);
+    // const averageScore = completedLessons > 0
+    //     ? Math.round(totalPoints / completedLessons)
+    //     : 0;
+    // const level = Math.floor(totalPoints / 100) + 1;
+    // const levelProgress = (totalPoints % 100);
 
     // Calculate the counts and progress
     const totalLessons = userLesson.length;
@@ -133,14 +133,14 @@ const Profile = () => {
                         bgColor="bg-orange-500/20"
                         textColor="text-orange-400"
                     />
-                    <StatCard
+                    {/* <StatCard
                         icon={<Star className="w-6 h-6 text-yellow-500" />}
                         value={averageScore}
                         label="Avg. Score"
                         suffix="%"
                         bgColor="bg-yellow-500/20"
                         textColor="text-yellow-400"
-                    />
+                    /> */}
                     <StatCard
                         icon={<BookOpen className="w-6 h-6 text-emerald-500" />}
                         value={completedLessonsS}
