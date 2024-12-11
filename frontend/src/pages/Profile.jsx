@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import Navigation from "@/components/Navigation";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
     Settings, Award, History, BookMarked,
     Trophy, Target, Flame, BookOpen,
     BarChart3, Calendar, Clock, Star
+    , Heart
 } from "lucide-react";
-import { getUserById, getUserProgress, getUserStreak } from "@/api/userService";
+
+import { getLessonStatusByUserId, getUserById, getUserProgress, getUserStreak } from "@/api/userService";
 import { format } from "date-fns";
 import { getTelegramUser } from "@/utils/telegram";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,6 +19,7 @@ const Profile = () => {
     const [userData, setUserData] = useState(null);
     const [userProgress, setUserProgress] = useState(null);
     const [userStreak, setUserStreak] = useState(null);
+    const [userLesson, setUserLesson] = useState(null)
     const [loading, setLoading] = useState(true);
     const telegramUser = getTelegramUser();
 
@@ -28,16 +31,22 @@ const Profile = () => {
                     setLoading(false);
                     return;
                 }
-
-                const [userDetails, progress, streak] = await Promise.all([
+                const [userDetails, progress, streak, lesson] = await Promise.all([
                     getUserById(telegramUser.id),
                     getUserProgress(telegramUser.id),
-                    getUserStreak(telegramUser.id)
+                    getUserStreak(telegramUser.id),
+                    getLessonStatusByUserId(telegramUser.id)
                 ]);
+
+                console.log("Fetched user details:", userDetails);
+                // console.log("Fetched user progress:", progress);
+                console.log("Fetched user streak:", streak);
+                console.log("Fetched user lesson data:", lesson);
 
                 setUserData(userDetails);
                 setUserProgress(progress);
                 setUserStreak(streak);
+                setUserLesson(lesson)
             } catch (error) {
                 console.error('Error fetching user data:', error);
             } finally {
@@ -54,11 +63,21 @@ const Profile = () => {
 
     const completedLessons = userProgress?.filter(p => p.status === 'completed')?.length || 0;
     const totalPoints = userProgress?.reduce((sum, p) => sum + (p.score || 0), 0) || 0;
+    const totalLikes = userData?.like_coins
+
     const averageScore = completedLessons > 0
         ? Math.round(totalPoints / completedLessons)
         : 0;
     const level = Math.floor(totalPoints / 100) + 1;
     const levelProgress = (totalPoints % 100);
+
+    // Calculate the counts and progress
+    const totalLessons = userLesson.length;
+    const completedLessonsS = userLesson.filter(lesson => lesson.status === 'completed').length;
+    const activeLessons = userLesson.filter(lesson => lesson.status === 'active').length;
+    const lockedLessons = userLesson.filter(lesson => lesson.status === 'locked').length;
+
+    const overallProgress = totalLessons > 0 ? Math.round((completedLessonsS / totalLessons) * 100) : 0;
 
     return (
         <div className="min-h-screen bg-[#243642]">
@@ -94,13 +113,13 @@ const Profile = () => {
                     </div>
 
                     {/* Level Progress */}
-                    <Card className="mt-6 p-4 bg-[#2c414f]/50 backdrop-blur-sm border-none shadow-md">
+                    {/* <Card className="mt-6 p-4 bg-[#2c414f]/50 backdrop-blur-sm border-none shadow-md">
                         <div className="flex items-center justify-between mb-2">
                             <span className="text-sm font-medium">Level {level}</span>
                             <span className="text-sm text-muted-foreground">{levelProgress}/100 XP</span>
                         </div>
                         <Progress value={levelProgress} className="h-2" />
-                    </Card>
+                    </Card> */}
                 </div>
             </div>
 
@@ -108,34 +127,80 @@ const Profile = () => {
             <div className="max-w-md mx-auto px-4 -mt-6">
                 <div className="grid grid-cols-2 gap-4 mb-6">
                     <StatCard
-                        icon={<Flame className="w-5 h-5 text-orange-500" />}
+                        icon={<Flame className="w-6 h-6 text-orange-500" />}
                         value={userStreak?.current_streak || 0}
                         label="Day Streak"
-                        bgColor="bg-orange-500/10"
+                        bgColor="bg-orange-500/20"
+                        textColor="text-orange-400"
                     />
                     <StatCard
-                        icon={<Star className="w-5 h-5 text-yellow-500" />}
+                        icon={<Star className="w-6 h-6 text-yellow-500" />}
                         value={averageScore}
                         label="Avg. Score"
                         suffix="%"
-                        bgColor="bg-yellow-500/10"
+                        bgColor="bg-yellow-500/20"
+                        textColor="text-yellow-400"
                     />
                     <StatCard
-                        icon={<BookOpen className="w-5 h-5 text-emerald-500" />}
-                        value={completedLessons}
-                        label="Lessons"
-                        bgColor="bg-emerald-500/10"
+                        icon={<BookOpen className="w-6 h-6 text-emerald-500" />}
+                        value={completedLessonsS}
+                        label="Completed Lessons"
+                        bgColor="bg-emerald-500/20"
+                        textColor="text-emerald-400"
                     />
-                    <StatCard
-                        icon={<Target className="w-5 h-5 text-blue-500" />}
+                    {/* <StatCard
+                        icon={<Target className="w-6 h-6 text-blue-500" />}
                         value={totalPoints}
                         label="Total Points"
-                        bgColor="bg-blue-500/10"
+                        bgColor="bg-blue-500/20"
+                        textColor="text-blue-400"
+                    /> */}
+                    <StatCard
+                        icon={<Heart className="w-6 h-6 text-pink-500" />}
+                        value={totalLikes}
+                        label="Total Likes"
+                        bgColor="bg-pink-500/20"
+                        textColor="text-pink-400"
                     />
                 </div>
-
+                <div className="mb-24">
+                    <div className="max-w-2xl mx-auto px-4 py-8 bg--950 rounded-xl shadow-2xl">
+                        <h2 className="text-3xl font-bold text-white mb-8 text-center">Lesson Progress</h2>
+                        <div className="space-y-6">
+                            <ProgressCar
+                                title="Completed Lessons"
+                                current={completedLessonsS}
+                                total={totalLessons}
+                                percentage={(completedLessonsS / totalLessons) * 100}
+                                color="bg-emerald-500"
+                            />
+                            <ProgressCar
+                                title="Active Lessons"
+                                current={activeLessons}
+                                total={totalLessons}
+                                percentage={(activeLessons / totalLessons) * 100}
+                                color="bg-gray-500"
+                            />
+                            <ProgressCar
+                                title="Locked Lessons"
+                                current={lockedLessons}
+                                total={totalLessons}
+                                percentage={(lockedLessons / totalLessons) * 100}
+                                color="bg-gray-500"
+                            />
+                        </div>
+                        <div className="mt-8 p-6 bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg shadow-inner">
+                            <h3 className="text-xl font-semibold text-white mb-4">Overall Progress</h3>
+                            <Progress value={overallProgress} className="h-3 bg-gray-700" />
+                            <div className="text-sm text-gray-300 mt-2 flex justify-between items-center">
+                                <span>Completion Rate</span>
+                                <span className="font-medium text-white">{overallProgress.toFixed(1)}%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 {/* Action Cards */}
-                <div className="space-y-4">
+                {/* <div className="space-y-4">
                     <ActionCard
                         icon={<BookMarked className="h-5 w-5 text-primary" />}
                         title="Saved Lessons"
@@ -156,26 +221,45 @@ const Profile = () => {
                         title="Settings"
                         description="Customize your experience"
                     />
-                </div>
+                </div> */}
             </div>
             <Navigation />
         </div>
     );
 };
 
-const StatCard = ({ icon, value, label, suffix = "", bgColor }) => (
-    <Card className="p-4 border-none shadow-md bg-[#2c414f]/50 backdrop-blur-sm">
-        <div className={`w-10 h-10 rounded-full ${bgColor} flex items-center justify-center mb-2`}>
-            {icon}
-        </div>
-        <div className="font-bold text-2xl">
-            {value}{suffix}
-        </div>
-        <div className="text-sm text-muted-foreground">
-            {label}
-        </div>
+const StatCard = ({ icon, value, label, suffix = '', bgColor, textColor }) => (
+    <Card className="overflow-hidden">
+        <CardContent className="p-6 bg-gradient-to-br from-gray-900 to-gray-800">
+            <div className={`${bgColor} w-10 h-12 rounded-lg flex items-center justify-center mb-4 transform -rotate-12 shadow-lg`}>
+                {icon}
+            </div>
+            <div className={`${textColor} font-bold text-3xl mb-1`}>
+                {value}{suffix}
+            </div>
+            <div className="text-sm text-gray-400 font-medium">
+                {label}
+            </div>
+        </CardContent>
     </Card>
+
 );
+
+const ProgressCar = ({ title, current, total, percentage, color }) => (
+    <Card className="overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 border-none shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02]">
+        <CardContent className="p-6">
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold text-lg text-white">{title}</h3>
+                <span className="text-sm font-medium text-gray-300">{current} / {total}</span>
+            </div>
+            <Progress value={percentage} className={`h-2 ${color}`} />
+            <div className="text-xs text-gray-400 mt-2 flex justify-between items-center">
+                <span>{title}</span>
+                <span className="font-medium text-white">{percentage.toFixed(1)}%</span>
+            </div>
+        </CardContent>
+    </Card>
+)
 
 const ActionCard = ({ icon, title, description }) => (
     <Card className="p-4 border-none shadow-md hover:shadow-lg transition-all bg-[#2c414f]/50 backdrop-blur-sm hover:bg-[#2c414f]/70">
@@ -197,7 +281,7 @@ const ProfileSkeleton = () => (
             <div className="max-w-md mx-auto px-4">
                 <div className="text-center">
                     <Skeleton className="w-24 h-24 rounded-full mx-auto mb-4" />
-                    <Skeleton className="h-8 w-48 mx-auto mb-2" />
+                    {/* <Skeleton className="h-8 w-48 mx-auto mb-2" /> */}
                     <Skeleton className="h-4 w-32 mx-auto" />
                 </div>
                 <Skeleton className="h-16 w-full mt-6" />

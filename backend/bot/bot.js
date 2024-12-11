@@ -6,7 +6,7 @@ const GroupManager = require('./GroupManager');
 dotenv.config();
 
 // Replace with your bot's token from BotFather
-const token = "7300307978:AAGpaTDnqd4laQQ3xb3CWEjIwuAU-PbyJI8";
+const token = "7300307978:AAHWkV9DGPItO6N3u66s7u18j8aV51984OM";
 // Create bot instance using Telegraf
 const bot = new Telegraf(token);
 

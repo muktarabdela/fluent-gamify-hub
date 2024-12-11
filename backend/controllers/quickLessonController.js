@@ -1,29 +1,35 @@
-const { getPool } = require('../config/db');
+const { QuickLesson, Lesson } = require('../model/model'); // Import Mongoose models
 
 const quickLessonController = {
+    // Get quick lesson by lesson ID
     getQuickLessonByLessonId: async (req, res) => {
         try {
-            const pool = getPool();
-            const [quickLesson] = await pool.query(
-                'SELECT * FROM QuickLessons WHERE lesson_id = ?',
-                [req.params.lessonId]
-            );
+            // Log the lessonId parameter for debugging
+            console.log('Request lesson ID:', req.params.lessonId);
 
-            if (quickLesson.length === 0) {
+            // Ensure lesson_id is treated as a string for the query
+            const lessonId = req.params.lessonId.toString();
+
+            // Query the database using the lessonId
+            const quickLessons = await QuickLesson.find({ lesson_id: lessonId }).lean();
+
+            // If no quick lessons are found, return a 404
+            if (quickLessons.length === 0) {
                 return res.status(404).json({ message: 'Quick lesson not found' });
             }
 
             // Log the raw data for debugging
-            console.log('Raw quick lesson data:', quickLesson[0]);
+            console.log('Raw quick lesson data:', quickLessons);
 
-            // No need to parse JSON fields since they are already in JSON format
-            res.json(quickLesson[0]);
+            // Return the quick lessons in the response
+            res.json(quickLessons);
         } catch (error) {
             console.error('Error fetching quick lesson:', error);
             res.status(500).json({ message: error.message });
         }
     },
 
+    // Create new quick lesson
     createQuickLesson: async (req, res) => {
         console.log('Received request to create quick lesson:', req.body);
         const {
@@ -47,46 +53,30 @@ const quickLessonController = {
         }
 
         try {
-            const pool = getPool();
-
             // Verify that the lesson exists
-            const [lesson] = await pool.query(
-                'SELECT * FROM Lessons WHERE lesson_id = ?',
-                [lesson_id]
-            );
+            const lesson = await Lesson.findById(lesson_id);
 
-            if (lesson.length === 0) {
+            if (!lesson) {
                 return res.status(404).json({ message: 'Lesson not found' });
             }
 
             // Create the quick lesson
-            const [result] = await pool.query(
-                `INSERT INTO QuickLessons (
-                    lesson_id, title, introduction, grammar_focus,
-                    vocabulary_words, vocabulary_phrases, key_points,
-                    example_sentences, image_url
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    lesson_id,
-                    title,
-                    introduction,
-                    JSON.stringify(grammar_focus || []),
-                    JSON.stringify(vocabulary_words || []),
-                    JSON.stringify(vocabulary_phrases || []),
-                    JSON.stringify(key_points || []),
-                    JSON.stringify(example_sentences || []),
-                    image_url
-                ]
-            );
+            const newQuickLesson = new QuickLesson({
+                lesson_id,
+                title,
+                introduction,
+                grammar_focus,
+                vocabulary_words,
+                vocabulary_phrases,
+                key_points,
+                example_sentences,
+                image_url
+            });
 
-            // Fetch the created quick lesson
-            const [newQuickLesson] = await pool.query(
-                'SELECT * FROM QuickLessons WHERE quick_lesson_id = ?',
-                [result.insertId]
-            );
+            await newQuickLesson.save();
 
-            console.log('Created quick lesson:', newQuickLesson[0]);
-            res.status(201).json(newQuickLesson[0]);
+            console.log('Created quick lesson:', newQuickLesson);
+            res.status(201).json(newQuickLesson);
         } catch (error) {
             console.error('Error creating quick lesson:', error);
             res.status(500).json({
@@ -96,62 +86,48 @@ const quickLessonController = {
         }
     },
 
+    // Update quick lesson
     updateQuickLesson: async (req, res) => {
         const {
             title,
-            content,
+            introduction,
+            grammar_focus,
+            vocabulary_words,
+            vocabulary_phrases,
             key_points,
             example_sentences,
             image_url
         } = req.body;
 
         try {
-            const pool = getPool();
-            const [result] = await pool.query(
-                `UPDATE QuickLessons SET 
-                title = ?, content = ?, key_points = ?,
-                example_sentences = ?, image_url = ?
-                WHERE quick_lesson_id = ?`,
-                [
-                    title,
-                    content,
-                    JSON.stringify(key_points || []),
-                    JSON.stringify(example_sentences || []),
-                    image_url,
-                    req.params.id
-                ]
-            );
+            const updatedQuickLesson = await QuickLesson.findByIdAndUpdate(req.params.id, {
+                title,
+                introduction,
+                grammar_focus,
+                vocabulary_words,
+                vocabulary_phrases,
+                key_points,
+                example_sentences,
+                image_url
+            }, { new: true });
 
-            if (result.affectedRows === 0) {
+            if (!updatedQuickLesson) {
                 return res.status(404).json({ message: 'Quick lesson not found' });
             }
 
-            // Fetch updated quick lesson
-            const [updatedQuickLesson] = await pool.query(
-                'SELECT * FROM QuickLessons WHERE quick_lesson_id = ?',
-                [req.params.id]
-            );
-
-            // Parse JSON fields
-            updatedQuickLesson[0].key_points = JSON.parse(updatedQuickLesson[0].key_points);
-            updatedQuickLesson[0].example_sentences = JSON.parse(updatedQuickLesson[0].example_sentences);
-
-            res.json(updatedQuickLesson[0]);
+            res.json({ message: 'Quick lesson updated successfully', quickLesson: updatedQuickLesson });
         } catch (error) {
             console.error('Error updating quick lesson:', error);
             res.status(500).json({ message: error.message });
         }
     },
 
+    // Delete quick lesson
     deleteQuickLesson: async (req, res) => {
         try {
-            const pool = getPool();
-            const [result] = await pool.query(
-                'DELETE FROM QuickLessons WHERE quick_lesson_id = ?',
-                [req.params.id]
-            );
+            const deletedQuickLesson = await QuickLesson.findByIdAndDelete(req.params.id);
 
-            if (result.affectedRows === 0) {
+            if (!deletedQuickLesson) {
                 return res.status(404).json({ message: 'Quick lesson not found' });
             }
 

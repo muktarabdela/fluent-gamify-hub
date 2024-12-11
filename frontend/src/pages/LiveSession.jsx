@@ -391,7 +391,6 @@ export default function LiveSession() {
                                         <SelectItem value="all">All Status</SelectItem>
                                         <SelectItem value="Ongoing">Ongoing</SelectItem>
                                         <SelectItem value="Scheduled">Scheduled</SelectItem>
-                                        <SelectItem value="Ended">Ended</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

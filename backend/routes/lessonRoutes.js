@@ -9,7 +9,8 @@ const {
     getLessonsByUnitWithStatus,
     updateLessonStatus,
     getAllLessons,
-    createMultipleLessons
+    createMultipleLessons,
+    getLessonStatusByUserId
 } = require('../controllers/lessonController');
 router.get('/', getAllLessons);
 
@@ -20,5 +21,5 @@ router.put('/:id', updateLesson);
 router.delete('/:id', deleteLesson);
 router.put('/:lessonId/status', updateLessonStatus);
 router.post('/bulk', createMultipleLessons);
-
+// router.get("/lesson-status", getLessonStatusByUserId)
 module.exports = router; 

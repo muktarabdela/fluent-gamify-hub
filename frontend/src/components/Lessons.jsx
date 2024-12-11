@@ -230,7 +230,7 @@ function LessonCard({ lesson }) {
                     <div className="pt-2">
                         <LessonActionButton
                             status={lesson.status}
-                            lessonId={lesson.lesson_id}
+                            lessonId={lesson._id}
                             unlockDate={lesson.unlock_date}
                         />
                     </div>
@@ -279,11 +279,12 @@ export default function MobileLessonDashboard() {
         const fetchAllUnits = async () => {
             try {
                 const unitsData = await getAllUnits(userId);
+                console.log("unit_id", unitsData)
                 setUnits(unitsData);
                 if (unitsData.length > 0) {
-                    setVisibleUnit(unitsData[0].unit_id);
+                    setVisibleUnit(unitsData[0]._id);
                 }
-                await Promise.all(unitsData.map(unit => fetchLessonsForUnit(unit.unit_id)));
+                await Promise.all(unitsData.map(unit => fetchLessonsForUnit(unit._id)));
             } catch (err) {
                 console.error('Error fetching units:', err);
                 setError(err.message);
@@ -296,7 +297,24 @@ export default function MobileLessonDashboard() {
         try {
             setLoading(true);
             const lessonsData = await getLessonsByUnitWithStatus(unitId, userId);
+            console.log("lessonsByUnit",lessonsData)
             setLessons(prev => [...prev, ...lessonsData]);
+            console.log(lessonsData)
+            // Calculate progress for the unit
+            const totalLessons = lessonsData.length;
+            const completedLessons = lessonsData.filter(lesson => lesson.status === 'completed').length;
+            const progressPercentage = totalLessons ? (completedLessons / totalLessons) * 100 : 0;
+
+            // Update the unit with progress percentage
+            setUnits(prevUnits => {
+                return prevUnits.map(unit => {
+                    if (unit.unit_id === unitId) {
+                        return { ...unit, progress_percentage: progressPercentage };
+                    }
+                    return unit;
+                });
+            });
+
             setLoading(false);
         } catch (err) {
             console.error('Error fetching lessons:', err);
@@ -304,6 +322,7 @@ export default function MobileLessonDashboard() {
             setLoading(false);
         }
     };
+
 
     useEffect(() => {
         const options = {
@@ -315,7 +334,7 @@ export default function MobileLessonDashboard() {
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 const unitId = parseInt(entry.target.getAttribute('data-unit-id'));
-                const previousUnitId = units[units.findIndex(u => u.unit_id === unitId) - 1]?.unit_id;
+                const previousUnitId = units[units.findIndex(u => u._id === unitId) - 1]?.unit_id;
 
                 if (entry.isIntersecting) {
                     setVisibleUnit(unitId);
@@ -366,7 +385,7 @@ export default function MobileLessonDashboard() {
                 ) : (
                     // Render units and lessons when not loading
                     units.map((unit) => (
-                        <div key={unit.unit_id} className="mb-8">
+                        <div key={unit._id} className="mb-8">
                             {/* Unit Divider - Make it sticky */}
                             <div className="sticky top-[4.5rem] z-10 mb-4">
                                 <section className="py-4 bg-white/95 backdrop-blur-md shadow-md px-6 max-w-md mx-auto rounded-xl">
@@ -393,8 +412,8 @@ export default function MobileLessonDashboard() {
                             </div>
 
                             <Accordion type="single" collapsible className="space-y-4">
-                                {lessonsByUnit[unit.unit_id]?.map((lesson, index, unitLessons) => (
-                                    <div key={lesson.lesson_id}>
+                                {lessonsByUnit[unit._id]?.map((lesson, index, unitLessons) => (
+                                    <div key={lesson._id}>
                                         <LessonCard
                                             lesson={lesson}
                                             isFirstIncomplete={lesson.status === 'active'}

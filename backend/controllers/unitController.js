@@ -1,33 +1,47 @@
-const { getPool } = require('../config/db');
+const { Unit, Lesson, UserProgress } = require('../model/model'); // Import Mongoose models
 
 const unitController = {
     // Get all units with lesson counts and progress
     getAllUnits: async (req, res) => {
         try {
             const userId = req.query.userId; // Get userId from query params
-            const pool = getPool();
             
-            const query = `
-                SELECT 
-                    u.*,
-                    COUNT(DISTINCT l.lesson_id) as total_lessons,
-                    COUNT(DISTINCT CASE WHEN up.status = 'completed' AND up.user_id = ? THEN l.lesson_id END) as completed_lessons,
-                    IFNULL(
-                        ROUND(
-                            (COUNT(DISTINCT CASE WHEN up.status = 'completed' AND up.user_id = ? THEN l.lesson_id END) * 100.0) /
-                            NULLIF(COUNT(DISTINCT l.lesson_id), 0),
-                            2
-                        ),
-                        0
-                    ) as progress_percentage
-                FROM Units u
-                LEFT JOIN Lessons l ON u.unit_id = l.unit_id
-                LEFT JOIN UserProgress up ON l.lesson_id = up.lesson_id
-                GROUP BY u.unit_id
-                ORDER BY u.order_number
-            `;
+            const units = await Unit.aggregate([
+                {
+                    $lookup: {
+                        from: 'lessons', // The name of the lessons collection
+                        localField: '_id',
+                        foreignField: 'unit_id',
+                        as: 'lessons'
+                    }
+                },
+                {
+                    $project: {
+                        title: 1,
+                        description: 1,
+                        order_number: 1,
+                        total_lessons: { $size: '$lessons' },
+                        completed_lessons: {
+                            $size: {
+                                $filter: {
+                                    input: '$lessons',
+                                    as: 'lesson',
+                                    cond: { $eq: ['$$lesson.status', 'completed'] } // Assuming status field exists in Lesson
+                                }
+                            }
+                        },
+                        progress_percentage: {
+                            $cond: {
+                                if: { $gt: [{ $size: '$lessons' }, 0] },
+                                then: { $multiply: [{ $divide: [{ $size: { $filter: { input: '$lessons', as: 'lesson', cond: { $eq: ['$$lesson.status', 'completed'] } } } }, { $size: '$lessons' }] }, 100] },
+                                else: 0
+                            }
+                        }
+                    }
+                },
+                { $sort: { order_number: 1 } }
+            ]);
 
-            const [units] = await pool.query(query, [userId, userId]);
             res.json(units);
         } catch (error) {
             console.error('Error fetching units:', error);
@@ -38,17 +52,13 @@ const unitController = {
     // Get unit by ID
     getUnitById: async (req, res) => {
         try {
-            const pool = getPool();
-            const [unit] = await pool.query(
-                'SELECT * FROM Units WHERE unit_id = ?',
-                [req.params.id]
-            );
+            const unit = await Unit.findById(req.params.id).populate('lessons'); // Populate lessons if needed
 
-            if (unit.length === 0) {
+            if (!unit) {
                 return res.status(404).json({ message: 'Unit not found' });
             }
 
-            res.json(unit[0]);
+            res.json(unit);
         } catch (error) {
             console.error('Error fetching unit:', error);
             res.status(500).json({ message: error.message });
@@ -57,16 +67,7 @@ const unitController = {
 
     // Create new unit
     createUnit: async (req, res) => {
-        // console.log('Received request to create unit:', req.body);
-        const { 
-            title, 
-            description, 
-            order_number,
-            total_lessons,
-            completed_lessons,
-            progress_percentage,
-            is_active 
-        } = req.body;
+        const { title, description, order_number, total_lessons, completed_lessons, progress_percentage, is_active } = req.body;
 
         // Validate required fields
         if (!title || !order_number) {
@@ -77,38 +78,19 @@ const unitController = {
         }
 
         try {
-            const pool = getPool();
-            const [result] = await pool.query(
-                `INSERT INTO Units (
-                    title, 
-                    description, 
-                    order_number, 
-                    total_lessons, 
-                    completed_lessons, 
-                    progress_percentage,
-                    is_active
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    title, 
-                    description, 
-                    order_number,
-                    total_lessons || 0,
-                    completed_lessons || 0,
-                    progress_percentage || 0.00,
-                    is_active !== undefined ? is_active : true
-                ]
-            );
+            const newUnit = new Unit({
+                title,
+                description,
+                order_number,
+                total_lessons: total_lessons || 0,
+                completed_lessons: completed_lessons || 0,
+                progress_percentage: progress_percentage || 0.00,
+                is_active: is_active !== undefined ? is_active : true
+            });
 
-            // console.log('Unit created successfully:', result);
+            await newUnit.save();
 
-            // Fetch the created unit
-            const [newUnit] = await pool.query(
-                'SELECT * FROM Units WHERE unit_id = ?',
-                [result.insertId]
-            );
-
-            // console.log('Created unit:', newUnit[0]);
-            res.status(201).json(newUnit[0]);
+            res.status(201).json(newUnit);
         } catch (error) {
             console.error('Error creating unit:', error);
             res.status(500).json({
@@ -123,17 +105,13 @@ const unitController = {
         const { title, description, order_number } = req.body;
 
         try {
-            const pool = getPool();
-            const [result] = await pool.query(
-                'UPDATE Units SET title = ?, description = ?, order_number = ? WHERE unit_id = ?',
-                [title, description, order_number, req.params.id]
-            );
+            const updatedUnit = await Unit.findByIdAndUpdate(req.params.id, { title, description, order_number }, { new: true });
 
-            if (result.affectedRows === 0) {
+            if (!updatedUnit) {
                 return res.status(404).json({ message: 'Unit not found' });
             }
 
-            res.json({ message: 'Unit updated successfully' });
+            res.json({ message: 'Unit updated successfully', unit: updatedUnit });
         } catch (error) {
             console.error('Error updating unit:', error);
             res.status(500).json({ message: error.message });
@@ -143,13 +121,9 @@ const unitController = {
     // Delete unit
     deleteUnit: async (req, res) => {
         try {
-            const pool = getPool();
-            const [result] = await pool.query(
-                'DELETE FROM Units WHERE unit_id = ?',
-                [req.params.id]
-            );
+            const deletedUnit = await Unit.findByIdAndDelete(req.params.id);
 
-            if (result.affectedRows === 0) {
+            if (!deletedUnit) {
                 return res.status(404).json({ message: 'Unit not found' });
             }
 
@@ -164,19 +138,16 @@ const unitController = {
     updateUnitProgress: async (req, res) => {
         const { unitId } = req.params;
         try {
-            const pool = getPool();
-            
-            // Get total and completed lessons
-            const [progress] = await pool.query(`
-                SELECT 
-                    COUNT(l.lesson_id) as total_lessons,
-                    COUNT(CASE WHEN up.status = 'completed' THEN 1 END) as completed_lessons
-                FROM Units u
-                LEFT JOIN Lessons l ON u.unit_id = l.unit_id
-                LEFT JOIN UserProgress up ON l.lesson_id = up.lesson_id
-                WHERE u.unit_id = ?
-                GROUP BY u.unit_id
-            `, [unitId]);
+            const progress = await Lesson.aggregate([
+                { $match: { unit_id: unitId } },
+                {
+                    $group: {
+                        _id: null,
+                        total_lessons: { $sum: 1 },
+                        completed_lessons: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } }
+                    }
+                }
+            ]);
 
             if (progress.length > 0) {
                 const { total_lessons, completed_lessons } = progress[0];
@@ -185,20 +156,13 @@ const unitController = {
                     : 0;
 
                 // Update unit with new progress
-                await pool.query(`
-                    UPDATE Units 
-                    SET 
-                        total_lessons = ?,
-                        completed_lessons = ?,
-                        progress_percentage = ?
-                    WHERE unit_id = ?
-                `, [total_lessons, completed_lessons, progress_percentage, unitId]);
-
-                res.json({ 
-                    total_lessons, 
-                    completed_lessons, 
-                    progress_percentage 
+                await Unit.findByIdAndUpdate(unitId, {
+                    total_lessons,
+                    completed_lessons,
+                    progress_percentage
                 });
+
+                res.json({ total_lessons, completed_lessons, progress_percentage });
             } else {
                 res.status(404).json({ message: 'Unit not found' });
             }

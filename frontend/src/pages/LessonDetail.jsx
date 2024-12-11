@@ -24,6 +24,7 @@ const LessonDetail = () => {
     const telegramUser = getTelegramUser();
 
     const { lessonId } = useParams();
+    console.log(lessonId)
     const navigate = useNavigate();
     const [lesson, setLesson] = useState(null);
     const [dialogues, setDialogues] = useState([]);
@@ -117,7 +118,7 @@ const LessonDetail = () => {
 
     const handleExerciseComplete = async () => {
         if (!telegramUser?.id) return;
-        
+
         try {
             // Mark lesson as completed with user ID
             await updateUserProgress(telegramUser.id, {
@@ -222,7 +223,7 @@ const LessonDetail = () => {
                     <>
                         {!showDialogues ? (
                             // Show QuickLesson initially
-                            quickLesson && <QuickLesson quickLesson={quickLesson} />
+                            quickLesson && <QuickLesson quickLesson={quickLesson[0]} />
                         ) : (
                             <>
                                 {/* Dialogues */}

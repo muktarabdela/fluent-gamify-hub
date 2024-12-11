@@ -1,14 +1,10 @@
-const { getPool } = require('../config/db');
+const { Exercise, UserProgress, Lesson } = require('../model/model'); // Import Mongoose models
 
 const exerciseController = {
     // Get exercises by lesson
     getExercisesByLesson: async (req, res) => {
         try {
-            const pool = getPool();
-            const [exercises] = await pool.query(
-                'SELECT * FROM Exercises WHERE lesson_id = ? ORDER BY order_number',
-                [req.params.lessonId]
-            );
+            const exercises = await Exercise.find({ lesson_id: req.params.lessonId }).sort({ order_number: 1 });
             res.json(exercises);
         } catch (error) {
             console.error('Error fetching exercises:', error);
@@ -19,17 +15,13 @@ const exerciseController = {
     // Get exercise by ID
     getExerciseById: async (req, res) => {
         try {
-            const pool = getPool();
-            const [exercise] = await pool.query(
-                'SELECT * FROM Exercises WHERE exercise_id = ?',
-                [req.params.id]
-            );
+            const exercise = await Exercise.findById(req.params.id);
 
-            if (exercise.length === 0) {
+            if (!exercise) {
                 return res.status(404).json({ message: 'Exercise not found' });
             }
 
-            res.json(exercise[0]);
+            res.json(exercise);
         } catch (error) {
             console.error('Error fetching exercise:', error);
             res.status(500).json({ message: error.message });
@@ -38,7 +30,6 @@ const exerciseController = {
 
     // Create new exercise
     createExercise: async (req, res) => {
-        console.log('Received request to create exercise:', req.body);
         const {
             lesson_id,
             type,
@@ -52,45 +43,33 @@ const exerciseController = {
 
         // Validate required fields
         if (!lesson_id || !type || !question || !correct_answer || !order_number) {
-            console.log('Missing required fields');
             return res.status(400).json({
                 message: 'lesson_id, type, question, correct_answer, and order_number are required'
             });
         }
 
         try {
-            const pool = getPool();
-            
             // Verify that the lesson exists
-            const [lesson] = await pool.query(
-                'SELECT * FROM Lessons WHERE lesson_id = ?',
-                [lesson_id]
-            );
+            const lesson = await Lesson.findById(lesson_id);
 
-            if (lesson.length === 0) {
+            if (!lesson) {
                 return res.status(404).json({ message: 'Lesson not found' });
             }
 
             // Create the exercise
-            const [result] = await pool.query(
-                `INSERT INTO Exercises (
-                    lesson_id, type, question, correct_answer,
-                    options, audio_url, image_url, order_number
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    lesson_id, type, question, correct_answer,
-                    JSON.stringify(options), audio_url, image_url, order_number
-                ]
-            );
+            const newExercise = new Exercise({
+                lesson_id,
+                type,
+                question,
+                correct_answer,
+                options,
+                audio_url,
+                image_url,
+                order_number
+            });
 
-            // Fetch the created exercise
-            const [newExercise] = await pool.query(
-                'SELECT * FROM Exercises WHERE exercise_id = ?',
-                [result.insertId]
-            );
-
-            // console.log('Created exercise:', newExercise[0]);
-            res.status(201).json(newExercise[0]);
+            await newExercise.save();
+            res.status(201).json(newExercise);
         } catch (error) {
             console.error('Error creating exercise:', error);
             res.status(500).json({
@@ -113,21 +92,21 @@ const exerciseController = {
         } = req.body;
 
         try {
-            const pool = getPool();
-            const [result] = await pool.query(
-                `UPDATE Exercises SET 
-                type = ?, question = ?, correct_answer = ?,
-                options = ?, audio_url = ?, image_url = ?,
-                order_number = ? WHERE exercise_id = ?`,
-                [type, question, correct_answer, JSON.stringify(options),
-                 audio_url, image_url, order_number, req.params.id]
-            );
+            const updatedExercise = await Exercise.findByIdAndUpdate(req.params.id, {
+                type,
+                question,
+                correct_answer,
+                options,
+                audio_url,
+                image_url,
+                order_number
+            }, { new: true });
 
-            if (result.affectedRows === 0) {
+            if (!updatedExercise) {
                 return res.status(404).json({ message: 'Exercise not found' });
             }
 
-            res.json({ message: 'Exercise updated successfully' });
+            res.json({ message: 'Exercise updated successfully', exercise: updatedExercise });
         } catch (error) {
             console.error('Error updating exercise:', error);
             res.status(500).json({ message: error.message });
@@ -137,13 +116,9 @@ const exerciseController = {
     // Delete exercise
     deleteExercise: async (req, res) => {
         try {
-            const pool = getPool();
-            const [result] = await pool.query(
-                'DELETE FROM Exercises WHERE exercise_id = ?',
-                [req.params.id]
-            );
+            const deletedExercise = await Exercise.findByIdAndDelete(req.params.id);
 
-            if (result.affectedRows === 0) {
+            if (!deletedExercise) {
                 return res.status(404).json({ message: 'Exercise not found' });
             }
 
@@ -157,30 +132,23 @@ const exerciseController = {
     // Get exercises by lesson with user progress
     getExercisesByLessonWithProgress: async (req, res) => {
         try {
-            const pool = getPool();
             const userId = req.query.userId;
-            // console.log('Fetching exercises for lesson:', req.params.lessonId, 'and user:', userId);
-            
-            const [exercises] = await pool.query(`
-                SELECT 
-                    e.*,
-                    COALESCE(up.score, 0) as user_score,
-                    CASE 
-                        WHEN up.status = 'completed' THEN 'completed'
-                        WHEN up.status = 'started' THEN 'in_progress'
-                        ELSE 'not_started'
-                    END as progress_status
-                FROM Exercises e
-                LEFT JOIN UserProgress up ON e.exercise_id = up.exercise_id 
-                    AND up.user_id = ?
-                WHERE e.lesson_id = ?
-                ORDER BY e.order_number
-            `, [userId, req.params.lessonId]);
-            
-            // console.log('Found exercises:', exercises);
-            res.json(exercises);
+            const exercises = await Exercise.find({ lesson_id: req.params.lessonId });
+
+            const userProgress = await UserProgress.find({ user_id: userId, lesson_id: req.params.lessonId });
+
+            const exercisesWithProgress = exercises.map(exercise => {
+                const progress = userProgress.find(up => up.exercise_id.toString() === exercise._id.toString());
+                return {
+                    ...exercise.toObject(),
+                    user_score: progress ? progress.score : 0,
+                    progress_status: progress ? progress.status : 'not_started'
+                };
+            });
+
+            res.json(exercisesWithProgress);
         } catch (error) {
-            console.error('Error fetching exercises:', error);
+            console.error('Error fetching exercises with progress:', error);
             res.status(500).json({ message: error.message });
         }
     },
@@ -195,15 +163,10 @@ const exerciseController = {
                 return res.status(400).json({ message: 'userId and answer are required' });
             }
 
-            const pool = getPool();
-            
             // Get the exercise
-            const [exercise] = await pool.query(
-                'SELECT * FROM Exercises WHERE exercise_id = ?',
-                [exerciseId]
-            );
+            const exercise = await Exercise.findById(exerciseId);
 
-            if (exercise.length === 0) {
+            if (!exercise) {
                 return res.status(404).json({ message: 'Exercise not found' });
             }
 
@@ -211,36 +174,32 @@ const exerciseController = {
             let score = 0;
             let isCorrect = false;
 
-            switch (exercise[0].type) {
+            switch (exercise.type) {
                 case 'sentence_building':
                 case 'fill_blank':
-                    isCorrect = answer.toLowerCase().trim() === exercise[0].correct_answer.toLowerCase().trim();
+                    isCorrect = answer.toLowerCase().trim() === exercise.correct_answer.toLowerCase().trim();
                     break;
                 case 'multiple_choice':
-                    isCorrect = answer === exercise[0].correct_answer;
+                    isCorrect = answer === exercise.correct_answer;
                     break;
                 case 'shadowing':
-                    // For shadowing exercises, we assume completion equals success
-                    isCorrect = true;
+                    isCorrect = true; // For shadowing exercises, we assume completion equals success
                     break;
             }
 
             score = isCorrect ? 100 : 0;
 
             // Update or insert progress
-            await pool.query(`
-                INSERT INTO UserProgress (user_id, lesson_id, exercise_id, status, score)
-                VALUES (?, ?, ?, 'completed', ?)
-                ON DUPLICATE KEY UPDATE
-                status = 'completed',
-                score = ?,
-                updated_at = CURRENT_TIMESTAMP
-            `, [userId, exercise[0].lesson_id, exerciseId, score, score]);
+            await UserProgress.findOneAndUpdate(
+                { user_id: userId, lesson_id: exercise.lesson_id, exercise_id: exerciseId },
+                { status: 'completed', score },
+                { upsert: true, new: true }
+            );
 
             res.json({
                 isCorrect,
                 score,
-                correctAnswer: exercise[0].correct_answer
+                correctAnswer: exercise.correct_answer
             });
         } catch (error) {
             console.error('Error submitting exercise answer:', error);
@@ -250,58 +209,15 @@ const exerciseController = {
 
     // Create multiple exercises
     createMultipleExercises: async (req, res) => {
-        const exercises = req.body;
+        const exercises = req.body.exercises;
 
-        // Validate that the body is an array
         if (!Array.isArray(exercises) || exercises.length === 0) {
-            return res.status(400).json({ message: 'An array of exercises is required' });
+            return res.status(400).json({ message: 'Exercises array is required and must not be empty' });
         }
 
         try {
-            const pool = getPool();
-            const createdExercises = [];
-
-            for (const exercise of exercises) {
-                // Validate required fields for each exercise
-                const { lesson_id, type, question, correct_answer, order_number } = exercise;
-                if (!lesson_id || !type || !question || !correct_answer || !order_number) {
-                    return res.status(400).json({
-                        message: 'lesson_id, type, question, correct_answer, and order_number are required for each exercise'
-                    });
-                }
-
-                // Verify that the lesson exists
-                const [lesson] = await pool.query(
-                    'SELECT * FROM Lessons WHERE lesson_id = ?',
-                    [lesson_id]
-                );
-
-                if (lesson.length === 0) {
-                    return res.status(404).json({ message: `Lesson with id ${lesson_id} not found` });
-                }
-
-                // Create the exercise
-                const [result] = await pool.query(
-                    `INSERT INTO Exercises (
-                        lesson_id, type, question, correct_answer,
-                        options, audio_url, image_url, order_number
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [
-                        lesson_id, type, question, correct_answer,
-                        JSON.stringify(exercise.options), exercise.audio_url, exercise.image_url, order_number
-                    ]
-                );
-
-                // Fetch the created exercise
-                const [newExercise] = await pool.query(
-                    'SELECT * FROM Exercises WHERE exercise_id = ?',
-                    [result.insertId]
-                );
-
-                createdExercises.push(newExercise[0]);
-            }
-
-            res.status(201).json(createdExercises);
+            const newExercises = await Exercise.insertMany(exercises);
+            res.status(201).json(newExercises);
         } catch (error) {
             console.error('Error creating multiple exercises:', error);
             res.status(500).json({

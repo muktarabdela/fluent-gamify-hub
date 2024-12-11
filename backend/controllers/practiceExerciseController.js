@@ -1,52 +1,38 @@
-const { getPool } = require('../config/db');
+const { PracticeExercise, Topic, Category, ExerciseType } = require('../model/model'); // Import Mongoose models
 
 const practiceExerciseController = {
+    // Get topics
     getTopics: async (req, res) => {
         try {
-            const pool = getPool();
-            const [topics] = await pool.query('SELECT * FROM Topics');
+            const topics = await Topic.find();
             res.json(topics);
         } catch (error) {
             res.status(500).json({ message: error.message });
         }
     },
+
+    // Get categories with exercise types
     getCategories: async (req, res) => {
         try {
-            const pool = getPool();
-            const [categories] = await pool.query(`
-                SELECT 
-                    c.*,
-                    COALESCE(JSON_ARRAYAGG(
-                        CASE WHEN et.id IS NOT NULL
-                        THEN JSON_OBJECT(
-                            'id', et.id,
-                            'name', et.name,
-                            'category_id', et.category_id
-                        )
-                        ELSE NULL END
-                    ), '[]') as exerciseTypes
-                FROM Categories c
-                LEFT JOIN ExerciseTypes et ON c.id = et.category_id
-                GROUP BY c.id
-            `);
-
+            const categories = await Category.find().populate('exerciseTypes');
             res.json(categories);
         } catch (error) {
             console.error('Error fetching categories:', error);
             res.status(500).json({ message: error.message });
         }
     },
+
+    // Create exercise
     createExercise: async (req, res) => {
         try {
-            const pool = getPool();
-            const { typeId, topicId, content } = req.body;
+            const { type_id, topic_id, content } = req.body;
+
             // Validate required fields
-            if (!typeId || !topicId || !content) {
+            if (!type_id || !topic_id || !content) {
                 return res.status(400).json({
-                    message: 'typeId, topicId and content are required'
+                    message: 'type_id, topic_id, and content are required'
                 });
             }
-
 
             // Validate content is an object
             if (typeof content !== 'object' || content === null) {
@@ -55,14 +41,15 @@ const practiceExerciseController = {
                 });
             }
 
-            const [result] = await pool.query(
-                `INSERT INTO PracticeExercises (type_id, topic_id, content)
-                VALUES (?, ?, ?, ?)`,
-                [typeId, topicId, JSON.stringify(content)]
-            );
+            const newExercise = new PracticeExercise({
+                type_id,
+                topic_id,
+                content
+            });
 
+            await newExercise.save();
             res.status(201).json({
-                id: result.insertId,
+                id: newExercise._id,
                 message: 'Exercise created successfully'
             });
         } catch (error) {
@@ -70,87 +57,56 @@ const practiceExerciseController = {
             res.status(500).json({ error: 'Failed to create exercise' });
         }
     },
+
+    // Get exercises
     getExercises: async (req, res) => {
         try {
-            const pool = getPool();
             const { categoryId, topicId } = req.query;
-            console.log(categoryId, topicId)
+
             if (!categoryId || !topicId) {
                 return res.status(400).json({
-                    message: 'categoryId, and topicId are required query parameters'
-                });
-            }
-
-            // Validate query parameters if provided
-            // if (categoryId && !Number.isInteger(Number(categoryId))) {
-            //     return res.status(400).json({
-            //         message: 'Category ID must be a valid integer'
-            //     });
-            // }
-
-            if (topicId && !Number.isInteger(Number(topicId))) {
-                return res.status(400).json({
-                    message: 'Topic ID must be a valid integer'
+                    message: 'categoryId and topicId are required query parameters'
                 });
             }
 
             // Build dynamic query based on filters
-            let query = `
-                SELECT e.*, et.name AS type_name, t.name AS topic_name, c.name AS category_name 
-                FROM PracticeExercises e
-                JOIN ExerciseTypes et ON e.type_id = et.id
-                JOIN Topics t ON e.topic_id = t.id
-                JOIN Categories c ON et.category_id = c.id
-                WHERE 1=1
-            `;
-            const params = [];
+            const exercises = await PracticeExercise.find({ topic_id: topicId })
+                .populate('type_id', 'name')
+                .populate('topic_id', 'name')
+                .populate({
+                    path: 'type_id',
+                    populate: { path: 'category_id', model: 'Category' }
+                });
 
-            if (categoryId) {
-                query += ` AND c.id = ?`;
-                params.push(categoryId);
-            }
-            if (topicId) {
-                query += ` AND t.id = ?`;
-                params.push(topicId);
-            }
-
-            const [exercises] = await pool.query(query, params);
             res.json(exercises);
         } catch (error) {
             console.error('Error fetching exercises:', error);
             res.status(500).json({ message: 'Failed to fetch exercises' });
         }
     },
+
+    // Get exercise by ID
     getExerciseById: async (req, res) => {
         try {
-            const pool = getPool();
-
             const { id } = req.params;
-            console.log("id from getExerciseById controller", id)
-            if (!Number.isInteger(Number(id))) {
+
+            if (!id) {
                 return res.status(400).json({
-                    message: 'Exercise ID must be a valid integer'
+                    message: 'Exercise ID is required'
                 });
             }
 
-            const query = `
-                SELECT e.*, et.name AS type_name, t.name AS topic_name, c.name AS category_name 
-                FROM PracticeExercises e
-                JOIN ExerciseTypes et ON e.type_id = et.id
-                JOIN Topics t ON e.topic_id = t.id
-                JOIN Categories c ON et.category_id = c.id
-                WHERE e.id = ?
-            `;
+            const exercise = await PracticeExercise.findById(id)
+                .populate('type_id', 'name')
+                .populate('topic_id', 'name');
 
-            const [exercise] = await pool.query(query, [id]);
-
-            if (exercise.length === 0) {
+            if (!exercise) {
                 return res.status(404).json({
                     message: 'Exercise not found'
                 });
             }
 
-            res.json(exercise[0]);
+            res.json(exercise);
         } catch (error) {
             console.error('Error fetching exercise details:', error);
             res.status(500).json({ message: 'Failed to fetch exercise details' });

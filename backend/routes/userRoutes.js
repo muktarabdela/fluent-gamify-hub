@@ -9,7 +9,8 @@ const {
     getUserProgress,
     updateUserProgress,
     getUserStreak,
-    updateUserStreak
+    updateUserStreak,
+    getLessonStatusByUserId
 } = require('../controllers/userController');
 
 router.post('/', createOrUpdateUser);
@@ -21,5 +22,5 @@ router.get('/:id/progress', getUserProgress);
 router.post('/:id/progress', updateUserProgress);
 router.get('/:id/streak', getUserStreak);
 router.put('/:id/streak', updateUserStreak);
-
+router.get('/:id/lesson-status', getLessonStatusByUserId)
 module.exports = router; 

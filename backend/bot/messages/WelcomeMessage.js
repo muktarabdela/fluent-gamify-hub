@@ -4,21 +4,23 @@ const sendWelcomeMessage = async (telegram, chatId) => {
         const webAppUrl = 'https://fluent-gamify-hub.vercel.app';
         const imageUrl = 'https://res.cloudinary.com/dczvebr3j/image/upload/v1727264037/hbampjrcszlxoohetngs.jpg';
 
-        const welcomeMessage = `Welcome to FluentHub! 🌟
-🎯 FluentHub - Your Smart Language Learning Companion:
-• AI-Powered Learning Path
-• Interactive Daily Challenges
-• Real-time Progress Analytics
-• Native Speaker Community
-• Gamified Learning Experience
+        const welcomeMessage = `  
+🎯 FluentHub - Your Ultimate Telegram English Learning Mini-App🌟 
 
-✨ Features:
-📚 Personalized lesson plans
-🎮 Interactive language games
-🏆 Achievement system
-👥 Community challenges
-📊 Detailed progress tracking
-Start your language journey today! 🚀`;
+ 🎙️ Live Voice Chats on Real-World Topics  
+ 📈 Detailed Progress Tracking  
+ 🏆 Gamified Learning
+ 👥 Real Conversations with Real People  
+ 🌍 Connect and Learn Without Leaving Telegram  
+        
+✨ Features:  
+  📚 Focused, Real-Life Lessons  
+  🎮 Fun and Motivating Challenges  
+  🏅 Achievement Rewards  
+  📊 Track Your Growth and Milestones  
+        
+Start your English learning journey today and open new opportunities! 🚀`;
+
 
         const options = {
             caption: welcomeMessage,

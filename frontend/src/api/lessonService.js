@@ -78,4 +78,4 @@ export const updateLessonStatus = async (lessonId, status, userId) => {
     console.error('Error updating lesson status:', error);
     throw error;
   }
-}; 
+};

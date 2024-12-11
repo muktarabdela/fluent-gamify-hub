@@ -64,7 +64,7 @@ const QuickLesson = ({ quickLesson }) => {
                                             {grammarPoint.topic}
                                         </h4>
                                         <div className="space-y-2">
-                                            {grammarPoint.examples.map((example, exIndex) => (
+                                            {grammarPoint?.examples?.map((example, exIndex) => (
                                                 <div key={exIndex} className="text-gray-700 pl-4">
                                                     • {example}
                                                 </div>

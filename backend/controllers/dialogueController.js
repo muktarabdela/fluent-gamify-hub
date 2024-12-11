@@ -1,16 +1,11 @@
-const { getPool } = require('../config/db');
+const { Dialogue } = require('../model/model'); // Import Mongoose models
 
 const dialogueController = {
     // Get dialogues by lesson ID
     getDialoguesByLesson: async (req, res) => {
         try {
-            const pool = getPool();
-            const [dialogues] = await pool.query(
-                `SELECT * FROM Dialogues 
-                 WHERE lesson_id = ? 
-                 ORDER BY sequence_order`,
-                [req.params.lessonId]
-            );
+            const dialogues = await Dialogue.find({ lesson_id: req.params.lessonId })
+                .sort({ sequence_order: 1 }); // Sort by sequence_order
             res.json(dialogues);
         } catch (error) {
             console.error('Error fetching dialogues:', error);
@@ -21,17 +16,13 @@ const dialogueController = {
     // Get dialogue by ID
     getDialogueById: async (req, res) => {
         try {
-            const pool = getPool();
-            const [dialogue] = await pool.query(
-                'SELECT * FROM Dialogues WHERE dialogue_id = ?',
-                [req.params.id]
-            );
+            const dialogue = await Dialogue.findById(req.params.id);
 
-            if (dialogue.length === 0) {
+            if (!dialogue) {
                 return res.status(404).json({ message: 'Dialogue not found' });
             }
 
-            res.json(dialogue[0]);
+            res.json(dialogue);
         } catch (error) {
             console.error('Error fetching dialogue:', error);
             res.status(500).json({ message: error.message });
@@ -49,20 +40,18 @@ const dialogueController = {
         }
 
         try {
-            const pool = getPool();
-            const [result] = await pool.query(
-                `INSERT INTO Dialogues 
-                (lesson_id, speaker_name, speaker_role, sequence_order, content, audio_url) 
-                VALUES (?, ?, ?, ?, ?, ?)`,
-                [lesson_id, speaker_name, speaker_role, sequence_order, content, audio_url]
-            );
+            const newDialogue = new Dialogue({
+                lesson_id,
+                speaker_name,
+                speaker_role,
+                sequence_order,
+                content,
+                audio_url
+            });
 
-            const [newDialogue] = await pool.query(
-                'SELECT * FROM Dialogues WHERE dialogue_id = ?',
-                [result.insertId]
-            );
+            await newDialogue.save();
 
-            res.status(201).json(newDialogue[0]);
+            res.status(201).json(newDialogue);
         } catch (error) {
             console.error('Error creating dialogue:', error);
             res.status(500).json({ message: error.message });
@@ -80,30 +69,9 @@ const dialogueController = {
         }
 
         try {
-            const pool = getPool();
-            const values = dialogues.map(d => [
-                d.lesson_id,
-                d.speaker_name,
-                d.speaker_role,
-                d.sequence_order,
-                d.content,
-                d.audio_url
-            ]);
+            const newDialogues = await Dialogue.insertMany(dialogues);
 
-            const [result] = await pool.query(
-                `INSERT INTO Dialogues 
-                (lesson_id, speaker_name, speaker_role, sequence_order, content, audio_url) 
-                VALUES ?`,
-                [values]
-            );
-
-            const [insertedDialogues] = await pool.query(
-                `SELECT * FROM Dialogues 
-                 WHERE dialogue_id >= ? AND dialogue_id < ?`,
-                [result.insertId, result.insertId + dialogues.length]
-            );
-
-            res.status(201).json(insertedDialogues);
+            res.status(201).json(newDialogues);
         } catch (error) {
             console.error('Error creating bulk dialogues:', error);
             res.status(500).json({ message: error.message });
@@ -115,20 +83,19 @@ const dialogueController = {
         const { speaker_name, speaker_role, sequence_order, content, audio_url } = req.body;
 
         try {
-            const pool = getPool();
-            const [result] = await pool.query(
-                `UPDATE Dialogues 
-                 SET speaker_name = ?, speaker_role = ?, sequence_order = ?, 
-                     content = ?, audio_url = ?
-                 WHERE dialogue_id = ?`,
-                [speaker_name, speaker_role, sequence_order, content, audio_url, req.params.id]
-            );
+            const updatedDialogue = await Dialogue.findByIdAndUpdate(req.params.id, {
+                speaker_name,
+                speaker_role,
+                sequence_order,
+                content,
+                audio_url
+            }, { new: true });
 
-            if (result.affectedRows === 0) {
+            if (!updatedDialogue) {
                 return res.status(404).json({ message: 'Dialogue not found' });
             }
 
-            res.json({ message: 'Dialogue updated successfully' });
+            res.json({ message: 'Dialogue updated successfully', dialogue: updatedDialogue });
         } catch (error) {
             console.error('Error updating dialogue:', error);
             res.status(500).json({ message: error.message });
@@ -138,13 +105,9 @@ const dialogueController = {
     // Delete dialogue
     deleteDialogue: async (req, res) => {
         try {
-            const pool = getPool();
-            const [result] = await pool.query(
-                'DELETE FROM Dialogues WHERE dialogue_id = ?',
-                [req.params.id]
-            );
+            const deletedDialogue = await Dialogue.findByIdAndDelete(req.params.id);
 
-            if (result.affectedRows === 0) {
+            if (!deletedDialogue) {
                 return res.status(404).json({ message: 'Dialogue not found' });
             }
 

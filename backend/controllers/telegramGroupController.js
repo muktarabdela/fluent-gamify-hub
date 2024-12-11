@@ -1,11 +1,10 @@
-const { getPool } = require('../config/db');
+const { TelegramGroup } = require('../model/model'); // Import Mongoose models
 
 const telegramGroupController = {
     // Get all telegram groups
     getAllGroups: async (req, res) => {
         try {
-            const pool = getPool();
-            const [groups] = await pool.query('SELECT * FROM TelegramGroups ORDER BY created_at DESC');
+            const groups = await TelegramGroup.find().sort({ created_at: -1 });
             res.json(groups);
         } catch (error) {
             console.error('Error fetching telegram groups:', error);
@@ -16,16 +15,13 @@ const telegramGroupController = {
     // Get an available telegram group
     getAvailableGroup: async (req, res) => {
         try {
-            const pool = getPool();
-            const [group] = await pool.query(
-                'SELECT * FROM TelegramGroups WHERE status = "available" ORDER BY last_used_at ASC LIMIT 1'
-            );
+            const group = await TelegramGroup.findOne({ status: 'available' }).sort({ last_used_at: 1 });
 
-            if (group.length === 0) {
+            if (!group) {
                 return res.status(404).json({ message: 'No available groups found' });
             }
 
-            res.json(group[0]);
+            res.json(group);
         } catch (error) {
             console.error('Error fetching available group:', error);
             res.status(500).json({ message: error.message });
@@ -35,17 +31,13 @@ const telegramGroupController = {
     // Get telegram group by ID
     getGroupById: async (req, res) => {
         try {
-            const pool = getPool();
-            const [group] = await pool.query(
-                'SELECT * FROM TelegramGroups WHERE group_id = ?',
-                [req.params.id]
-            );
+            const group = await TelegramGroup.findById(req.params.id);
 
-            if (group.length === 0) {
+            if (!group) {
                 return res.status(404).json({ message: 'Telegram group not found' });
             }
 
-            res.json(group[0]);
+            res.json(group);
         } catch (error) {
             console.error('Error fetching telegram group:', error);
             res.status(500).json({ message: error.message });
@@ -63,18 +55,13 @@ const telegramGroupController = {
         }
 
         try {
-            const pool = getPool();
-            const [result] = await pool.query(
-                'INSERT INTO TelegramGroups (telegram_chat_id, status) VALUES (?, ?)',
-                [telegram_chat_id, status || 'available']
-            );
+            const newGroup = new TelegramGroup({
+                telegram_chat_id,
+                status: status || 'available'
+            });
 
-            const [newGroup] = await pool.query(
-                'SELECT * FROM TelegramGroups WHERE group_id = ?',
-                [result.insertId]
-            );
-
-            res.status(201).json(newGroup[0]);
+            await newGroup.save();
+            res.status(201).json(newGroup);
         } catch (error) {
             console.error('Error creating telegram group:', error);
             res.status(500).json({
@@ -89,17 +76,21 @@ const telegramGroupController = {
         const { telegram_chat_id, status } = req.body;
 
         try {
-            const pool = getPool();
-            const [result] = await pool.query(
-                'UPDATE TelegramGroups SET telegram_chat_id = ?, status = ?, last_used_at = CASE WHEN status = "in_use" THEN CURRENT_TIMESTAMP ELSE last_used_at END WHERE group_id = ?',
-                [telegram_chat_id, status, req.params.id]
+            const updatedGroup = await TelegramGroup.findByIdAndUpdate(
+                req.params.id,
+                {
+                    telegram_chat_id,
+                    status,
+                    last_used_at: status === 'in_use' ? Date.now() : undefined
+                },
+                { new: true }
             );
 
-            if (result.affectedRows === 0) {
+            if (!updatedGroup) {
                 return res.status(404).json({ message: 'Telegram group not found' });
             }
 
-            res.json({ message: 'Telegram group updated successfully' });
+            res.json({ message: 'Telegram group updated successfully', group: updatedGroup });
         } catch (error) {
             console.error('Error updating telegram group:', error);
             res.status(500).json({ message: error.message });
@@ -109,13 +100,9 @@ const telegramGroupController = {
     // Delete telegram group
     deleteGroup: async (req, res) => {
         try {
-            const pool = getPool();
-            const [result] = await pool.query(
-                'DELETE FROM TelegramGroups WHERE group_id = ?',
-                [req.params.id]
-            );
+            const result = await TelegramGroup.findByIdAndDelete(req.params.id);
 
-            if (result.affectedRows === 0) {
+            if (!result) {
                 return res.status(404).json({ message: 'Telegram group not found' });
             }
 

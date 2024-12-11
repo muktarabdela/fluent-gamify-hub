@@ -11,7 +11,7 @@ export const createOrUpdateUser = async (userData) => {
 };
 
 export const getUserById = async (userId) => {
-  
+
   try {
     const response = await instance.get(`/users/${userId}`);
     return response.data;
@@ -87,6 +87,17 @@ export const getAllUsers = async () => {
     return response.data;
   } catch (error) {
     console.error('Error fetching all users:', error);
+    throw error;
+  }
+};
+
+export const getLessonStatusByUserId = async (userId) => {
+  console.log("user id from getLessonStatusByUserId in lesson servies", userId)
+  try {
+    const response = await instance.get(`/users/${userId}/lesson-status`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching lesson status:', error);
     throw error;
   }
 }; 

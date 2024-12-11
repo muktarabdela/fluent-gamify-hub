@@ -26,15 +26,15 @@ export const getTelegramUser = () => {
 
     // For development only
     // Uncomment the following lines for testing in a non-Telegram environment
-    return {
-        id: 87654321,
-        first_name: "muktar",
-        last_name: "abdela",
-        username: "muktar",
-        language_code: "en",
-        auth_date: Math.floor(Date.now() / 1000),
-        hash: 'development_hash'
-    };
+    // return {
+    //     id: 87654321,
+    //     first_name: "muktar",
+    //     last_name: "abdela",
+    //     username: "muktar",
+    //     language_code: "en",
+    //     auth_date: Math.floor(Date.now() / 1000),
+    //     hash: 'development_hash'
+    // };
 
     // return {
     //     id: 12345678,
