@@ -1,35 +1,35 @@
 const { User, UserStreak, UserProgress, LessonStatus, Lesson } = require('../model/model'); // Import Mongoose models
 
 // Helper function to initialize user progress
-const initializeUserProgress = async (userId) => {
-    try {
-        // Get all lessons ordered by unit and lesson order
-        const lessons = await Lesson.find().sort({ order_number: 1 }); // Adjust sorting as needed
+// const initializeUserProgress = async (userId) => {
+//     try {
+//         // Get all lessons ordered by unit and lesson order
+//         const lessons = await Lesson.find().sort({ order_number: 1 }); // Adjust sorting as needed
 
-        if (lessons.length === 0) return;
+//         if (lessons.length === 0) return;
 
-        // First lesson of first unit should be 'in_progress', rest should be 'locked'
-        const userProgressData = lessons.map((lesson, index) => {
-            const status = index === 0 ? 'in_progress' : 'locked'; // Change 'started' to 'in_progress'
-            return {
-                user_id: userId,
-                lesson_id: lesson._id,
-                status,
-                score: 0,
-                created_at: new Date(),
-                updated_at: new Date()
-            };
-        });
+//         // First lesson of first unit should be 'in_progress', rest should be 'locked'
+//         const userProgressData = lessons.map((lesson, index) => {
+//             const status = index === 0 ? 'in_progress' : 'locked'; // Change 'started' to 'in_progress'
+//             return {
+//                 user_id: userId,
+//                 lesson_id: lesson._id,
+//                 status,
+//                 score: 0,
+//                 created_at: new Date(),
+//                 updated_at: new Date()
+//             };
+//         });
 
-        // Batch insert all progress records
-        await UserProgress.insertMany(userProgressData);
+//         // Batch insert all progress records
+//         await UserProgress.insertMany(userProgressData);
 
-        console.log(`Initialized progress for user ${userId} with ${lessons.length} lessons`);
-    } catch (error) {
-        console.error('Error initializing user progress:', error);
-        throw error;
-    }
-};
+//         console.log(`Initialized progress for user ${userId} with ${lessons.length} lessons`);
+//     } catch (error) {
+//         console.error('Error initializing user progress:', error);
+//         throw error;
+//     }
+// };
 
 const userController = {
     // Create or update user from Telegram data
@@ -65,7 +65,7 @@ const userController = {
                 await newUser.save();
 
                 // Initialize user progress for all available lessons
-                await initializeUserProgress(id);
+                // await initializeUserProgress(id);
 
                 // Initialize user streak
                 const newStreak = new UserStreak({
