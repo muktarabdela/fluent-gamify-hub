@@ -17,11 +17,11 @@ const QuickLessons = () => {
     const [loading, setLoading] = useState(true);
 
     const columns = [
-        { key: 'quick_lesson_id', label: 'ID' },
+        { key: 'quick__id', label: 'ID' },
         { key: 'title', label: 'Title' },
         { key: 'introduction', label: 'Introduction' },
-        { 
-            key: 'grammar_focus', 
+        {
+            key: 'grammar_focus',
             label: 'Grammar Focus',
             render: (value) => {
                 if (!value) return '-';
@@ -29,8 +29,8 @@ const QuickLessons = () => {
                 return Array.isArray(grammarArray) ? grammarArray.join(', ') : '-';
             }
         },
-        { 
-            key: 'vocabulary_words', 
+        {
+            key: 'vocabulary_words',
             label: 'Vocabulary Words',
             render: (value) => {
                 if (!value) return 0;
@@ -53,6 +53,7 @@ const QuickLessons = () => {
     const loadLessons = async () => {
         try {
             const data = await getAllLessons();
+            console.log(lessons)
             setLessons(data);
             if (data.length > 0) {
                 setSelectedLesson(data[0]);
@@ -65,7 +66,8 @@ const QuickLessons = () => {
     const loadQuickLesson = async () => {
         try {
             setLoading(true);
-            const data = await getQuickLessonByLessonId(selectedLesson.lesson_id);
+            const data = await getQuickLessonByLessonId(selectedLesson._id);
+            console.log(data)
             setQuickLessons(data ? [data] : []);
         } catch (error) {
             toast.error('Failed to load quick lesson');
@@ -78,7 +80,7 @@ const QuickLessons = () => {
         try {
             await createQuickLesson({
                 ...formData,
-                lesson_id: selectedLesson.lesson_id
+                _id: selectedLesson._id
             });
             toast.success('Quick lesson created successfully');
             loadQuickLesson();
@@ -90,7 +92,7 @@ const QuickLessons = () => {
 
     const handleUpdate = async (formData) => {
         try {
-            await updateQuickLesson(editingQuickLesson.quick_lesson_id, formData);
+            await updateQuickLesson(editingQuickLesson._id, formData);
             toast.success('Quick lesson updated successfully');
             loadQuickLesson();
             setIsDialogOpen(false);
@@ -103,7 +105,7 @@ const QuickLessons = () => {
     const handleDelete = async (quickLesson) => {
         if (window.confirm('Are you sure you want to delete this quick lesson?')) {
             try {
-                await deleteQuickLesson(quickLesson.quick_lesson_id);
+                await deleteQuickLesson(quickLesson._id);
                 toast.success('Quick lesson deleted successfully');
                 loadQuickLesson();
             } catch (error) {
@@ -125,14 +127,14 @@ const QuickLessons = () => {
                     <div className="flex items-center gap-2">
                         <select
                             className="text-sm border rounded-md px-2 py-1"
-                            value={selectedLesson?.lesson_id || ''}
+                            value={selectedLesson?._id || ''}
                             onChange={(e) => {
-                                const lesson = lessons.find(l => l.lesson_id === Number(e.target.value));
+                                const lesson = lessons.find(l => l._id === String(e.target.value));
                                 setSelectedLesson(lesson);
                             }}
                         >
                             {lessons.map((lesson) => (
-                                <option key={lesson.lesson_id} value={lesson.lesson_id}>
+                                <option key={lesson._id} value={lesson._id}>
                                     {lesson.title}
                                 </option>
                             ))}
@@ -158,7 +160,7 @@ const QuickLessons = () => {
             ) : (
                 <DataTable
                     columns={columns}
-                    data={quickLessons}
+                    data={quickLessons[0]}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                 />

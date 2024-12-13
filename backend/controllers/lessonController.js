@@ -36,13 +36,44 @@ const initializeLessonStatuses = async (unitId, userId) => {
     }
 };
 
+// Move the helper function before the controller object
+const unlockNextLesson = async (lessonId, userId) => {
+    try {
+        // Get current lesson's unit and order
+        const currentLesson = await Lesson.findById(lessonId);
+
+        if (!currentLesson) return null;
+
+        // Get next lesson in the same unit
+        const nextLesson = await Lesson.findOne({
+            unit_id: currentLesson.unit_id,
+            order_number: { $gt: currentLesson.order_number }
+        }).sort({ order_number: 1 });
+
+        if (nextLesson) {
+            // Update next lesson's status to active
+            await LessonStatus.findOneAndUpdate(
+                { lesson_id: nextLesson._id, user_id: userId },
+                { status: 'active', unlock_date: new Date() },
+                { new: true, upsert: true } // Create if it doesn't exist
+            );
+
+            return nextLesson._id;
+        }
+
+        return null;
+    } catch (error) {
+        console.error('Error unlocking next lesson:', error);
+        throw error;
+    }
+};
 
 const lessonController = {
     // Get all lessons for a specific unit
     getAllLessons: async (req, res) => {
         try {
             const { unitId } = req.query;
-            const lessons = await Lesson.find({ unit_id: unitId }).populate('unit_id'); // Populate unit details if needed
+            const lessons = await Lesson.find({})
             res.json(lessons);
         } catch (error) {
             console.error('Error fetching all lessons:', error);
@@ -50,10 +81,33 @@ const lessonController = {
         }
     },
 
-    // Get lesson by ID
+    // Get lesson by unit_id
+    getLessonByUnitId: async (req, res) => {
+        try {
+            const { unitId } = req.params; // Extract unit_id from params
+            console.log("unitId from getLessonByUnitId", unitId); // Log the unit_id for debugging
+            const lesson = await Lesson.find({
+                unit_id: unitId
+            }); // Find lesson by unit_id
+
+            if (!lesson) {
+                return res.status(404).json({ message: 'Lesson not found' });
+            }
+
+            res.json(lesson);
+        } catch (error) {
+            console.error('Error fetching lesson:', error);
+            res.status(500).json({ message: error.message });
+        }
+    },
+    // Get lesson by unit_id
     getLessonById: async (req, res) => {
         try {
-            const lesson = await Lesson.findById(req.params.id).populate('unit_id'); // Populate unit details if needed
+            const { id } = req.params; // Extract lesson ID from params
+            console.log("lesson id from getLessonById", id); // Log the lesson ID for debugging
+
+            // Ensure the ID is passed as an object
+            const lesson = await Lesson.findOne({ _id: id }); // Find lesson by ID
 
             if (!lesson) {
                 return res.status(404).json({ message: 'Lesson not found' });
@@ -186,15 +240,27 @@ const lessonController = {
     // Update lesson status
     updateLessonStatus: async (req, res) => {
         const { lessonId } = req.params;
-        const { status } = req.body;
-
+        const { status, userId } = req.body;
+        if (!lessonId || !status || !userId) {
+            return res.status(400).json({ error: 'Missing required fields: lessonId, status, or userId' });
+        }
         try {
             const updatedStatus = await LessonStatus.findOneAndUpdate(
-                { lesson_id: lessonId, user_id: req.body.user_id }, // Assuming user_id is passed in the request body
+                { lesson_id: lessonId, user_id: userId }, // Assuming user_id is passed in the request body
                 { status },
                 { new: true, upsert: true } // Create if it doesn't exist
             );
+            console.log("updatedStatus", updatedStatus)
+            if (status === 'completed') {
+                const nextLessonId = await unlockNextLesson(lessonId, userId);
 
+                const lessonStatuses = await LessonStatus.find({
+                    lesson_id: { $in: [lessonId, nextLessonId] },
+                    user_id: userId
+                });
+
+                return res.json(lessonStatuses);
+            }
             res.json({ message: 'Lesson status updated successfully', status: updatedStatus });
         } catch (error) {
             console.error('Error updating lesson status:', error);

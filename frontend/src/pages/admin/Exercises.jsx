@@ -17,12 +17,12 @@ const Exercises = () => {
     const [loading, setLoading] = useState(true);
 
     const columns = [
-        { key: 'exercise_id', label: 'ID' },
+        { key: '_id', label: 'ID' },
         { key: 'type', label: 'Type' },
         { key: 'question', label: 'Question' },
         { key: 'order_number', label: 'Order' },
-        { 
-            key: 'options', 
+        {
+            key: 'options',
             label: 'Options',
             render: (value) => {
                 if (!value) return '-';
@@ -57,7 +57,7 @@ const Exercises = () => {
     const loadExercises = async () => {
         try {
             setLoading(true);
-            const data = await getExercisesByLesson(selectedLesson.lesson_id);
+            const data = await getExercisesByLesson(selectedLesson._id);
             setExercises(data);
         } catch (error) {
             toast.error('Failed to load exercises');
@@ -70,7 +70,7 @@ const Exercises = () => {
         try {
             await createExercise({
                 ...formData,
-                lesson_id: selectedLesson.lesson_id
+                lesson_id: selectedLesson._id
             });
             toast.success('Exercise created successfully');
             loadExercises();
@@ -82,7 +82,7 @@ const Exercises = () => {
 
     const handleUpdate = async (formData) => {
         try {
-            await updateExercise(editingExercise.exercise_id, formData);
+            await updateExercise(editingExercise._id, formData);
             toast.success('Exercise updated successfully');
             loadExercises();
             setIsDialogOpen(false);
@@ -95,7 +95,7 @@ const Exercises = () => {
     const handleDelete = async (exercise) => {
         if (window.confirm('Are you sure you want to delete this exercise?')) {
             try {
-                await deleteExercise(exercise.exercise_id);
+                await deleteExercise(exercise._id);
                 toast.success('Exercise deleted successfully');
                 loadExercises();
             } catch (error) {
@@ -117,14 +117,14 @@ const Exercises = () => {
                     <div className="flex items-center gap-2">
                         <select
                             className="text-sm border rounded-md px-2 py-1"
-                            value={selectedLesson?.lesson_id || ''}
+                            value={selectedLesson?._id || ''}
                             onChange={(e) => {
-                                const lesson = lessons.find(l => l.lesson_id === Number(e.target.value));
+                                const lesson = lessons.find(l => l._id === String(e.target.value));
                                 setSelectedLesson(lesson);
                             }}
                         >
                             {lessons.map((lesson) => (
-                                <option key={lesson.lesson_id} value={lesson.lesson_id}>
+                                <option key={lesson._id} value={lesson._id}>
                                     {lesson.title}
                                 </option>
                             ))}

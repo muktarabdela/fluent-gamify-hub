@@ -39,10 +39,10 @@ const ExerciseContainer = ({ exercises, userId, lessonId, onComplete }) => {
     };
 
     const handleExerciseSubmit = async (answer) => {
-        const newCompletedExercises = new Set([...completedExercises, currentExercise.exercise_id]);
+        const newCompletedExercises = new Set([...completedExercises, currentExercise._id]);
         setCompletedExercises(newCompletedExercises);
 
-        setExerciseScores(prev => new Map(prev.set(currentExercise.exercise_id, answer.score || 100)));
+        setExerciseScores(prev => new Map(prev.set(currentExercise._id, answer.score || 100)));
 
         try {
             if (newCompletedExercises.size === exercises.length) {
@@ -53,16 +53,9 @@ const ExerciseContainer = ({ exercises, userId, lessonId, onComplete }) => {
                 // Update lesson status and user progress
                 const [lessonStatusResponse, streakResponse] = await Promise.all([
                     updateLessonStatus(lessonId, 'completed', userId),
-                    updateUserStreak(userId),
-                    updateUserProgress(userId, {
-                        lesson_id: lessonId,
-                        status: 'completed',
-                        score: calculateOverallScore(),
-                        completion_date: new Date().toISOString(),
-                        time_spent_seconds: calculateTotalTime()
-                    })
+                    updateUserStreak(userId)
                 ]);
-
+                console.log("lessonStatusResponse", lessonStatusResponse)
                 // Get updated streak data after the update
                 const updatedStreakData = await getUserStreak(userId);
 

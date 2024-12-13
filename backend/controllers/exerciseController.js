@@ -138,7 +138,7 @@ const exerciseController = {
             const userProgress = await UserProgress.find({ user_id: userId, lesson_id: req.params.lessonId });
 
             const exercisesWithProgress = exercises.map(exercise => {
-                const progress = userProgress.find(up => up.exercise_id.toString() === exercise._id.toString());
+                const progress = userProgress.find(up => up.exercise_id?.toString() === exercise?._id.toString());
                 return {
                     ...exercise.toObject(),
                     user_score: progress ? progress.score : 0,

@@ -35,7 +35,7 @@ const dialogueSchema = new mongoose.Schema({
 });
 
 const quickLessonSchema = new mongoose.Schema({
-    lesson_id: { type: String, required: true },
+    lesson_id: { type: String, required: true }, // Changed to Number for consistency
     title: { type: String, required: true },
     introduction: { type: String, required: true },
     grammar_focus: [String],
@@ -47,6 +47,7 @@ const quickLessonSchema = new mongoose.Schema({
     created_at: { type: Date, default: Date.now },
     updated_at: { type: Date, default: Date.now }
 });
+
 
 const exerciseSchema = new mongoose.Schema({
     lesson_id: { type: String, required: true },
@@ -63,7 +64,7 @@ const exerciseSchema = new mongoose.Schema({
 const userProgressSchema = new mongoose.Schema({
     user_id: { type: String, required: true },  // For Telegram user ID
     lesson_id: { type: String, required: true },
-    exercise_id:  { type: String, required: true },
+    exercise_id: { type: String, required: true },
     status: {
         type: String,
         enum: ['not_started', 'in_progress', 'completed', 'locked'],
@@ -131,7 +132,7 @@ const telegramGroupSchema = new mongoose.Schema({
 });
 
 const liveSessionParticipantSchema = new mongoose.Schema({
-    session_id:  { type: String, required: true },
+    session_id: { type: String, required: true },
     user_id: { type: String, required: true },
     status: { type: String, enum: ['joined', 'completed', 'left'], default: 'joined' },
     joined_at: { type: Date, default: Date.now },
@@ -161,14 +162,14 @@ const categorySchema = new mongoose.Schema({
 });
 
 const exerciseTypeSchema = new mongoose.Schema({
-    category_id:  { type: String, required: true },
+    category_id: { type: String, required: true },
     name: { type: String, required: true },
     created_at: { type: Date, default: Date.now },
     updated_at: { type: Date, default: Date.now }
 });
 
 const practiceExerciseSchema = new mongoose.Schema({
-    type_id:  { type: String, required: true },
+    type_id: { type: String, required: true },
     topic_id: { type: String, required: true },
     topic: { type: String, required: true },
     content: { type: Object, required: true },  // Store JSON content

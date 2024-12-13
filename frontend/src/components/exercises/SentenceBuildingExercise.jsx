@@ -181,7 +181,7 @@ const SentenceBuildingExercise = ({ exercise, onSubmit, onContinue }) => {
                             animate={{ scale: 1, opacity: 1 }}
                             className="group relative px-4 py-2 rounded-lg bg-primary text-white font-medium text-sm cursor-pointer flex items-center gap-2"
                         >
-                            <span onClick={() => handleWordSpeak(word)}>
+                            <span>
                                 {word}
                             </span>
                             <div
@@ -198,13 +198,13 @@ const SentenceBuildingExercise = ({ exercise, onSubmit, onContinue }) => {
                 <div className="flex flex-wrap gap-2">
                     {availableWords.map((word, index) => (
                         <motion.div
-                            onClick={() => handleWordSpeak(word)}
+                           
                             key={`available-${word}-${index}`}
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             className="group relative px-4 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 font-medium text-sm cursor-pointer transition-all flex items-center gap-2"
                         >
-                            <span onClick={() => handleWordSpeak(word)}>
+                            <span>
                                 {word}
                             </span>
                             {/* <Volume2

@@ -4,7 +4,7 @@ import { Plus } from 'lucide-react';
 import DataTable from '@/components/admin/DataTable';
 import FormDialog from '@/components/admin/FormDialog';
 import LessonForm from '@/components/admin/forms/LessonForm';
-import { getLessonsByUnitWithStatus, createLesson, updateLesson, deleteLesson, getAllLessons } from '@/api/lessonService';
+import { getLessonsByUnitWithStatus, createLesson, updateLesson, deleteLesson, getAllLessons,  getLessonByUnitId } from '@/api/lessonService';
 import { getAllUnits } from '@/api/unitService';
 import { toast } from 'sonner';
 
@@ -17,7 +17,7 @@ const Lessons = () => {
     const [loading, setLoading] = useState(true);
 
     const columns = [
-        { key: 'lesson_id', label: 'ID' },
+        { key: '_id', label: 'ID' },
         { key: 'title', label: 'Title' },
         { key: 'description', label: 'Description' },
         { key: 'order_number', label: 'Order' },
@@ -26,8 +26,8 @@ const Lessons = () => {
             label: 'Status',
             render: (value) => (
                 <span className={`px-2 py-1 rounded-full text-xs ${value === 'active' ? 'bg-green-100 text-green-800' :
-                        value === 'completed' ? 'bg-blue-100 text-blue-800' :
-                            'bg-gray-100 text-gray-800'
+                    value === 'completed' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
                     }`}>
                     {value || 'locked'}
                 </span>
@@ -48,6 +48,7 @@ const Lessons = () => {
     const loadUnits = async () => {
         try {
             const data = await getAllUnits();
+            console.log("all unites", data)
             setUnits(data);
             if (data.length > 0) {
                 setSelectedUnit(data[0]);
@@ -60,7 +61,8 @@ const Lessons = () => {
     const loadLessons = async () => {
         try {
             setLoading(true);
-            const data = await getAllLessons(selectedUnit.unit_id);
+            const data = await getLessonByUnitId(selectedUnit._id);
+            console.log(data)
             setLessons(data);
         } catch (error) {
             toast.error('Failed to load lessons');
@@ -73,7 +75,7 @@ const Lessons = () => {
         try {
             await createLesson({
                 ...formData,
-                unit_id: selectedUnit.unit_id
+                _id: selectedUnit._id
             });
             toast.success('Lesson created successfully');
             loadLessons();
@@ -85,7 +87,7 @@ const Lessons = () => {
 
     const handleUpdate = async (formData) => {
         try {
-            await updateLesson(editingLesson.lesson_id, formData);
+            await updateLesson(editingLesson.id, formData);
             toast.success('Lesson updated successfully');
             loadLessons();
             setIsDialogOpen(false);
@@ -98,7 +100,7 @@ const Lessons = () => {
     const handleDelete = async (lesson) => {
         if (window.confirm('Are you sure you want to delete this lesson?')) {
             try {
-                await deleteLesson(lesson.lesson_id);
+                await deleteLesson(lesson._id);
                 toast.success('Lesson deleted successfully');
                 loadLessons();
             } catch (error) {
@@ -120,14 +122,14 @@ const Lessons = () => {
                     <div className="flex items-center gap-2">
                         <select
                             className="text-sm border rounded-md px-2 py-1"
-                            value={selectedUnit?.unit_id || ''}
+                            value={selectedUnit?._id || ''}
                             onChange={(e) => {
-                                const unit = units.find(u => u.unit_id === Number(e.target.value));
+                                const unit = units.find(u => u._id === String(e.target.value));
                                 setSelectedUnit(unit);
                             }}
                         >
                             {units.map((unit) => (
-                                <option key={unit.unit_id} value={unit.unit_id}>
+                                <option key={unit._id} value={unit._id}>
                                     {unit.title}
                                 </option>
                             ))}

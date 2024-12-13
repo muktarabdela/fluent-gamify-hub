@@ -31,9 +31,8 @@ const Profile = () => {
                     setLoading(false);
                     return;
                 }
-                const [userDetails, progress, streak, lesson] = await Promise.all([
+                const [userDetails, streak, lesson] = await Promise.all([
                     getUserById(telegramUser.id),
-                    // getUserProgress(telegramUser.id),
                     getUserStreak(telegramUser.id),
                     getLessonStatusByUserId(telegramUser.id)
                 ]);
@@ -72,10 +71,10 @@ const Profile = () => {
     // const levelProgress = (totalPoints % 100);
 
     // Calculate the counts and progress
-    const totalLessons = userLesson.length;
-    const completedLessonsS = userLesson.filter(lesson => lesson.status === 'completed').length;
-    const activeLessons = userLesson.filter(lesson => lesson.status === 'active').length;
-    const lockedLessons = userLesson.filter(lesson => lesson.status === 'locked').length;
+    const totalLessons = userLesson?.length;
+    const completedLessonsS = userLesson?.filter(lesson => lesson.status === 'completed').length;
+    const activeLessons = userLesson?.filter(lesson => lesson.status === 'active').length;
+    const lockedLessons = userLesson?.filter(lesson => lesson.status === 'locked').length;
 
     const overallProgress = totalLessons > 0 ? Math.round((completedLessonsS / totalLessons) * 100) : 0;
 

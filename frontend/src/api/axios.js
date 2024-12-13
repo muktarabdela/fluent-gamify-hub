@@ -2,7 +2,7 @@
 
 import axios from "axios";
 const instance = axios.create({
-	baseURL:"https://fluent-gamify-hub-production.up.railway.app/api",
+	baseURL: "https://fluent-gamify-hub-production.up.railway.app/api",
 	timeout: 40000,
 	headers: {
 		"Content-Type": "application/json",

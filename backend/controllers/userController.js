@@ -31,6 +31,55 @@ const { User, UserStreak, UserProgress, LessonStatus, Lesson } = require('../mod
 //     }
 // };
 
+// Helper function to update streak
+const updateStreak = async (userId) => {
+    const today = new Date().toISOString().split('T')[0];
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const currentStreak = await UserStreak.findOne({ user_id: userId });
+
+    if (!currentStreak) {
+        console.log('No streak found for user:', userId);
+        return; // Exit if the streak doesn't exist
+    }
+
+    // Validate last_activity_date
+    let lastDate = currentStreak.last_activity_date
+        ? new Date(currentStreak.last_activity_date)
+        : null;
+
+    if (!lastDate || isNaN(lastDate)) {
+        console.log('Invalid or missing last_activity_date. Initializing.');
+        lastDate = new Date(); // Initialize to today
+    }
+
+    let newCurrentStreak = currentStreak.current_streak;
+
+    // Compare dates
+    if (lastDate.toISOString().split('T')[0] === yesterday.toISOString().split('T')[0]) {
+        // Consecutive day
+        newCurrentStreak += 1;
+    } else if (lastDate.toISOString().split('T')[0] !== today) {
+        // Streak broken
+        newCurrentStreak = 1;
+    }
+
+    // Update streak in database
+    await UserStreak.updateOne(
+        { user_id: userId },
+        {
+            current_streak: newCurrentStreak,
+            longest_streak: Math.max(currentStreak.longest_streak, newCurrentStreak),
+            last_activity_date: today,
+            updated_at: Date.now()
+        }
+    );
+
+    // console.log('Streak updated for user:', userId);
+};
+
+
 const userController = {
     // Create or update user from Telegram data
     createOrUpdateUser: async (req, res) => {
@@ -219,11 +268,26 @@ const userController = {
     updateUserStreak: async (req, res) => {
         try {
             const userId = req.params.id;
+            console.log(userId);
 
-            // Check if streak was already updated today based on updated_at
+            // Fetch current streak
             const currentStreak = await UserStreak.findOne({ user_id: userId });
 
-            if (currentStreak && currentStreak.updated_at.toDateString() === new Date().toDateString()) {
+            // Debugging
+            // console.log('Current Streak:', currentStreak);
+
+            // Validate updated_at
+            if (currentStreak && (!currentStreak.updated_at || isNaN(new Date(currentStreak.updated_at)))) {
+                currentStreak.updated_at = new Date();
+                await currentStreak.save();
+            }
+
+            const isUpdatedToday = currentStreak &&
+                currentStreak.updated_at instanceof Date &&
+                !isNaN(currentStreak.updated_at) &&
+                currentStreak.updated_at.toDateString() === new Date().toDateString();
+
+            if (isUpdatedToday) {
                 // Already updated today, just return current streak
                 res.json(currentStreak);
                 return;
@@ -245,6 +309,7 @@ const userController = {
             res.status(500).json({ message: error.message });
         }
     },
+
 
     // Delete user
     deleteUser: async (req, res) => {
@@ -270,12 +335,8 @@ const userController = {
     // Get lesson status by user ID
     getLessonStatusByUserId: async (req, res) => {
         const userId = req.params.id; // Assuming user ID is passed in the URL
-
         try {
             const lessonStatuses = await LessonStatus.find({ user_id: userId })
-                .populate('lesson_id') // Populate lesson details if needed
-                .populate('unit_id'); // Populate unit details if needed
-
             if (!lessonStatuses || lessonStatuses.length === 0) {
                 return res.status(404).json({ message: 'No lesson statuses found for this user' });
             }

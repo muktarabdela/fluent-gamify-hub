@@ -1,5 +1,6 @@
 const config = require('./config'); // Adjust path as needed
 const { getPool } = require('../config/db');
+const { TelegramGroup, LiveSession } = require('../model/model');
 const webAppUrl = 'https://fluent-gamify-hub.vercel.app';
 
 class GroupManager {
@@ -540,9 +541,6 @@ class GroupManager {
     }
     async endSession(groupId) {
         console.log(`Ending session for group ${groupId}`);
-        const pool = getPool();
-        const connection = await pool.getConnection();
-
         try {
             const normalizedGroupId = String(groupId);
 
@@ -553,58 +551,48 @@ class GroupManager {
                 return;
             }
 
-            await connection.beginTransaction();
+            // Fetch the TelegramGroup document
+            const telegramGroup = await TelegramGroup.findOne({ telegram_chat_id: groupId.toString() });
 
-            // Fetch internal group ID
-            const [telegramGroup] = await connection.query(
-                'SELECT group_id FROM TelegramGroups WHERE telegram_chat_id = ?',
-                [groupId.toString()]
-            );
-
-            if (telegramGroup.length === 0) {
+            if (!telegramGroup) {
                 throw new Error('Telegram group not found');
             }
 
-            const internalGroupId = telegramGroup[0].group_id;
+            const internalGroupId = telegramGroup.group_id;
 
-            // Fetch the active session ID
-            const [liveSession] = await connection.query(
-                `SELECT session_id FROM LiveSessions 
-                WHERE telegram_chat_id = ? 
-                AND status != 'Ended' 
-                ORDER BY created_at DESC 
-                LIMIT 1`,
-                [groupId.toString()]
-            );
+            // Fetch the active session
+            // Check if a LiveSession already exists for the group
+            let liveSession = await LiveSession.findOne({ telegram_chat_id: groupId.toString() });
 
-            if (liveSession.length === 0) {
+            if (!liveSession) {
                 throw new Error('Active session not found');
             }
 
-            const sessionId = liveSession[0].session_id;
+            const sessionId = liveSession._id;
 
-            // Update database tables
+            // Update database documents
             await Promise.all([
-                connection.query(
-                    `UPDATE LiveSessions 
-                    SET status = 'Scheduled',
-                        current_participants = 0,
-                        updated_at = CURRENT_TIMESTAMP 
-                    WHERE telegram_chat_id = ? 
-                    AND status != 'Ended'`,
-                    [groupId.toString()]
+                LiveSession.updateMany(
+                    { telegram_chat_id: groupId.toString(), status: { $ne: 'Ended' } },
+                    {
+                        $set: {
+                            status: 'Scheduled',
+                            current_participants: 0,
+                            updated_at: new Date()
+                        }
+                    }
                 ),
-                connection.query(
-                    `UPDATE TelegramGroups 
-                    SET status = 'available', 
-                        updated_at = CURRENT_TIMESTAMP,
-                        last_used_at = CURRENT_TIMESTAMP 
-                    WHERE telegram_chat_id = ?`,
-                    [groupId.toString()]
+                TelegramGroup.updateOne(
+                    { telegram_chat_id: groupId.toString() },
+                    {
+                        $set: {
+                            status: 'available',
+                            updated_at: new Date(),
+                            last_used_at: new Date()
+                        }
+                    }
                 )
             ]);
-
-            await connection.commit();
 
             // Notify group about session end
             await this.bot.telegram.sendMessage(
@@ -617,14 +605,13 @@ class GroupManager {
 
             // Clear chat history for all users
             try {
-                const messages = await this.bot.telegram.getChatMessages(groupId); // You need to retrieve the bot's messages
+                const messages = await this.bot.telegram.getChatMessages(groupId); // Retrieve bot's messages
                 for (const message of messages) {
                     await this.bot.telegram.deleteMessage(groupId, message.message_id); // Delete bot's messages
                 }
             } catch (error) {
                 console.error('Error deleting bot messages:', error);
             }
-
 
             // Reset group settings
             try {
@@ -646,7 +633,8 @@ class GroupManager {
 
             // Remove group from activeGroups
             this.activeGroups.delete(normalizedGroupId);
-            console.log(this.activeGroups)
+
+            console.log(this.activeGroups);
 
             return {
                 success: true,
@@ -654,11 +642,8 @@ class GroupManager {
             };
 
         } catch (error) {
-            await connection.rollback();
             console.error('Error ending session:', error);
             throw new Error(`Failed to end session: ${error.message}`);
-        } finally {
-            connection.release();
         }
     }
 

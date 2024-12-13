@@ -13,7 +13,7 @@ const LiveSessions = () => {
     const [loading, setLoading] = useState(true);
 
     const columns = [
-        { key: 'session_id', label: 'ID' },
+        { key: '_id', label: 'ID' },
         { key: 'session_type', label: 'Type' },
         {
             key: 'lesson_title',
@@ -71,7 +71,7 @@ const LiveSessions = () => {
     console.log(sessions)
     const handleUpdate = async (formData) => {
         try {
-            await updateSession(editingSession.session_id, formData);
+            await updateSession(editingSession._id, formData);
             toast.success('Live session updated successfully');
             loadSessions();
             setIsDialogOpen(false);
@@ -84,7 +84,7 @@ const LiveSessions = () => {
     const handleDelete = async (session) => {
         if (window.confirm('Are you sure you want to delete this live session?')) {
             try {
-                await deleteSession(session.session_id);
+                await deleteSession(session._id);
                 toast.success('Live session deleted successfully');
                 loadSessions();
             } catch (error) {

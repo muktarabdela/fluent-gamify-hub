@@ -95,7 +95,7 @@ function LessonCard({ lesson }) {
 
     return (
         <AccordionItem
-            value={`item-${lesson.lesson_id}`}
+            value={`item-${lesson._id}`}
             className={`mb-4 -mt-1 rounded-lg overflow-hidden shadow-md transition-all duration-300 
                 ${getStatusStyles(lesson.status)}
                 ${lesson.status === 'locked' ? 'cursor-not-allowed' : ''}
@@ -308,7 +308,7 @@ export default function MobileLessonDashboard() {
             // Update the unit with progress percentage
             setUnits(prevUnits => {
                 return prevUnits.map(unit => {
-                    if (unit.unit_id === unitId) {
+                    if (unit._id === unitId) {
                         return { ...unit, progress_percentage: progressPercentage };
                     }
                     return unit;
@@ -334,7 +334,7 @@ export default function MobileLessonDashboard() {
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 const unitId = parseInt(entry.target.getAttribute('data-unit-id'));
-                const previousUnitId = units[units.findIndex(u => u._id === unitId) - 1]?.unit_id;
+                const previousUnitId = units[units.findIndex(u => u._id === unitId) - 1]?._id;
 
                 if (entry.isIntersecting) {
                     setVisibleUnit(unitId);

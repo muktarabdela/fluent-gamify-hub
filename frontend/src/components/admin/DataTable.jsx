@@ -10,31 +10,31 @@ import {
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2 } from 'lucide-react';
 
-const DataTable = ({ 
-    columns, 
-    data, 
-    onEdit, 
+const DataTable = ({
+    columns,
+    data,
+    onEdit,
     onDelete,
-    actions = true 
+    actions = true
 }) => {
     return (
         <div className="border rounded-lg">
             <Table>
                 <TableHeader>
                     <TableRow>
-                        {columns.map((column) => (
+                        {columns?.map((column) => (
                             <TableHead key={column.key}>{column.label}</TableHead>
                         ))}
                         {actions && <TableHead>Actions</TableHead>}
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {data.map((item) => (
+                    {data?.map((item) => (
                         <TableRow key={item.id}>
                             {columns.map((column) => (
                                 <TableCell key={`${item.id}-${column.key}`}>
-                                    {column.render 
-                                        ? column.render(item[column.key], item) 
+                                    {column.render
+                                        ? column.render(item[column.key], item)
                                         : item[column.key]}
                                 </TableCell>
                             ))}

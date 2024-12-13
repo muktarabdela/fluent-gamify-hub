@@ -215,6 +215,7 @@ export default function LiveSession() {
     };
 
     const handleInitialClick = async (session) => {
+        console.log("session", session)
         setSelectedSession(session);
         setIsJoinDialogOpen(true);
         setJoinStatus({ loading: true, error: null, inviteLink: null });
@@ -241,16 +242,16 @@ export default function LiveSession() {
             // Create new session
             const data = await createNewSession({
                 topic: session.topic,
-                sessionId: session.session_id,
+                sessionId: session._id,
                 group_id: availableGroup.telegram_chat_id,
                 duration: session.duration
             });
 
             // Parallel updates
             await Promise.all([
-                completeUserSession(session.session_id, telegramUser.id),
-                updateSessionStatus(session.session_id, 'Ongoing', data.inviteLink),
-                updateSessionTelegramChat(session.session_id, availableGroup.telegram_chat_id),
+                // completeUserSession(session.session_id, telegramUser.id),
+                // updateSessionStatus(session.session_id, 'Ongoing', data.inviteLink),
+                // updateSessionTelegramChat(session.session_id, availableGroup.telegram_chat_id),
             ]);
 
             setJoinStatus({
@@ -491,7 +492,7 @@ export default function LiveSession() {
                             <div className="text-center space-y-4">
                                 <p className="text-green-600">Session created successfully!</p>
                                 <Button
-                                    className="w-full bg-green-500"
+                                    className="w-full bg-green-500 hover:bg-green-500"
                                     onClick={() => window.open(joinStatus.inviteLink, '_blank')}
                                 >
                                     Join Now

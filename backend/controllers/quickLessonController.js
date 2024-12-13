@@ -19,7 +19,7 @@ const quickLessonController = {
             }
 
             // Log the raw data for debugging
-            console.log('Raw quick lesson data:', quickLessons);
+            // console.log('Raw quick lesson data:', quickLessons);
 
             // Return the quick lessons in the response
             res.json(quickLessons);

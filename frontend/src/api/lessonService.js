@@ -27,9 +27,20 @@ export const getLessonsByUnitWithStatus = async (unitId, userId) => {
 };
 
 // ... existing code ...
-export const getLessonById = async (lessonId) => {
+export const getLessonById = async (unitId) => {
+  console.log(unitId)
   try {
-    const response = await instance.get(`/lessons/${lessonId}`);
+    const response = await instance.get(`/lessons/${unitId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching lesson:', error);
+    throw error;
+  }
+};
+export const getLessonByUnitId = async (unitId) => {
+  console.log(unitId)
+  try {
+    const response = await instance.get(`/lessons/units/${unitId}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching lesson:', error);

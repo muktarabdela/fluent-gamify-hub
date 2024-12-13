@@ -14,7 +14,7 @@ const TelegramGroups = () => {
     const [loading, setLoading] = useState(true);
 
     const columns = [
-        { key: 'group_id', label: 'ID' },
+        { key: '_id', label: 'ID' },
         { key: 'telegram_chat_id', label: 'Chat ID' },
         { 
             key: 'status', 
@@ -70,7 +70,7 @@ const TelegramGroups = () => {
 
     const handleUpdate = async (formData) => {
         try {
-            await updateGroup(editingGroup.group_id, formData);
+            await updateGroup(editingGroup._id, formData);
             toast.success('Telegram group updated successfully');
             loadGroups();
             setIsDialogOpen(false);
@@ -83,7 +83,7 @@ const TelegramGroups = () => {
     const handleDelete = async (group) => {
         if (window.confirm('Are you sure you want to delete this telegram group?')) {
             try {
-                await deleteGroup(group.group_id);
+                await deleteGroup(group._id);
                 toast.success('Telegram group deleted successfully');
                 loadGroups();
             } catch (error) {

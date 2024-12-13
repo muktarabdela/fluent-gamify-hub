@@ -29,6 +29,7 @@ const exerciseTypeLabels = {
 };
 
 export default function LessonActionButton({ status, lessonId, unlockDate }) {
+    console.log("lessonId ", lessonId)
     const telegramUser = getTelegramUser();
     const navigate = useNavigate();
     const [lesson, setLesson] = useState(null);
@@ -44,6 +45,7 @@ export default function LessonActionButton({ status, lessonId, unlockDate }) {
                     getLessonById(lessonId),
                     getExercisesByLesson(lessonId, telegramUser?.id) // Replace with actual userId
                 ]);
+                console.log(lessonData)
                 setLesson(lessonData);
                 setExercises(exercisesData);
             } catch (error) {
@@ -94,15 +96,17 @@ export default function LessonActionButton({ status, lessonId, unlockDate }) {
 
     const { text, className, icon, disabled } = getButtonProps();
 
+    const handleClick = () => {
+        if (status !== 'locked') {
+            // Logic to open the dialog
+        }
+    };
+
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <button
-                    onClick={() => !disabled && navigate(`/lesson/${lessonId}`)}
-                    disabled={disabled}
-                    className={`w-full ${className} text-white font-semibold py-3 px-6 rounded-xl 
-                        flex items-center justify-center gap-2 transition-all`}
-                >
+                <button onClick={handleClick} className={`w-full ${className} text-white font-semibold py-3 px-6 rounded-xl 
+                        flex items-center justify-center gap-2 transition-all`}>
                     {text}
                     {icon}
                 </button>
@@ -128,6 +132,18 @@ export default function LessonActionButton({ status, lessonId, unlockDate }) {
                             </p>
                         </div>
 
+                        {/* Quick Lesson */}
+                        <div className="p-4 bg-blue-50 rounded-lg mt-4">
+                            <div className="flex items-center gap-3 mb-2">
+                                <BookOpen size={20} className="text-blue-600" />
+                                <h4 className="text-sm font-semibold text-blue-900">
+                                    Quick Lesson
+                                </h4>
+                            </div>
+                            <p className="text-sm text-blue-700">
+                                Get a concise overview of the lesson's key concepts
+                            </p>
+                        </div>
                         {/* Dialogue Practice */}
                         <div className="p-4 bg-blue-50 rounded-lg">
                             <div className="flex items-center gap-3 mb-2">
@@ -140,6 +156,7 @@ export default function LessonActionButton({ status, lessonId, unlockDate }) {
                                 Practice real-world conversations with interactive dialogues
                             </p>
                         </div>
+
 
 
                         {/* Interactive Exercises */}

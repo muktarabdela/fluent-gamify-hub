@@ -5,42 +5,8 @@ const unitController = {
     getAllUnits: async (req, res) => {
         try {
             const userId = req.query.userId; // Get userId from query params
-            
-            const units = await Unit.aggregate([
-                {
-                    $lookup: {
-                        from: 'lessons', // The name of the lessons collection
-                        localField: '_id',
-                        foreignField: 'unit_id',
-                        as: 'lessons'
-                    }
-                },
-                {
-                    $project: {
-                        title: 1,
-                        description: 1,
-                        order_number: 1,
-                        total_lessons: { $size: '$lessons' },
-                        completed_lessons: {
-                            $size: {
-                                $filter: {
-                                    input: '$lessons',
-                                    as: 'lesson',
-                                    cond: { $eq: ['$$lesson.status', 'completed'] } // Assuming status field exists in Lesson
-                                }
-                            }
-                        },
-                        progress_percentage: {
-                            $cond: {
-                                if: { $gt: [{ $size: '$lessons' }, 0] },
-                                then: { $multiply: [{ $divide: [{ $size: { $filter: { input: '$lessons', as: 'lesson', cond: { $eq: ['$$lesson.status', 'completed'] } } } }, { $size: '$lessons' }] }, 100] },
-                                else: 0
-                            }
-                        }
-                    }
-                },
-                { $sort: { order_number: 1 } }
-            ]);
+
+            const units = await Unit.find()
 
             res.json(units);
         } catch (error) {
@@ -151,8 +117,8 @@ const unitController = {
 
             if (progress.length > 0) {
                 const { total_lessons, completed_lessons } = progress[0];
-                const progress_percentage = total_lessons > 0 
-                    ? (completed_lessons / total_lessons) * 100 
+                const progress_percentage = total_lessons > 0
+                    ? (completed_lessons / total_lessons) * 100
                     : 0;
 
                 // Update unit with new progress
