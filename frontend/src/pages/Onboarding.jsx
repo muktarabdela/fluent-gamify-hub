@@ -23,6 +23,138 @@ const interests = [
   { id: "family", label: "Family & Home", icon: Home },
 ];
 
+const countryList = [
+  "United States",
+  "Canada",
+  "United Kingdom",
+  "Australia",
+  "India",
+  "Germany",
+  "France",
+  "Japan",
+  "China",
+  "Brazil",
+  "South Africa",
+  "Mexico",
+  "Italy",
+  "Spain",
+  "Russia",
+  "South Korea",
+  "Argentina",
+  "Indonesia",
+  "Turkey",
+  "Saudi Arabia",
+  "Netherlands",
+  "Sweden",
+  "Switzerland",
+  "Norway",
+  "Denmark",
+  "Finland",
+  "New Zealand",
+  "Portugal",
+  "Poland",
+  "Belgium",
+  "Austria",
+  "Czech Republic",
+  "Greece",
+  "Hungary",
+  "Ireland",
+  "Thailand",
+  "Vietnam",
+  "Malaysia",
+  "Philippines",
+  "Singapore",
+  "Pakistan",
+  "Bangladesh",
+  "Egypt",
+  "Nigeria",
+  "Kenya",
+  "Colombia",
+  "Chile",
+  "Peru",
+  "Venezuela",
+  "Ecuador",
+  "Cuba",
+  "Morocco",
+  "Algeria",
+  "Tunisia",
+  "Israel",
+  "Iran",
+  "Iraq",
+  "Jordan",
+  "United Arab Emirates",
+  "Qatar",
+  "Oman",
+  "Kuwait",
+  "Bahrain",
+  "Sri Lanka",
+  "Myanmar",
+  "Nepal",
+  "Kazakhstan",
+  "Uzbekistan",
+  "Azerbaijan",
+  "Belarus",
+  "Slovakia",
+  "Croatia",
+  "Slovenia",
+  "Bosnia and Herzegovina",
+  "Serbia",
+  "Bulgaria",
+  "Romania",
+  "Lithuania",
+  "Latvia",
+  "Estonia",
+  "Iceland",
+  "Luxembourg",
+  "Monaco",
+  "Liechtenstein",
+  "Malta",
+  "Cyprus",
+  "Zimbabwe",
+  "Ethiopia",
+  "Ghana",
+  "Uganda",
+  "Tanzania",
+  "Zambia",
+  "Botswana",
+  "Namibia",
+  "Mozambique",
+  "Angola",
+  "Sudan",
+  "Cameroon",
+  "Ivory Coast",
+  "Senegal",
+  "Libya",
+  "Paraguay",
+  "Bolivia",
+  "Uruguay",
+  "Guatemala",
+  "Honduras",
+  "El Salvador",
+  "Panama",
+  "Costa Rica",
+  "Dominican Republic",
+  "Jamaica",
+  "Trinidad and Tobago",
+  "Barbados",
+  "Bahamas",
+  "Haiti",
+  "Madagascar",
+  "Mali",
+  "Chad",
+  "Somalia",
+  "Democratic Republic of the Congo",
+  "Afghanistan",
+  "Armenia",
+  "Georgia",
+  "Mongolia",
+  "North Korea",
+  "Turkmenistan",
+  "Tajikistan",
+  "Kyrgyzstan"
+];
+
+
 const Onboarding = () => {
   const { loading, user, showWelcome, setShowWelcome } = useInitialSetup();
   const navigate = useNavigate();
@@ -31,6 +163,7 @@ const Onboarding = () => {
     country: "",
     interests: [],
   });
+  const [searchTerm, setSearchTerm] = useState("");
 
   const handleInterestToggle = (interestId) => {
     setFormData((prev) => ({
@@ -44,14 +177,14 @@ const Onboarding = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (step === 1 && !formData.country) {
-      toast.error("Please enter your country");
+      toast.error("Please select your country");
       return;
     }
     if (step === 2 && formData.interests.length < 3) {
       toast.error("Please select at least three interests");
       return;
     }
-    
+
     if (step === 1) {
       setStep(2);
     } else {
@@ -65,12 +198,12 @@ const Onboarding = () => {
         await updateUserPreferences(user.user_id, {
           country: formData.country,
           interests: formData.interests,
-          onboarding_completed: true
+          onboarding_completed: true,
         });
 
         // Save to localStorage for client-side use
         localStorage.setItem("userPreferences", JSON.stringify(formData));
-        
+
         toast.success("Welcome to FluentHub!");
         navigate("/dashboard");
       } catch (error) {
@@ -85,6 +218,10 @@ const Onboarding = () => {
       setStep(step - 1);
     }
   };
+
+  const filteredCountries = countryList.filter((country) =>
+    country.toLowerCase().includes(searchTerm.toLowerCase())
+  ).sort();
 
   // Show loading state
   if (loading) {
@@ -141,13 +278,23 @@ const Onboarding = () => {
               <div className="space-y-4">
                 <Label htmlFor="country">Which country are you from?</Label>
                 <Input
-                  id="country"
-                  placeholder="Enter your country"
-                  value={formData.country}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, country: e.target.value }))
-                  }
+                  id="search"
+                  placeholder="Search your country"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
+                <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md">
+                  {filteredCountries.map((country) => (
+                    <div
+                      key={country}
+                      className={`p-2 cursor-pointer  ${formData.country === country ? 'bg-primary text-white' : ''
+                        }`}
+                      onClick={() => setFormData((prev) => ({ ...prev, country }))}
+                    >
+                      {country}
+                    </div>
+                  ))}
+                </div>
               </div>
               <Button type="submit" className="w-full">
                 Next
@@ -170,18 +317,16 @@ const Onboarding = () => {
                 return (
                   <div
                     key={interest.id}
-                    className={`bg-white/50 backdrop-blur-sm rounded-lg p-4 flex flex-col items-center gap-2 cursor-pointer transition-all hover:bg-white/60 ${
-                      formData.interests.includes(interest.id)
-                        ? 'ring-2 ring-primary border border-primary bg-primary/10'
-                        : 'border border-neutral-200'
-                    }`}
+                    className={`bg-white/50 backdrop-blur-sm rounded-lg p-4 flex flex-col items-center gap-2 cursor-pointer transition-all hover:bg-white/60 ${formData.interests.includes(interest.id)
+                      ? 'ring-2 ring-primary border border-primary bg-primary/10'
+                      : 'border border-neutral-200'
+                      }`}
                     onClick={() => handleInterestToggle(interest.id)}
                   >
-                    <IconComponent className={`w-6 h-6 ${
-                      formData.interests.includes(interest.id)
-                        ? 'text-primary'
-                        : 'text-neutral-600'
-                    }`} />
+                    <IconComponent className={`w-6 h-6 ${formData.interests.includes(interest.id)
+                      ? 'text-primary'
+                      : 'text-neutral-600'
+                      }`} />
                     <span className="text-sm text-neutral-700 text-center font-medium">{interest.label}</span>
                   </div>
                 );

@@ -174,7 +174,7 @@ const SentenceBuildingExercise = ({ exercise, onSubmit, onContinue }) => {
             {/* Selected Words Area */}
             <div className="mb-6 min-h-[60px] p-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl">
                 <div className="flex flex-wrap gap-2">
-                    {selectedWords.map((word, index) => (
+                    {selectedWords?.map((word, index) => (
                         <motion.div
                             key={`selected-${word}-${index}`}
                             initial={{ scale: 0.8, opacity: 0 }}
@@ -196,7 +196,7 @@ const SentenceBuildingExercise = ({ exercise, onSubmit, onContinue }) => {
             {/* Available Words */}
             <div className="mb-6">
                 <div className="flex flex-wrap gap-2">
-                    {availableWords.map((word, index) => (
+                    {availableWords?.map((word, index) => (
                         <motion.div
                            
                             key={`available-${word}-${index}`}

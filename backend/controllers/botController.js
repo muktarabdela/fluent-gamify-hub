@@ -72,6 +72,7 @@ const botController = {
                             status: 'Ongoing',
                             inviteLink: sessionResult.inviteLink,
                             updated_at: new Date(),
+                            telegram_chat_id: group_id.toString(),
                         },
                         $inc: { current_participants: 1 }, // Increment participants by 1
                     }

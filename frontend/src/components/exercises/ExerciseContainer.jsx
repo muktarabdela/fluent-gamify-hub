@@ -20,7 +20,7 @@ const ExerciseContainer = ({ exercises, userId, lessonId, onComplete }) => {
     const [streakData, setStreakData] = useState(null);
 
     const currentExercise = exercises[currentExerciseIndex];
-    const progress = (completedExercises.size / exercises.length) * 100;
+    const progress = (completedExercises?.size / exercises.length) * 100;
 
     // Calculate overall score from all completed exercises
     const calculateOverallScore = () => {
@@ -75,12 +75,12 @@ const ExerciseContainer = ({ exercises, userId, lessonId, onComplete }) => {
 
         return {
             isCorrect: true,
-            showContinue: currentExerciseIndex < exercises.length - 1
+            showContinue: currentExerciseIndex < exercises?.length - 1
         };
     };
 
     const handleContinue = () => {
-        if (currentExerciseIndex < exercises.length - 1) {
+        if (currentExerciseIndex < exercises?.length - 1) {
             setCurrentExerciseIndex(prev => prev + 1);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {

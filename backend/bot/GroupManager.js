@@ -258,7 +258,8 @@ class GroupManager {
             groupId,
             `🚨 Not enough participants to continue the session.\n` +
             `👥 Minimum required: 2 participants.\n` +
-            `⏳ The session will end in 2 minutes unless more members join.`
+            `⏳ The session will end in 2 minutes unless more members join.\n` +
+            `👀 Waiting for participants to join...`
         );
     }
 
@@ -563,7 +564,6 @@ class GroupManager {
             // Fetch the active session
             // Check if a LiveSession already exists for the group
             let liveSession = await LiveSession.findOne({ telegram_chat_id: groupId.toString() });
-
             if (!liveSession) {
                 throw new Error('Active session not found');
             }
@@ -573,7 +573,7 @@ class GroupManager {
             // Update database documents
             await Promise.all([
                 LiveSession.updateMany(
-                    { telegram_chat_id: groupId.toString(), status: { $ne: 'Ended' } },
+                    { telegram_chat_id: groupId.toString() },
                     {
                         $set: {
                             status: 'Scheduled',
@@ -604,14 +604,14 @@ class GroupManager {
             );
 
             // Clear chat history for all users
-            try {
-                const messages = await this.bot.telegram.getChatMessages(groupId); // Retrieve bot's messages
-                for (const message of messages) {
-                    await this.bot.telegram.deleteMessage(groupId, message.message_id); // Delete bot's messages
-                }
-            } catch (error) {
-                console.error('Error deleting bot messages:', error);
-            }
+            // try {
+            //     const messages = await this.bot.telegram.getChatMessages(groupId); // Retrieve bot's messages
+            //     for (const message of messages) {
+            //         await this.bot.telegram.deleteMessage(groupId, message.message_id); // Delete bot's messages
+            //     }
+            // } catch (error) {
+            //     console.error('Error deleting bot messages:', error);
+            // }
 
             // Reset group settings
             try {
@@ -632,9 +632,8 @@ class GroupManager {
             await this.removeAllMembers(groupId);
 
             // Remove group from activeGroups
-            this.activeGroups.delete(normalizedGroupId);
-
-            console.log(this.activeGroups);
+            const removedGroup = this.activeGroups.delete(normalizedGroupId);
+            console.log("removedGroup at end session function after end group session in line 636", removedGroup)
 
             return {
                 success: true,

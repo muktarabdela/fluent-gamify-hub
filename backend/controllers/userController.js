@@ -346,6 +346,29 @@ const userController = {
             console.error('Error fetching lesson statuses:', error);
             res.status(500).json({ message: error.message });
         }
+    },
+
+    // New method to get user data with lesson statuses
+    getUserDataWithLessons: async (req, res) => {
+        const userId = req.params.id;
+        try {
+            const user = await User.findOne({ user_id: userId });
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+
+            const lessonStatuses = await LessonStatus.find({ user_id: userId });
+            const userStreak = await UserStreak.findOne({ user_id: userId });
+
+            res.json({
+                user,
+                lessonStatuses,
+                userStreak
+            });
+        } catch (error) {
+            console.error('Error fetching user data with lessons:', error);
+            res.status(500).json({ message: error.message });
+        }
     }
 };
 

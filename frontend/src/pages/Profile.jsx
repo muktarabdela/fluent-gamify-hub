@@ -9,7 +9,7 @@ import {
     , Heart
 } from "lucide-react";
 
-import { getLessonStatusByUserId, getUserById, getUserStreak } from "@/api/userService";
+import { getLessonStatusByUserId, getUserById, getUserDataWithLessons, getUserStreak } from "@/api/userService";
 import { format } from "date-fns";
 import { getTelegramUser } from "@/utils/telegram";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,25 +27,17 @@ const Profile = () => {
         const fetchUserData = async () => {
             try {
                 setLoading(true);
-                if (!telegramUser?.id) {
-                    setLoading(false);
-                    return;
-                }
-                const [userDetails, streak, lesson] = await Promise.all([
-                    getUserById(telegramUser.id),
-                    getUserStreak(telegramUser.id),
-                    getLessonStatusByUserId(telegramUser.id)
-                ]);
+                const response = await getUserDataWithLessons(telegramUser.id)
+                console.log(response)
+                const { user, lessonStatuses, userStreak } = await response
 
-                console.log("Fetched user details:", userDetails);
-                // console.log("Fetched user progress:", progress);
-                console.log("Fetched user streak:", streak);
-                console.log("Fetched user lesson data:", lesson);
+                console.log("Fetched user details:", user);
+                console.log("Fetched lesson statuses:", lessonStatuses);
+                console.log("Fetched user streak:", userStreak);
 
-                setUserData(userDetails);
-                // setUserProgress(progress);
-                setUserStreak(streak);
-                setUserLesson(lesson)
+                setUserData(user);
+                setUserLesson(lessonStatuses);
+                setUserStreak(userStreak);
             } catch (error) {
                 console.error('Error fetching user data:', error);
             } finally {
@@ -171,7 +163,7 @@ const Profile = () => {
                                 current={completedLessonsS}
                                 total={totalLessons}
                                 percentage={(completedLessonsS / totalLessons) * 100}
-                                color="bg-emerald-500"
+                                color="bg-gray-500"
                             />
                             <ProgressCar
                                 title="Active Lessons"

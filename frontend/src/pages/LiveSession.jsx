@@ -48,26 +48,24 @@ export default function LiveSession() {
 
     // Fetch sessions when tab changes or status filter changes
     useEffect(() => {
-        const fetchSessions = async () => {
-            try {
-                setLoading(true);
-                const status = statusFilter !== 'all' ? statusFilter : null;
-                const userId = telegramUser.id;
-                const data = await getSessionsByType('free_talk', status, userId);
-                setSessions(data);
-                console.log(data)
-                setError(null);
-            } catch (err) {
-                console.error('Error fetching sessions:', err);
-                setError('Failed to load sessions. Please try again later.');
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchSessions();
     }, [statusFilter]);
-
+    const fetchSessions = async () => {
+        try {
+            setLoading(true);
+            const status = statusFilter !== 'all' ? statusFilter : null;
+            const userId = telegramUser.id;
+            const data = await getSessionsByType('free_talk', status, userId);
+            setSessions(data);
+            console.log(data)
+            setError(null);
+        } catch (err) {
+            console.error('Error fetching sessions:', err);
+            setError('Failed to load sessions. Please try again later.');
+        } finally {
+            setLoading(false);
+        }
+    };
     // Filter and sort sessions
     const filteredSessions = sessions
         .filter((session) => {
@@ -246,6 +244,7 @@ export default function LiveSession() {
                 group_id: availableGroup.telegram_chat_id,
                 duration: session.duration
             });
+            fetchSessions();
 
             // Parallel updates
             await Promise.all([
@@ -277,7 +276,7 @@ export default function LiveSession() {
             console.error('Error creating session:', error);
             setJoinStatus({
                 loading: false,
-                error: error.message || 'Failed to create session. Please try again.',
+                error: error.response.data.message || 'Failed to create session. Please try again.',
                 inviteLink: null,
             });
 
@@ -465,7 +464,12 @@ export default function LiveSession() {
             </div>
 
             {/* Add Dialog */}
-            <Dialog open={isJoinDialogOpen} onOpenChange={setIsJoinDialogOpen}>
+            <Dialog open={isJoinDialogOpen} onOpenChange={(open) => {
+                if (!open && !joinStatus.loading) {
+                    setIsJoinDialogOpen(open);
+                    fetchSessions();
+                }
+            }}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Join Live Session</DialogTitle>
@@ -474,41 +478,59 @@ export default function LiveSession() {
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="py-4">
+                    <div className="py-6 px-4 bg-gray-50 rounded-lg shadow-md">
+                        {/* Loading State */}
                         {joinStatus.loading && (
                             <div className="text-center">
-                                <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
-                                <p>Creating session...</p>
+                                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+                                <p className="text-gray-600 font-medium">
+                                    Creating your session... Hang tight, this may take a moment.
+                                </p>
                             </div>
                         )}
 
+                        {/* Error State */}
                         {joinStatus.error && (
-                            <div className="text-red-500 text-center">
-                                {joinStatus.error}
+                            <div className="text-center">
+                                <p className="text-red-600 font-semibold mb-2">Oops! Something went wrong.</p>
+                                <p className="text-gray-600 text-sm">
+                                    {joinStatus.error || "We couldn't create the session. Please try again."}
+                                </p>
                             </div>
                         )}
 
+                        {/* Success State */}
                         {joinStatus.inviteLink && (
                             <div className="text-center space-y-4">
-                                <p className="text-green-600">Session created successfully!</p>
+                                <p className="text-green-600 font-semibold text-lg">🎉 Session Created Successfully!</p>
+                                <p className="text-gray-600">
+                                    Your session has been created. Click the button below to join now and invite others to participate!
+                                </p>
                                 <Button
-                                    className="w-full bg-green-500 hover:bg-green-500"
+                                    className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 rounded-lg transition duration-300"
                                     onClick={() => window.open(joinStatus.inviteLink, '_blank')}
                                 >
-                                    Join Now
+                                    Join Session
                                 </Button>
+                                <p className="text-gray-500 text-sm">
+                                    Need help? Contact support or try refreshing if the session link doesn’t work.
+                                </p>
                             </div>
                         )}
                     </div>
 
-                    <DialogFooter>
+
+                    {/* <DialogFooter>
                         <Button
                             variant="outline"
-                            onClick={() => setIsJoinDialogOpen(false)}
+                            onClick={() => {
+                                setIsJoinDialogOpen(false);
+                                fetchSessions()
+                            }}
                         >
                             Close
                         </Button>
-                    </DialogFooter>
+                    </DialogFooter> */}
                 </DialogContent>
             </Dialog>
         </>

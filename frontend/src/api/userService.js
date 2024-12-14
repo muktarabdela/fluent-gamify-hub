@@ -101,3 +101,12 @@ export const getLessonStatusByUserId = async (userId) => {
     throw error;
   }
 }; 
+export const getUserDataWithLessons = async (userId) => {
+  try {
+    const response = await instance.get(`/users/${userId}/data`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user data with lessons:', error);
+    throw error;
+  }
+};
