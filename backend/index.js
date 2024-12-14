@@ -14,7 +14,7 @@ const app = express();
 
 // Move CORS before other middleware
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:8080', 'https://fluent-gamify-hub-production.up.railway.app', 'https://fluent-gamify-hub.vercel.app'],
+    origin: ['http://localhost:8080', 'https://fluent-gamify-hub-production.up.railway.app', 'https://fluent-gamify-hub.vercel.app'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
@@ -49,7 +49,7 @@ const startServer = async () => {
         console.log('Database connection established');
 
         // Use routes with Telegram validation
-        app.use('/api', routes);
+        app.use('/fluent/api', routes);
 
         // Health check endpoint
         app.get('/api/health', (req, res) => {

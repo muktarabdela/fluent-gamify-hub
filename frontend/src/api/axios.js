@@ -2,7 +2,7 @@
 
 import axios from "axios";
 const instance = axios.create({
-	baseURL: "https://fluent-gamify-hub-production.up.railway.app/api",
+	baseURL: "https://pharmedica.et/fluent/api/",
 	timeout: 40000,
 	headers: {
 		"Content-Type": "application/json",
@@ -38,6 +38,6 @@ instance.interceptors.response.use(
 
 export default instance;
 
-
+// https://pharmedica.et/fluent/api/
 // https://fluent-gamify-hub-production.up.railway.app/api
 //http://localhost:5000/api'
