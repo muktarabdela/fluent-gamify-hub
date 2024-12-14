@@ -34,6 +34,24 @@ const parseJSON = (jsonData) => {
     return [];
 };
 
+const colorClasses = [
+    'from-red-500 to-red-300',
+    'from-blue-500 to-blue-300',
+    'from-green-500 to-green-300',
+    'from-yellow-500 to-yellow-300',
+    'from-purple-500 to-purple-300',
+    'from-pink-500 to-pink-300',
+    'from-indigo-500 to-indigo-300',
+    'from-cyan-500 to-cyan-300',
+    'from-teal-500 to-teal-300',
+    'from-orange-500 to-orange-300',
+];
+
+// Function to get a random color class
+const getRandomColorClass = () => {
+    return colorClasses[Math.floor(Math.random() * colorClasses.length)];
+};
+
 function LessonCard({ lesson }) {
     const [imageError, setImageError] = useState(false);
 
@@ -106,13 +124,13 @@ function LessonCard({ lesson }) {
                     <div className="flex items-center gap-6">
                         <div className="relative">
                             <div className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-lg">
-                                <div className="w-full h-full bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center">
-                                    <img
+                                <div className={`w-full h-full bg-gradient-to-br ${getRandomColorClass()} flex items-center justify-center`}>
+                                    {/* <img
                                         src={`https://tools-api.webcrumbs.org/image-placeholder/48/48/${lesson.topic}/1`}
                                         alt={lesson.title}
                                         className="w-full h-full object-cover transform group-hover:scale-110 
                                     transition-transform duration-300"
-                                    />
+                                    /> */}
                                 </div>
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
                             </div>
@@ -297,7 +315,7 @@ export default function MobileLessonDashboard() {
         try {
             setLoading(true);
             const lessonsData = await getLessonsByUnitWithStatus(unitId, userId);
-            console.log("lessonsByUnit",lessonsData)
+            console.log("lessonsByUnit", lessonsData)
             setLessons(prev => [...prev, ...lessonsData]);
             console.log(lessonsData)
             // Calculate progress for the unit
